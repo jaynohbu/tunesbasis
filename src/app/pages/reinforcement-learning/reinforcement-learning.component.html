@@ -40,21 +40,35 @@
                         <!-- Chapter 4 -->
                         <p-tabPanel header="Cross-Entropy Method">
                             <div class="sub-section">
-                                <h3>Cross-Entropy Method (CEM)</h3>
-                                <p>
-                                    The Cross-Entropy Method is a stochastic optimization technique.
-                                    It evaluates a population of solutions, keeps the best (“elite”) samples,
-                                    and updates the distribution toward them.
-                                </p>
+                               <h3>Cross-Entropy Method (CEM)</h3>
+<p>
+  The Cross-Entropy Method is a stochastic optimization technique.
+  It evaluates a population of solutions, keeps the best (“elite”) samples,
+  and updates the distribution toward them by minimizing cross-entropy.
+  In this context the model’s policy is a parameterized distribution 
+  <code>q(x; θ)</code>, and the elite samples define the target distribution <code>p(x)</code>.
+  Each iteration adjusts <code>θ</code> to minimize the cross-entropy:
+</p>
+<p style="text-align:center;">
+  <code>min<sub>θ</sub> H(p, q<sub>θ</sub>) = – Σ p(x) log q(x; θ)</code>
+</p>
+<p>
+  This minimization “cross-entrophies away” bad behaviors by steadily 
+  concentrating the probability mass of <code>q(x; θ)</code> on the elite 
+  (high-reward) regions of <code>p(x)</code>, thereby optimizing the policy step by step.
+</p>
 
-                                <h4>Formula (Cross-Entropy) 상대와 교차비교로 바라본 자신의 불확식성 = 추가적인 부담(정보량) </h4>
+
+                               <h4>Formula (Cross-Entropy): Viewing One's Own Uncertainty in Comparison with Others = Additional Information Burden</h4>
+
                                 <p>
                                     H(p, q) = – Σ p(x) log q(x)
                                     <br>
                                     • Measures how well q approximates true distribution p.
                                     <br>
                                     • Equivalent to "extra bits" needed if samples come from p but described by q".
-                                    이 추가된 정보가 
+                                    <br>
+                                     • This Additional Information Burden represents the Cross-Entropy.
                                 </p>
 
                                 <img src="assets/images/cross_entropy_example.png" alt="Cross-Entropy p vs q Example"
