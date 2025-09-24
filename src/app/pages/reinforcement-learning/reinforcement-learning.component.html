@@ -10,56 +10,33 @@
 
                     <p-tabView orientation="top">
 
-                        <!-- Chapter 1 -->
-                        <p-tabPanel header="What is RL?">
-                            <div class="sub-section">
-                                <h3>What Is Reinforcement Learning?</h3>
-                                <p>Core ideas of RL, difference from supervised/unsupervised, MDPs, agent–environment
-                                    loop, rewards.</p>
-                            </div>
-                        </p-tabPanel>
-
-                        <!-- Chapter 2 -->
-                        <p-tabPanel header="OpenAI Gym API">
-                            <div class="sub-section">
-                                <h3>OpenAI Gym / Gymnasium</h3>
-                                <p>Action & observation spaces, wrappers, rendering, building environments, running
-                                    random agents.</p>
-                            </div>
-                        </p-tabPanel>
-
-                        <!-- Chapter 3 -->
-                        <p-tabPanel header="PyTorch Deep Learning">
-                            <div class="sub-section">
-                                <h3>Deep Learning with PyTorch</h3>
-                                <p>Tensors, gradients, optimizers, neural networks, monitoring with TensorBoard/Ignite.
-                                </p>
-                            </div>
-                        </p-tabPanel>
-
+                     
                         <!-- Chapter 4 -->
                         <p-tabPanel header="Cross-Entropy Method">
                             <div class="sub-section">
-                               <h3>Cross-Entropy Method (CEM)</h3>
-<p>
-  The Cross-Entropy Method is a stochastic optimization technique.
-  It evaluates a population of solutions, keeps the best (“elite”) samples,
-  and updates the distribution toward them by minimizing cross-entropy.
-  In this context the model’s policy is a parameterized distribution 
-  <code>q(x; θ)</code>, and the elite samples define the target distribution <code>p(x)</code>.
-  Each iteration adjusts <code>θ</code> to minimize the cross-entropy:
-</p>
-<p style="text-align:center;">
-  <code>min<sub>θ</sub> H(p, q<sub>θ</sub>) = – Σ p(x) log q(x; θ)</code>
-</p>
-<p>
-  This minimization “cross-entrophies away” bad behaviors by steadily 
-  concentrating the probability mass of <code>q(x; θ)</code> on the elite 
-  (high-reward) regions of <code>p(x)</code>, thereby optimizing the policy step by step.
-</p>
+                                <h3>Cross-Entropy Method (CEM)</h3>
+                                <p>
+                                    The Cross-Entropy Method is a stochastic optimization technique.
+                                    It evaluates a population of solutions, keeps the best (“elite”) samples,
+                                    and updates the distribution toward them by minimizing cross-entropy.
+                                    In this context the model’s policy is a parameterized distribution
+                                    <code>q(x; θ)</code>, and the elite samples define the target distribution
+                                    <code>p(x)</code>.
+                                    Each iteration adjusts <code>θ</code> to minimize the cross-entropy:
+                                </p>
+                                <p style="text-align:center;">
+                                    <code>min<sub>θ</sub> H(p, q<sub>θ</sub>) = – Σ p(x) log q(x; θ)</code>
+                                </p>
+                                <p>
+                                    This minimization “cross-entrophies away” bad behaviors by steadily
+                                    concentrating the probability mass of <code>q(x; θ)</code> on the elite
+                                    (high-reward) regions of <code>p(x)</code>, thereby optimizing the policy step by
+                                    step.
+                                </p>
 
 
-                               <h4>Formula (Cross-Entropy): Viewing One's Own Uncertainty in Comparison with Others = Additional Information Burden</h4>
+                                <h4>Formula (Cross-Entropy): Viewing One's Own Uncertainty in Comparison with Others =
+                                    Additional Information Burden</h4>
 
                                 <p>
                                     H(p, q) = – Σ p(x) log q(x)
@@ -68,7 +45,7 @@
                                     <br>
                                     • Equivalent to "extra bits" needed if samples come from p but described by q".
                                     <br>
-                                     • This Additional Information Burden represents the Cross-Entropy.
+                                    • This Additional Information Burden represents the Cross-Entropy.
                                 </p>
 
                                 <img src="assets/images/cross_entropy_example.png" alt="Cross-Entropy p vs q Example"
