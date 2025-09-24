@@ -1,0 +1,180 @@
+<div class="grid">
+    <div class="col-12 md:col-12">
+        <div class="card">
+            <h5>Reinforcement Learning</h5>
+            <p-tabView orientation="left">
+
+                <!-- INTRODUCTION -->
+                <p-tabPanel header="Introduction" class="line-height-3 m-0">
+                    <h1>Introduction to Reinforcement Learning</h1>
+
+                    <p-tabView orientation="top">
+
+                        <!-- Chapter 1 -->
+                        <p-tabPanel header="What is RL?">
+                            <div class="sub-section">
+                                <h3>What Is Reinforcement Learning?</h3>
+                                <p>Core ideas of RL, difference from supervised/unsupervised, MDPs, agent–environment
+                                    loop, rewards.</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 2 -->
+                        <p-tabPanel header="OpenAI Gym API">
+                            <div class="sub-section">
+                                <h3>OpenAI Gym / Gymnasium</h3>
+                                <p>Action & observation spaces, wrappers, rendering, building environments, running
+                                    random agents.</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 3 -->
+                        <p-tabPanel header="PyTorch Deep Learning">
+                            <div class="sub-section">
+                                <h3>Deep Learning with PyTorch</h3>
+                                <p>Tensors, gradients, optimizers, neural networks, monitoring with TensorBoard/Ignite.
+                                </p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 4 -->
+                        <p-tabPanel header="Cross-Entropy Method">
+                            <div class="sub-section">
+                                <h3>Cross-Entropy Method (CEM)</h3>
+                                <p>
+                                    The Cross-Entropy Method is a stochastic optimization technique.
+                                    It evaluates a population of solutions, keeps the best (“elite”) samples,
+                                    and updates the distribution toward them.
+                                </p>
+
+                                <h4>Formula (Cross-Entropy) 상대와 교차비교로 바라본 자신의 불확식성 = 추가적인 부담(정보량) </h4>
+                                <p>
+                                    H(p, q) = – Σ p(x) log q(x)
+                                    <br>
+                                    • Measures how well q approximates true distribution p.
+                                    <br>
+                                    • Equivalent to "extra bits" needed if samples come from p but described by q".
+                                    이 추가된 정보가 
+                                </p>
+
+                                <img src="assets/images/cross_entropy_example.png" alt="Cross-Entropy p vs q Example"
+                                    style="max-width:50%; margin:15px 0;">
+
+                                <div class="side-note">
+                                    <h4>Why “Cross”?</h4>
+                                    <p>
+                                        It’s called <strong>cross-entropy</strong> because it “crosses” two
+                                        distributions:
+                                        the <strong>true distribution (p)</strong> and the <strong>model distribution
+                                            (q)</strong>.
+                                        It’s not about impurity, but about mismatch between two probability views.
+                                    </p>
+                                </div>
+
+                                <div class="side-note">
+                                    <h4>Information Theory View</h4>
+                                    <p>
+                                        • Entropy H(p): average number of bits to encode events from p. <br>
+                                        • Cross-Entropy H(p,q): bits needed if we use q to encode p. <br>
+                                        • KL Divergence: H(p,q) – H(p) = wasted extra bits.
+                                    </p>
+                                    <p>
+                                        👉 Cross-Entropy answers: “How inefficient is my model q when the world really
+                                        follows p?”
+                                    </p>
+                                </div>
+
+                                <div class="side-note">
+                                    <h4>Why the log?</h4>
+                                    <p>
+                                        Information content = –log₂(p).
+                                        • Common events (p high) → small information.
+                                        • Rare events (p low) → large information.
+                                    </p>
+                                    <img src="assets/images/information_content.png" alt="Information Content Curve"
+                                        style="max-width:50%; margin:15px 0;">
+                                    <p>
+                                        Example points: p=0.5 → 1 bit, p=0.25 → 2 bits, p=0.1 → 3.32 bits.
+                                        This explains why log is natural: it maps probability to “bits of surprise.”
+                                    </p>
+                                </div>
+
+                                <div class="side-note">
+                                    <h4>Intuition Summary</h4>
+                                    <ul>
+                                        <li>Entropy = baseline uncertainty of true distribution p.</li>
+                                        <li>Cross-Entropy = coding cost when using q for p.</li>
+                                        <li>KL Divergence = inefficiency (extra cost) from mismatch.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </p-tabPanel>
+
+                    </p-tabView>
+                </p-tabPanel>
+
+                <!-- PART 2 -->
+                <p-tabPanel header="Value-based Methods + Other Methods" class="line-height-3 m-0">
+                    <h1>Value-based Methods and Other Approaches</h1>
+
+                    <p-tabView orientation="top">
+
+                        <!-- Chapter 5 -->
+                        <p-tabPanel header="Bellman Equation">
+                            <div class="sub-section">
+                                <h3>Tabular Learning and the Bellman Equation</h3>
+                                <p>Value functions, Bellman equation, Q-iteration, FrozenLake experiments.</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 6 -->
+                        <p-tabPanel header="Deep Q-Networks">
+                            <div class="sub-section">
+                                <h3>Deep Q-Networks (DQN)</h3>
+                                <p>From tabular Q-learning to deep Q-learning, training loop, Pong/Atari examples,
+                                    wrappers, performance issues.</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 7 -->
+                        <p-tabPanel header="Higher-level RL Libraries">
+                            <div class="sub-section">
+                                <h3>Higher-level RL Libraries</h3>
+                                <p>Using abstractions (PTAN, replay buffers, experience sources, target networks).</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 8 -->
+                        <p-tabPanel header="DQN Extensions">
+                            <div class="sub-section">
+                                <h3>DQN Extensions</h3>
+                                <p>Variants of DQN (Double DQN, Dueling DQN, Prioritized Replay, etc.).</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 9 -->
+                        <p-tabPanel header="Speeding up RL">
+                            <div class="sub-section">
+                                <h3>Ways to Speed Up RL</h3>
+                                <p>Engineering & algorithmic optimizations: parallelization, reward shaping, curriculum
+                                    learning.</p>
+                            </div>
+                        </p-tabPanel>
+
+                        <!-- Chapter 10 -->
+                        <p-tabPanel header="RL for Stock Trading">
+                            <div class="sub-section">
+                                <h3>Stocks Trading Using RL</h3>
+                                <p>Designing a stock trading environment, training an RL agent, evaluating trading
+                                    strategies.</p>
+                            </div>
+                        </p-tabPanel>
+
+                    </p-tabView>
+                </p-tabPanel>
+
+            </p-tabView>
+        </div>
+    </div>
+</div>

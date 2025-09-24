@@ -1,0 +1,228 @@
+<div class="grid">
+    <div class="col-12 md:col-12">
+        <div class="card">
+            <h5>Time Series</h5>
+            <p-tabView orientation="left">
+                <p-tabPanel header="Overview" class="line-height-3 m-0">
+
+                    <h1>Time Series</h1>
+
+                    <div class="section">
+                        <p>
+                            A <strong>time series</strong> is a sequence of data points collected or recorded at
+                            successive points in time, usually at uniform intervals (seconds, minutes, days, months,
+                            years).
+                        </p>
+                        <p>
+                            <em>Examples:</em> stock prices per day, daily temperature, server CPU usage per second,
+                            monthly sales, heart rate recordings.
+                        </p>
+                    </div>
+
+                    <div class="section">
+                        <h2>Key Aspects of Time Series</h2>
+                        <ul>
+                            <li>
+                                <strong>Order matters:</strong> Unlike typical tabular data, the order of observations
+                                is crucial. Yesterday’s stock price affects today’s.
+                            </li>
+
+                            <li>
+                                <strong>Components of a time series:</strong>
+                                <ul>
+                                    <li><strong>Trend:</strong> Long-term movement (upward or downward).</li>
+                                    <li><strong>Seasonality:</strong> Regular, repeating patterns (e.g., higher sales in
+                                        December).</li>
+                                    <li><strong>Cyclic patterns:</strong> Irregular, longer-term ups and downs (business
+                                        cycles).</li>
+                                    <li><strong>Noise:</strong> Random fluctuations that can’t be explained.</li>
+                                </ul>
+                            </li>
+
+                            <li>
+                                <strong>Stationarity:</strong> A stationary time series has constant mean, variance, and
+                                autocovariance over time. Many models (like ARIMA) assume stationarity.
+                             <div class="side-note">
+  <h3>Side Note: Stationarity</h3>
+  <p>
+    A <strong>stationary time series</strong> has constant mean, variance, and autocovariance over time.
+    This means that <strong>trend</strong> and <strong>seasonality</strong> violate strict stationarity
+    because they cause systematic changes in the mean (and sometimes variance).
+  </p>
+
+  <p>In practice, we make a series stationary by transformations such as:</p>
+  <ul>
+    <li><strong>Differencing:</strong> Removing trend by subtracting consecutive values.</li>
+    <li><strong>Seasonal differencing:</strong> Removing repeating seasonal effects (e.g., this December – last December).</li>
+    <li><strong>Detrending or decomposition:</strong> Separating the series into trend, seasonality, and residuals.</li>
+  </ul>
+
+  <p>
+    <strong>Important:</strong> Even after making a series stationary, we don’t lose useful information.
+    The remaining series still contains autocorrelation patterns that models like ARIMA can capture,
+    while the removed trend and seasonality can be modeled and added back later.
+  </p>
+
+  <h4>How to Estimate Trend</h4>
+  <ul>
+    <li><strong>Moving Average (Smoothing):</strong> Take averages over a fixed window to remove short-term fluctuations.<br>
+      Example: Observed series [100, 135, 170, 205, 120, 155, 190, 225]<br>
+      Moving average (window=4) → [132.5, 147.5, 172.5, 192.5, …]
+    </li>
+    <li><strong>Regression Line:</strong> Fit a straight line (or curve) to approximate the trend.<br>
+      Formula: Trend(t) = a + bt<br>
+      Example: [100, 120, 140, 160, 180, 200, 220, 240] (linear increase of +20 each step).
+    </li>
+    <li><strong>Decomposition:</strong> Use statistical methods (STL, classical decomposition, X-11, X-13) to split the series into Trend + Seasonality + Residual automatically.</li>
+  </ul>
+
+  <h4>Examples</h4>
+
+  <div class="example">
+    <strong>1. Differencing (removing trend)</strong><br>
+    Original series: [100, 110, 120, 130, 140]<br>
+    First difference: [10, 10, 10, 10]<br>
+    (constant increments of 10) A model (say ARIMA) will quickly learn:
+    <div style="margin-left:20px; font-weight:bold;">
+      X<sub>t</sub> − X<sub>t−1</sub> = 10
+    </div>
+    So the model predicts the next increment = 10, and after inverting differencing:
+    <div style="margin-left:20px; font-weight:bold;">
+      140 + 10 = 150
+    </div>
+    <em>👉 Trend removed, but the model still learns the increment rule and restores it for forecasting.</em>
+  </div>
+
+  <div class="example">
+    <strong>2. Seasonal differencing (removing repeating seasonality)</strong><br>
+    Original series: [20, 30, 40, 50, 22, 32, 42, 52, 21, 31, 41, 51]<br>
+    Seasonal difference (lag = 4): [2, 2, 2, 2, 1, 1, 1, 1]<br>
+    The ARIMA model sees that:
+    <div style="margin-left:20px; font-weight:bold;">
+      X<sub>t</sub> − X<sub>t−4</sub> ≈ 2 (early) and later ≈ 1
+    </div>
+    So the model predicts (after inverting the differencing):
+    <div style="margin-left:20px; font-weight:bold;">
+      51 + 1 = 52
+    </div>
+    <em>👉 Seasonal pattern reduced — the model learns the year-to-year increments and adds them back when forecasting.</em>
+  </div>
+
+  <div class="example">
+    <strong>3. Detrending or decomposition</strong><br>
+    Observed series: [100, 135, 170, 205, 120, 155, 190, 225]<br>
+    Estimated trend: [100, 120, 140, 160, 180, 200, 220, 240]<br>
+    Seasonality: [0, 15, 30, 45, -60, -45, -30, -15]<br>
+    Residuals: [0, 0, 0, 0, 0, 0, 0, 0]<br>
+    The model learns each component separately:
+    <ul>
+      <li><strong>Trend:</strong> increases by +20 each step.
+    <p>
+  The estimated trend <code>[100, 120, 140, 160, 180, 200, 220, 240]</code> was obtained by fitting a simple linear regression line that increases by +20 at each step.
+</p>
+    </li>
+      <li><strong>Seasonality:</strong> follows a repeating cycle (0 → +15 → +30 → +45 → -60 → …).</li>
+      <li><strong>Residuals:</strong> zero (no random noise in this toy example).</li>
+    </ul>
+    So the forecast is built as:
+    <div style="margin-left:20px; font-weight:bold;">
+      Next value = (240 + 20) + (cycle continues: +0) + 0 = 260
+    </div>
+    <em>👉 The series is separated into trend + seasonality + residual, then recombined for forecasting.</em>
+  </div>
+
+  <h4>Visualization</h4>
+  <p>
+    <img src="assets/images/time_series_decomposition.png" alt="Time Series Decomposition Chart" style="max-width:50%; border:1px solid #ccc; border-radius:6px; padding:4px;">
+  </p>
+</div>
+
+
+
+                                <div class="side-note">
+                                    <h3>Side Note: Autocovariance</h3>
+                                    <p>
+                                        <strong>Autocovariance</strong> measures how two values of a time series relate
+                                        depending on how far apart they are in time (the lag).
+                                    </p>
+                                    <ul>
+                                        <li>If autocovariance is large (positive or negative) at some lag, it means
+                                            there’s a relationship or dependency.</li>
+                                        <li>If it’s close to zero, the values at that lag are basically unrelated (like
+                                            noise).</li>
+                                    </ul>
+                                    <p><em>Example:</em></p>
+                                    <ul>
+                                        <li>Daily temperatures: today’s temperature is usually close to yesterday’s →
+                                            strong positive autocovariance.</li>
+                                        <li>Stock returns: tomorrow’s return is almost independent of today’s →
+                                            autocovariance near zero.</li>
+                                    </ul>
+                                    <p>
+                                        So, autocovariance doesn’t always imply a clear pattern — but significant values
+                                        at certain lags hint at repeating structures like seasonality or trends.
+                                    </p>
+                                </div>
+                            </li>
+
+                            <li>
+                                <strong>Autocorrelation:</strong> How current values relate to past values (e.g.,
+                                today’s temperature is correlated with yesterday’s).
+                                <div class="side-note">
+                                    <h3>Side Note: Autocovariance vs Autocorrelation</h3>
+                                    <p>They are closely related but not the same:</p>
+                                    <ul>
+                                        <li><strong>Autocovariance:</strong> Measures the raw covariance between two
+                                            values of a time series at a certain lag. Units are the square of the data
+                                            units (e.g., °C²). Scale-dependent, so harder to compare.</li>
+                                        <li><strong>Autocorrelation:</strong> Normalized autocovariance, always between
+                                            -1 and 1. Unit-free, making it easier to interpret and compare across
+                                            datasets
+                                            and lags.</li>
+                                    </ul>
+                                    <p><em>Example:</em></p>
+                                    <ul>
+                                        <li>Daily temperature: high autocovariance and autocorrelation (close to 0.9 at
+                                            lag 1).</li>
+                                        <li>Stock returns: both autocovariance and autocorrelation close to 0 (no
+                                            dependency).</li>
+                                    </ul>
+                                    <p>
+                                        <strong>Quick intuition:</strong> Autocovariance shows raw strength;
+                                        Autocorrelation shows normalized strength. In autocorrelation plots, what
+                                        matters most is the <strong>regular spacing of the spikes</strong>, not that
+                                        they
+                                        are identical in size. The first seasonal lag (e.g., 12 for monthly data) often
+                                        has the strongest correlation, while later multiples (24, 36, …) may weaken due
+                                        to noise. Even if smaller, regularly spaced spikes still reveal repeating
+                                        seasonal or cyclic patterns.
+                                    </p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="section">
+                        <h2>Applications</h2>
+                        <ul>
+                            <li>Forecasting (stock prices, energy demand, sales)</li>
+                            <li>Anomaly detection (fraud detection, sensor failure)</li>
+                            <li>Pattern recognition (speech, ECG signals, music beats)</li>
+                        </ul>
+                    </div>
+
+                    <div class="section">
+                        <h2>Models</h2>
+                        <ul>
+                            <li><strong>Classical:</strong> AR, MA, ARMA, ARIMA, SARIMA</li>
+                            <li><strong>Statistical + ML:</strong> Exponential smoothing, Kalman filters, Random Forests
+                            </li>
+                            <li><strong>Deep Learning:</strong> RNNs, LSTMs, GRUs, Transformers for time series</li>
+                        </ul>
+                    </div>
+
+                </p-tabPanel>
+            </p-tabView>
+        </div>
+    </div>
+</div>

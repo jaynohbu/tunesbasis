@@ -1,0 +1,393 @@
+<div class="grid">
+  <div class="col-12 md:col-12">
+    <div class="card">
+      <h5>LeetCode Patterns</h5>
+
+      <p-accordion [multiple]="true">
+
+        <!-- TWO POINTERS -->
+        <p-accordionTab header="Two Pointers">
+          <h1>Two Pointers Technique</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Two Sum II – Sorted Array (#167)"></p-tabPanel>
+            <p-tabPanel header="3Sum (#15)"></p-tabPanel>
+          <p-tabPanel header="4Sum (#18)">
+  <div class="sub-section">
+    <h2>4Sum (#18)</h2>
+
+    <!-- Problem Statement -->
+    <h3>Problem Statement</h3>
+    <p>
+      Given an array <code>nums</code> of <code>n</code> integers, return all unique quadruplets 
+      <code>[nums[a], nums[b], nums[c], nums[d]]</code> such that:
+    </p>
+    <ul>
+      <li><code>0 &lt;= a, b, c, d &lt; n</code></li>
+      <li><code>a, b, c, and d</code> are distinct indices</li>
+      <li><code>nums[a] + nums[b] + nums[c] + nums[d] == target</code></li>
+    </ul>
+    <p>Answer must not contain duplicate quadruplets.</p>
+
+    <!-- Approach -->
+    <h3>Approach</h3>
+    <ul>
+      <li>Sort the array to handle duplicates easily.</li>
+      <li>Fix the first number (<code>i</code>), skipping duplicates.</li>
+      <li>Fix the second number (<code>j</code>), skipping duplicates.</li>
+      <li>Use two pointers (<code>left</code>, <code>right</code>) for the remaining two numbers.</li>
+      <li>Move pointers inward depending on the current sum:
+        <ul>
+          <li>If <code>total == target</code> → save quadruplet and move both pointers (skip duplicates).</li>
+          <li>If <code>total &lt; target</code> → move <code>left</code> forward to increase sum.</li>
+          <li>If <code>total &gt; target</code> → move <code>right</code> backward to decrease sum.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- Code -->
+    <h3>Code (Python)</h3>
+    <pre>
+from typing import List
+
+class Solution:
+    def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
+        res = []
+        nums.sort()
+        n = len(nums)
+        for i in range(n - 3):  # fix the first number
+            if i > 0 and nums[i] == nums[i - 1]:  # skip duplicates for i
+                continue
+            for j in range(i + 1, n - 2):  # fix the second number
+                if j > i + 1 and nums[j] == nums[j - 1]:  
+                    # skip duplicates for j
+                    continue
+                left, right = j + 1, n - 1  # two pointers for remaining numbers
+                while left < right:
+                    total = nums[i] + nums[j] + nums[left] + nums[right]
+                    if total == target:
+                        res.append([nums[i], nums[j], nums[left], nums[right]])
+                        left += 1
+                        right -= 1
+                        # skip duplicates for left
+                        while left < right and nums[left] == nums[left - 1]:
+                            left += 1
+                        # skip duplicates for right
+                        while left < right and nums[right] == nums[right + 1]:
+                            right -= 1
+                    elif total < target:
+                        left += 1
+                    else:
+                        right -= 1
+        return res
+    </pre>
+
+    <!-- Graphic -->
+    <h3>Two-Pointer Traversal Illustration</h3>
+    <img src="assets/images/four_sum_explained.png"
+        alt="4Sum Two-Pointer Illustration"
+        style="max-width:70%; margin:15px 0;">
+
+    <div>
+      <p>The graphic shows:</p>
+      <ul>
+        <li>Outer loops fix <code>i</code> and <code>j</code>.</li>
+        <li>Two pointers (<code>left</code>, <code>right</code>) move inward inside the sorted subarray.</li>
+        <li>Duplicates are skipped to avoid repeating quadruplets.</li>
+      </ul>
+    </div>
+  </div>
+</p-tabPanel>
+
+            <p-tabPanel header="Container With Most Water (#11)"></p-tabPanel>
+            <p-tabPanel header="Trapping Rain Water (#42)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- FAST & SLOW POINTERS -->
+        <p-accordionTab header="Fast & Slow Pointers">
+          <h1>Cycle Detection & Midpoint Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Linked List Cycle (#141)"></p-tabPanel>
+            <p-tabPanel header="Linked List Cycle II (#142)"></p-tabPanel>
+            <p-tabPanel header="Happy Number (#202)"></p-tabPanel>
+            <p-tabPanel header="Middle of the Linked List (#876)"></p-tabPanel>
+            <p-tabPanel header="Reorder List (#143)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- TOPOLOGICAL SORT -->
+        <p-accordionTab header="Topological Sort">
+          <h1>Topological Sorting</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Course Schedule (#207)"></p-tabPanel>
+            <p-tabPanel header="Course Schedule II (#210)"></p-tabPanel>
+            <p-tabPanel header="Alien Dictionary (LintCode/LC Premium)"></p-tabPanel>
+            <p-tabPanel header="Minimum Height Trees (#310)"></p-tabPanel>
+            <p-tabPanel header="Sequence Reconstruction (#444)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- TOP K ELEMENTS -->
+        <p-accordionTab header="Top K Elements">
+          <h1>Heap / Priority Queue Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Kth Largest Element in an Array (#215)"></p-tabPanel>
+            <p-tabPanel header="Top K Frequent Elements (#347)"></p-tabPanel>
+            <p-tabPanel header="Find K Closest Elements (#658)"></p-tabPanel>
+            <p-tabPanel header="Kth Smallest Element in a BST (#230)"></p-tabPanel>
+            <p-tabPanel header="Kth Largest Element in a Stream (#703)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- SUBSETS -->
+        <p-accordionTab header="Subsets">
+          <h1>Subset / Power Set Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Subsets (#78)"></p-tabPanel>
+            <p-tabPanel header="Subsets II (#90)"></p-tabPanel>
+            <p-tabPanel header="Combination Sum (#39)"></p-tabPanel>
+            <p-tabPanel header="Combination Sum II (#40)"></p-tabPanel>
+            <p-tabPanel header="Permutations (#46)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- SLIDING WINDOW -->
+        <p-accordionTab header="Sliding Window">
+          <h1>Sliding Window Technique</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Minimum Window Substring (#76)"></p-tabPanel>
+            <p-tabPanel header="Longest Substring Without Repeating Characters (#3)"></p-tabPanel>
+            <p-tabPanel header="Longest Repeating Character Replacement (#424)"></p-tabPanel>
+            <p-tabPanel header="Permutation in String (#567)"></p-tabPanel>
+            <p-tabPanel header="Sliding Window Maximum (#239)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- PREFIX SUM -->
+        <p-accordionTab header="Prefix Sum">
+          <h1>Prefix Sum Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Subarray Sum Equals K (#560)"></p-tabPanel>
+            <p-tabPanel header="Range Sum Query – Immutable (#303)"></p-tabPanel>
+            <p-tabPanel header="Range Sum Query 2D – Immutable (#304)"></p-tabPanel>
+            <p-tabPanel header="Continuous Subarray Sum (#523)"></p-tabPanel>
+            <p-tabPanel header="Maximum Size Subarray Sum Equals k (#325, Premium)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- OVERLAPPING INTERVALS -->
+        <p-accordionTab header="Overlapping Intervals">
+          <h1>Interval Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Merge Intervals (#56)"></p-tabPanel>
+            <p-tabPanel header="Insert Interval (#57)"></p-tabPanel>
+            <p-tabPanel header="Non-overlapping Intervals (#435)"></p-tabPanel>
+            <p-tabPanel header="Meeting Rooms (#252, Premium)"></p-tabPanel>
+            <p-tabPanel header="Meeting Rooms II (#253, Premium)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- MONOTONIC STACK -->
+        <p-accordionTab header="Monotonic Stack">
+          <h1>Monotonic Stack Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Next Greater Element I (#496)"></p-tabPanel>
+            <p-tabPanel header="Next Greater Element II (#503)"></p-tabPanel>
+            <p-tabPanel header="Daily Temperatures (#739)"></p-tabPanel>
+            <p-tabPanel header="Largest Rectangle in Histogram (#84)"></p-tabPanel>
+            <p-tabPanel header="Trapping Rain Water (#42)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- MODIFIED BINARY SEARCH -->
+        <p-accordionTab header="Modified Binary Search">
+          <h1>Binary Search Variants</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Search in Rotated Sorted Array (#33)"></p-tabPanel>
+            <p-tabPanel header="Find Minimum in Rotated Sorted Array (#153)"></p-tabPanel>
+            <p-tabPanel header="Median of Two Sorted Arrays (#4)"></p-tabPanel>
+            <p-tabPanel header="Search a 2D Matrix (#74)"></p-tabPanel>
+            <p-tabPanel header="Find Peak Element (#162)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- MATRIX TRAVERSALS -->
+        <p-accordionTab header="Matrix Traversals">
+          <h1>Matrix Traversal Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Spiral Matrix (#54)">
+
+                <div class="sub-section">
+  <h2>Spiral Matrix Traversal (#54)</h2>
+
+  <!-- Problem Statement -->
+  <h3>Problem Statement</h3>
+  <p>
+    Given an <code>m x n</code> matrix, return all elements of the matrix in spiral order.
+  </p>
+  <pre>
+  [[1, 2, 3],
+   [4, 5, 6],
+   [7, 8, 9]]
+  </pre>
+  <p>Output: <code>[1, 2, 3, 6, 9, 8, 7, 4, 5]</code></p>
+
+  <!-- Approach -->
+  <h3>Approach</h3>
+  <ul>
+    <li>Maintain 4 boundaries: <code>top</code>, <code>bottom</code>, <code>left</code>, <code>right</code>.</li>
+    <li>Traverse in order:
+      <ol>
+        <li>Left → Right across the <code>top</code> row</li>
+        <li>Top → Bottom down the <code>right</code> column</li>
+        <li>Right → Left across the <code>bottom</code> row</li>
+        <li>Bottom → Top up the <code>left</code> column</li>
+      </ol>
+    </li>
+    <li>After each pass, move the boundary inward.</li>
+    <li>Stop when <code>top &gt; bottom</code> or <code>left &gt; right</code>.</li>
+  </ul>
+
+  <div>
+    <p>Important boundary checks:</p>
+    <ul>
+      <li>After going <strong>down the right column</strong>, check <code>if top &lt;= bottom</code>  
+          → ensures there’s still a row before moving back left across the bottom.</li>
+      <li>After going <strong>left across the bottom row</strong>, check <code>if left &lt;= right</code>  
+          → ensures there’s still a column before moving back up.</li>
+    </ul>
+  </div>
+
+  <p>
+    When traversing backwards (right → left or bottom → top), we use  
+    <code>range(right, left - 1, -1)</code>.  
+    The <code>left - 1</code> ensures <code>left</code> is included since Python’s <code>range</code> excludes the stop index.
+  </p>
+
+  <!-- Code -->
+  <h3>Code (Python)</h3>
+  <pre>
+from typing import List
+
+class Solution:
+    def spiralOrder(self, matrix: List[List[int]]) -> List[int]:
+        res = []
+        # get indices for left, right, top, and bottom from the matrix
+        left, right = 0, len(matrix[0]) - 1
+        top, bottom = 0, len(matrix) - 1
+        # continue while within the boundaries
+        while left <= right and top <= bottom:
+            # at the top, move right all the way, then narrow top
+            for col in range(left, right + 1):
+                res.append(matrix[top][col])
+            top += 1
+            # at the right, move down all the way, then narrow right
+            for row in range(top, bottom + 1):
+                res.append(matrix[row][right])
+            right -= 1
+            # at the bottom, check if there are more rows, then move left all the way, then narrow bottom
+            if top <= bottom:
+                for col in range(right, left - 1, -1):
+                    res.append(matrix[bottom][col])
+                bottom -= 1
+            # at the left, check if there are more columns, then move up all the way, then narrow left
+            if left <= right:
+                for row in range(bottom, top - 1, -1):
+                    res.append(matrix[row][left])
+                left += 1
+        return res
+
+  </pre>
+
+  <!-- Diagram -->
+  <h3>Traversal Diagram</h3>
+  <img src="assets/images/spiral_matrix_traversal_explained.png"
+       alt="Spiral Matrix Diagram"
+       style="max-width:60%; margin:15px 0;">
+</div>
+
+            </p-tabPanel>
+            <p-tabPanel header="Spiral Matrix II (#59)"></p-tabPanel>
+            <p-tabPanel header="Rotate Image (#48)"></p-tabPanel>
+            <p-tabPanel header="Set Matrix Zeroes (#73)"></p-tabPanel>
+            <p-tabPanel header="Word Search (#79)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- LINKED LIST REVERSAL -->
+        <p-accordionTab header="Linked List Reversal">
+          <h1>In-place Linked List Reversals</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Reverse Linked List (#206)"></p-tabPanel>
+            <p-tabPanel header="Reverse Linked List II (#92)"></p-tabPanel>
+            <p-tabPanel header="Reverse Nodes in k-Group (#25)"></p-tabPanel>
+            <p-tabPanel header="Rotate List (#61)"></p-tabPanel>
+            <p-tabPanel header="Palindrome Linked List (#234)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- DYNAMIC PROGRAMMING -->
+        <p-accordionTab header="Dynamic Programming">
+          <h1>Classic DP Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Fibonacci (#509)"></p-tabPanel>
+            <p-tabPanel header="Longest Common Subsequence (#1143)"></p-tabPanel>
+            <p-tabPanel header="Longest Increasing Subsequence (#300)"></p-tabPanel>
+            <p-tabPanel header="Subset Sum (Classic)"></p-tabPanel>
+            <p-tabPanel header="Matrix Chain Multiplication (Classic)"></p-tabPanel>
+            <p-tabPanel header="0/1 Knapsack (Classic)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- BINARY TREE TRAVERSALS -->
+        <p-accordionTab header="Binary Tree Traversals">
+          <h1>Tree Traversal Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Binary Tree Inorder Traversal (#94)"></p-tabPanel>
+            <p-tabPanel header="Binary Tree Preorder Traversal (#144)"></p-tabPanel>
+            <p-tabPanel header="Binary Tree Postorder Traversal (#145)"></p-tabPanel>
+            <p-tabPanel header="Binary Tree Level Order Traversal (#102)"></p-tabPanel>
+            <p-tabPanel header="Binary Tree Zigzag Level Order Traversal (#103)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- DFS -->
+        <p-accordionTab header="DFS">
+          <h1>Depth-First Search Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Number of Islands (#200)"></p-tabPanel>
+            <p-tabPanel header="Clone Graph (#133)"></p-tabPanel>
+            <p-tabPanel header="Word Search (#79)"></p-tabPanel>
+            <p-tabPanel header="Path Sum (#112)"></p-tabPanel>
+            <p-tabPanel header="Max Area of Island (#695)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- BFS -->
+        <p-accordionTab header="BFS">
+          <h1>Breadth-First Search Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="Binary Tree Level Order Traversal (#102)"></p-tabPanel>
+            <p-tabPanel header="Word Ladder (#127)"></p-tabPanel>
+            <p-tabPanel header="Perfect Squares (#279)"></p-tabPanel>
+            <p-tabPanel header="Minimum Depth of Binary Tree (#111)"></p-tabPanel>
+            <p-tabPanel header="Rotting Oranges (#994)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+        <!-- BACKTRACKING -->
+        <p-accordionTab header="Backtracking">
+          <h1>Backtracking Problems</h1>
+          <p-tabView orientation="top">
+            <p-tabPanel header="N-Queens (#51)"></p-tabPanel>
+            <p-tabPanel header="Sudoku Solver (#37)"></p-tabPanel>
+            <p-tabPanel header="Word Search (#79)"></p-tabPanel>
+            <p-tabPanel header="Palindrome Partitioning (#131)"></p-tabPanel>
+            <p-tabPanel header="Generate Parentheses (#22)"></p-tabPanel>
+          </p-tabView>
+        </p-accordionTab>
+
+      </p-accordion>
+    </div>
+  </div>
+</div>

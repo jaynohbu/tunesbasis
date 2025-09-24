@@ -1,0 +1,169 @@
+<div class="grid">
+  <div class="col-12 md:col-12">
+    <div class="card">
+      <h5>ML Metrics</h5>
+      <p-tabView orientation="left">
+        <p-tabPanel header="Overview" class="line-height-3 m-0">
+          <h1>Evaluation & Classification Metrics in ML</h1>
+
+          <!-- Confusion Matrix -->
+          <div class="section">
+            <h2>Confusion Matrix</h2>
+            <p>
+              A table layout that summarizes the results of classification—what was predicted vs what was actual. It has four parts:
+            </p>
+            <ul>
+              <li>True Positives (TP): predicted positive, actually positive</li>
+              <li>True Negatives (TN): predicted negative, actually negative</li>
+              <li>False Positives (FP): predicted positive, actually negative</li>
+              <li>False Negatives (FN): predicted negative, actually positive</li>
+            </ul>
+            <div class="side-note">
+              <h3>Why it matters</h3>
+              <p>
+                Many metrics are derived from these four values. The confusion matrix helps you see if your model is making a lot of “false negatives” (missing positives) or “false positives” (wrongly labeling negatives).
+              </p>
+              <h4>Simple Example</h4>
+              <p>
+                Suppose you have 100 test examples of disease detection:<br>
+                Actual Positive = 20, Actual Negative = 80<br>
+                Model predicts Positive for 25 examples, of which 15 are actually positive → TP = 15, FP = 10<br>
+                Model misses 5 of the actual positives → FN = 5, TN = 70
+              </p>
+            </div>
+          </div>
+
+          <!-- Precision and Recall -->
+          <div class="section">
+            <h2>Precision & Recall</h2>
+            <p>
+              These are metrics to evaluate how well a classification model performs, especially when you care differently about false positives vs false negatives.
+            </p>
+            <div class="side-note">
+              <h3>Definitions (Binary Classification)</h3>
+              <p>
+                <strong>Precision</strong> = TP / (TP + FP)<br>
+                <strong>Recall</strong> (aka Sensitivity or True Positive Rate) = TP / (TP + FN)
+              </p>
+              <h4>Use-cases & trade-offs</h4>
+              <p>
+                • If you want to avoid false positives (e.g. spam detection where marking a real email as spam is bad) → favour precision.<br>
+                • If you want to avoid false negatives (e.g. diagnosing disease where missing a sick person is bad) → favour recall.
+              </p>
+              <h4>Numeric Example</h4>
+              <p>
+                From the confusion matrix example above: TP = 15, FP = 10, FN = 5<br>
+                Precision = 15 / (15 + 10) = 0.60<br>
+                Recall = 15 / (15 + 5) = 0.75
+              </p>
+            </div>
+          </div>
+
+          <!-- ROC Curve & AUC -->
+          <div class="section">
+            <h2>ROC Curve & AUC</h2>
+            <p>
+              ROC = Receiver Operating Characteristic curve; it shows how TPR (Recall) vs FPR (False Positive Rate) trade off when you change the classification threshold. AUC means Area Under that Curve.
+            </p>
+            <div class="side-note">
+              <h3>Definition</h3>
+              <p>
+                <strong>True Positive Rate (TPR)</strong> = TP / (TP + FN)<br>
+                <strong>False Positive Rate (FPR)</strong> = FP / (FP + TN)
+              </p>
+              <h4>AUC (Area Under Curve)</h4>
+              <p>
+                AUC gives a single number between 0.5 (random) and 1.0 (perfect).
+              </p>
+              <h4>When ROC might mislead</h4>
+              <p>
+                • In imbalanced datasets (very few positives), ROC can look good even if model is bad at the minority class.<br>
+                • In those cases, Precision-Recall curves might be more informative.
+              </p>
+            </div>
+          </div>
+
+          <!-- F1 Score -->
+          <div class="section">
+            <h2>F1 Score</h2>
+            <p>
+              The harmonic mean of Precision and Recall. It balances both metrics into one number. If one is low, F1 is low.
+            </p>
+            <div class="side-note">
+              <h3>Formula</h3>
+              <p>
+                <strong>F1 = 2 × (Precision × Recall) / (Precision + Recall)</strong>
+              </p>
+              <h4>Numeric Example</h4>
+              <p>
+                Using Precision = 0.60, Recall = 0.75 above → F1 = 2 × (0.60 × 0.75)/(0.60 + 0.75) ≈ 0.67
+              </p>
+            </div>
+          </div>
+
+          <!-- Accuracy -->
+          <div class="section">
+            <h2>Accuracy</h2>
+            <p>
+              The simplest metric: proportion of all correct predictions (both true positives and true negatives) out of total.
+            </p>
+            <div class="side-note">
+              <h3>Formula</h3>
+              <p>
+                Accuracy = (TP + TN) / (TP + TN + FP + FN)
+              </p>
+              <h4>Pros & Cons</h4>
+              <p>
+                • Pros: easy to understand.<br>
+                • Cons: misleading when classes are imbalanced. E.g., if 95% negatives, always predicting “negative” gives 95% accuracy but model is useless.
+              </p>
+            </div>
+          </div>
+
+          <!-- PR Curve & PR-AUC -->
+          <div class="section">
+            <h2>Precision-Recall Curve & PR-AUC</h2>
+            <p>
+              The PR curve plots Precision vs Recall at various thresholds. PR-AUC is the area under this curve; useful especially in imbalanced data.
+            </p>
+            <div class="side-note">
+              <h3>Why use PR-Curve / PR-AUC</h3>
+              <p>
+                More sensitive than ROC when dealing with rare positive class because PR focuses on precision and recall rather than true negatives.
+              </p>
+              <h4>Numeric Example</h4>
+              <p>
+                Suppose you have 10 examples, 2 positives among them. You try different thresholds:<br>
+                Threshold 1 → Predict all positive: Precision = 2/10 = 0.20, Recall = 1.0<br>
+                Threshold 2 → Predict only strongest 1 positive: Precision = 1/1 = 1.0, Recall = 0.5<br>
+                PR-AUC would approximate area under the curve of these points.
+              </p>
+            </div>
+          </div>
+
+          <!-- Trade-offs & Choosing Metrics -->
+          <div class="section">
+            <h2>Trade-offs & Choosing Metrics</h2>
+            <p>
+              No single metric is perfect. What metric you use depends on your problem’s priorities:
+            </p>
+            <ul>
+              <li>If false negatives are very costly → maximize Recall.</li>
+              <li>If false positives are costly → maximize Precision.</li>
+              <li>If both are important → balance via F1 or PR-AUC.</li>
+              <li>If class balance is very skewed → avoid Accuracy alone.</li>
+            </ul>
+            <div class="side-note">
+              <h3>Example Decision</h3>
+              <p>
+                In disease screening: missing disease (FN) could lead to harm → you’d favor high recall.<br>
+                In spam detection: incorrectly marking real email as spam (FP) annoys users → favor high precision.
+              </p>
+            </div>
+          </div>
+
+        </p-tabPanel>
+      </p-tabView>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,711 @@
+<div class="grid">
+    <div class="col-12 md:col-12">
+        <div class="card">
+            <h5>Machine Learning Basics</h5>
+            <p-tabView orientation="left">
+
+                <!-- OVERVIEW (Foundations content renamed with side-notes added) -->
+                <p-tabPanel header="Overview" class="line-height-3 m-0">
+                    <h1>Machine Learning Foundations</h1>
+
+                    <div class="section">
+                        <h2>Why Machine Learning?</h2>
+                        <p>
+                            Programs computers to <strong>learn from data</strong>, rather than fixed rules.
+                        </p>
+                        <p>
+                            <strong>Arthur Samuel (1959):</strong> “Ability to learn without explicit programming.”<br>
+                            <strong>Tom Mitchell (1997):</strong> Learning = improving performance <i>P</i> on task
+                            <i>T</i>
+                            with experience <i>E</i>.
+                        </p>
+                        <div class="side-note">
+                            <h4>Example</h4>
+                            <p>Email spam filter: Instead of coding rules like “if contains FREE → spam,” the filter
+                                learns from labeled emails (spam/ham).</p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>ML vs Traditional Programming</h2>
+                        <p>
+                            <strong>Traditional:</strong> rules + data → outputs<br>
+                            <strong>ML:</strong> data + outputs → rules (model)
+                        </p>
+                        <div class="side-note">
+                            <p><em>ML flips the programming approach: instead of coding rules, you let the system infer
+                                    them.</em></p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>AI, ML, and Data Science</h2>
+                        <ul>
+                            <li><strong>AI:</strong> General goal = mimic human intelligence.</li>
+                            <li><strong>ML:</strong> Subset of AI, data-driven learning.</li>
+                            <li><strong>Data Science:</strong> Broader field of deriving insights from structured +
+                                unstructured data.</li>
+                        </ul>
+                        <div class="side-note">
+                            <p>These fields overlap. For example, computer vision research can be AI, ML, and Data
+                                Science simultaneously.</p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Current AI Landscape</h2>
+                        <p>Gartner Hype Cycle (2024): stages from hype → productivity.</p>
+                        <ul>
+                            <li>Google Translate (speech translation)</li>
+                            <li>Shazam (music recognition)</li>
+                            <li>Google Photos / Facebook (image recognition)</li>
+                            <li>Siri, Alexa (question answering)</li>
+                            <li>Deep Blue, AlphaGo (games)</li>
+                            <li>AlphaFold (protein folding)</li>
+                            <li>Tesla/Waymo (driverless cars)</li>
+                        </ul>
+                        <div class="side-note">
+                            <p><em>AI hype is real, but many systems are already useful. The challenge is separating
+                                    hype from impact.</em></p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Why ML Has Improved Recently</h2>
+                        <ul>
+                            <li>More data (internet, sensors, transactions)</li>
+                            <li>Better tools (scikit-learn, TensorFlow, PyTorch)</li>
+                            <li>Compute power (GPUs, TPUs, cloud)</li>
+                            <li>Business need for automation</li>
+                        </ul>
+                    </div>
+
+                    <div class="section">
+                        <h2>Challenges in ML</h2>
+                        <h3>Bad Data</h3>
+                        <ul>
+                            <li>Too little data</li>
+                            <li>Non-representative (biased samples)</li>
+                            <li>Poor quality (noise, outliers)</li>
+                            <li>Irrelevant features</li>
+                        </ul>
+                        <h3>Bad Algorithms</h3>
+                        <ul>
+                            <li><strong>Overfitting:</strong> too complex, memorizes (fix with regularization)</li>
+                            <li><strong>Underfitting:</strong> too simple, misses patterns</li>
+                            <li><strong>Hyperparameters:</strong> need careful tuning</li>
+                        </ul>
+                        <div class="side-note">
+                            <p>“Garbage in, garbage out” — even a perfect algorithm fails with poor data.</p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Generalization & Validation</h2>
+                        <p>
+                            Training vs Test: Must evaluate on unseen data.<br>
+                            <strong>Generalization Error:</strong> real-world performance measure.
+                        </p>
+                        <p>
+                            <strong>Validation Methods:</strong><br>
+                            • Hold-out validation (train/validate/test split).<br>
+                            • Cross-validation (robust estimate).
+                        </p>
+                        <div class="side-note">
+                            <p>Without test data, you don’t know if your model is genuinely learning or just memorizing.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Machine Learning Engineering</h2>
+                        <h3>When ML is Useful (Burkov)</h3>
+                        <ul>
+                            <li>Complex, perceptive, or changing problems</li>
+                            <li>Simple yes/no objective</li>
+                            <li>Cost-effective</li>
+                        </ul>
+                        <h3>When ML is NOT Useful</h3>
+                        <ul>
+                            <li>Explainability is critical</li>
+                            <li>Errors are too costly</li>
+                            <li>Data is too hard to get</li>
+                            <li>Simple rules suffice</li>
+                        </ul>
+                        <h3>ML Lifecycle</h3>
+                        <ol>
+                            <li>Frame problem</li>
+                            <li>Collect data</li>
+                            <li>Explore data</li>
+                            <li>Prepare data</li>
+                            <li>Train & select models</li>
+                            <li>Tune models</li>
+                            <li>Present results</li>
+                            <li>Deploy & monitor</li>
+                        </ol>
+                    </div>
+
+                    <div class="section">
+                        <h2>End-to-End ML Project</h2>
+                        <ol>
+                            <li><strong>Frame the Problem:</strong> business objectives, assumptions, references</li>
+                            <li><strong>Get Data:</strong> sources, formats, legal access, holdout test</li>
+                            <li><strong>Explore Data:</strong> distributions, correlations, missing values</li>
+                            <li><strong>Prepare Data:</strong> cleaning, feature engineering, scaling</li>
+                            <li><strong>Shortlist Models:</strong> try linear, SVM, trees, neural nets</li>
+                            <li><strong>Fine-Tune:</strong> hyperparameters (grid/random/Bayesian), ensembles</li>
+                            <li><strong>Present Solution:</strong> show business value, assumptions, limitations</li>
+                            <li><strong>Launch:</strong> integrate, test, monitor, retrain regularly</li>
+                        </ol>
+                    </div>
+                </p-tabPanel>
+
+                <!-- ML CATEGORIES (your original Overview content restored with side-notes intact) -->
+                <p-tabPanel header="ML Categories" class="line-height-3 m-0">
+                    <h1>Categories of Machine Learning</h1>
+
+                    <!-- SUPERVISED -->
+                    <div class="section">
+                        <h2>Supervised Learning</h2>
+                        <p>
+                            In supervised learning, the model is trained on labeled data (input X with known output Y).
+                            The goal is to learn the mapping from input to output.
+                        </p>
+
+                        <p-tabView>
+                            <!-- Linear Regression -->
+                            <p-tabPanel header="Linear Regression">
+                                <h3>Linear Regression</h3>
+                                <p>
+                                    Linear Regression is used for predicting continuous values.
+                                    It fits a line (or hyperplane in higher dimensions) that minimizes squared error
+                                    between predictions and actual values.
+                                </p>
+
+                                <h4>Formula</h4>
+                                <p>Hypothesis: <strong>ŷ = θ<sub>0</sub> + θ<sub>1</sub>x</strong></p>
+                                <img src="assets/images/linear_regression_line.png"
+                                    alt="Linear Regression Best Fit Line" style="max-width:40%; margin:15px 0;">
+
+                                <h4>Example</h4>
+                                <p>
+                                    Hours studied [1,2,3,4] → Scores [50,55,65,70]<br>
+                                    Best fit line ≈ <strong>45 + 6×Hours</strong><br>
+                                    If Hours = 5 → Predicted Score = 75
+                                </p>
+
+                                <h4>Cost Functions</h4>
+                                <ul>
+                                    <li><strong>MSE (Mean Squared Error):</strong> average squared error between
+                                        predicted and actual values.</li>
+                                    <li><strong>RMSE (Root Mean Squared Error):</strong> same as MSE but in target’s
+                                        unit scale.</li>
+                                </ul>
+
+                                <h4>Closed-Form Solution (Normal Equation)</h4>
+                                <p>
+                                    Parameters can be solved directly with:
+                                    <strong>θ = (X<sup>T</sup>X)<sup>−1</sup>X<sup>T</sup>y</strong><br>
+                                    • ✅ Exact solution, fast for small datasets.<br>
+                                    • ❌ Expensive for very large datasets (matrix inversion).
+                                </p>
+                                <div class="side-note">
+                                    <h4>What is the Normal Equation?</h4>
+                                    <p>
+                                        The Normal Equation is the <strong>closed-form solution</strong> for linear
+                                        regression:
+                                        <br>θ = (X<sup>T</sup>X)<sup>−1</sup>X<sup>T</sup>y
+                                    </p>
+                                    <h4>How this formula comes out</h4>
+                                    <p>
+                                        1. Minimize <strong>MSE</strong>: J(θ) = (1/2m)||Xθ – y||²<br>
+                                        2. Take derivative wrt θ, set = 0<br>
+                                        3. Gives: X<sup>T</sup>Xθ = X<sup>T</sup>y<br>
+                                        4. Solve: θ = (X<sup>T</sup>X)<sup>−1</sup>X<sup>T</sup>y
+                                    </p>
+                                    <h4>Why “Normal”?</h4>
+                                    <p>Residual errors are orthogonal (normal) to the feature space. Not related to
+                                        normal distribution.</p>
+                                </div>
+
+                                <h4>Gradient Descent</h4>
+                                <p>
+                                    Iterative update rule: <strong>θ := θ − α ∇J(θ)</strong>, where α is the learning
+                                    rate.<br>
+                                    • ✅ Scales better with large datasets.<br>
+                                    • ❌ Requires tuning α and iterations.
+                                </p>
+                                <img src="assets/images/gradient_descent_steps.png" alt="Gradient Descent Steps"
+                                    style="max-width:40%; margin:15px 0;">
+
+                                <h4>Python Example (Training, Evaluation, Inference)</h4>
+                                <pre><code class="language-python">
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+df = pd.read_csv("students.csv")
+X = df[["Hours"]]
+y = df["Score"]
+
+lin_reg = LinearRegression().fit(X, y)
+y_pred = lin_reg.predict(X)
+
+print("Intercept:", lin_reg.intercept_)
+print("Slope:", lin_reg.coef_)
+print("MSE:", mean_squared_error(y, y_pred))
+print("R²:", r2_score(y, y_pred))
+
+print("Predicted score for 5 hours:", lin_reg.predict([[5]])[0])
+        </code></pre>
+
+                                <div class="side-note">
+                                    <p><strong>Interpretation:</strong><br>
+                                        • Equation: ŷ ≈ Intercept + Slope × Hours.<br>
+                                        • MSE = average squared prediction error.<br>
+                                        • R² = how much of the data’s spread is explained by the model.<br>
+                                        • Inference = predict new outcomes (e.g., 5 hours → score ≈ 75).
+                                    </p>
+                                </div>
+                                <div class="side-note">
+                                    <p><strong>👉 R² = How much of the data’s spread my model can explain.</strong></p>
+                                    <ul>
+                                        <li>R² = 0 → explains none (no better than average).</li>
+                                        <li>R² = 0.5 → explains half.</li>
+                                        <li>R² = 1 → explains all (perfect fit).</li>
+                                    </ul>
+                                    <h4>Perfect Fit vs Overfit</h4>
+                                    <p>
+                                        • Noise-free linear data: line passes all points → R²=1, not overfit.<br>
+                                        • Noisy data: complex curve fits all points → R²=1 on training, but overfit (bad
+                                        on test).<br>
+                                        • Always check on test data.
+                                    </p>
+                                </div>
+
+                                <h4>Parametric Nature</h4>
+                                <p>Form is fixed (line/hyperplane), only a few parameters θ to learn → parametric.</p>
+
+                                <h4>Statistical Modeling</h4>
+                                <p>From statistics (interpreting coefficients). In ML, focus = predictive accuracy.</p>
+                            </p-tabPanel>
+
+                            <!-- Logistic Regression -->
+                            <p-tabPanel header="Logistic Regression">
+                                <h3>Logistic Regression</h3>
+
+                                <p>
+                                    Logistic Regression is used for <strong>classification</strong>.
+                                    Instead of fitting a line to predict continuous values, it models the
+                                    <strong>probability</strong> that an input belongs to a certain class (0 or 1).
+                                </p>
+
+                                <h4>Formula</h4>
+                                <p>
+                                    Hypothesis (sigmoid function):
+                                    <strong>h(x) = 1 / (1 + e<sup>−θ<sup>T</sup>x</sup>)</strong>
+                                </p>
+                                <img src="assets/images/sigmoid_curve.png" alt="Sigmoid Curve"
+                                    style="max-width:40%; margin:15px 0;">
+
+                                <div class="side-note">
+                                    <h4>Intuition</h4>
+                                    <p>
+                                        • Logistic regression squashes the linear output (−∞, +∞) into [0,1].<br>
+                                        • Output = probability of class 1.<br>
+                                        • Example: Age → Buy Insurance (Yes/No). Age=35 → P≈0.31 (31% chance).
+                                    </p>
+                                </div>
+
+                                <h4>Decision Rule</h4>
+                                <p>
+                                    Predict 1 if h(x) ≥ 0.5, else 0.<br>
+                                    Decision boundary is where h(x) = 0.5 → θ<sup>T</sup>x = 0.
+                                </p>
+                                <img src="assets/images/logistic_boundary.png"
+                                    alt="Logistic Regression Decision Boundary" style="max-width:40%; margin:15px 0;">
+
+                                <div class="side-note">
+                                    <p>
+                                        • The decision boundary can be linear (straight line) or non-linear (curve),
+                                        depending on the features and transformations applied.<br>
+                                        • In higher dimensions, the boundary becomes a hyperplane.
+                                    </p>
+                                </div>
+
+                                <h4>Cost Function</h4>
+                                <p>
+                                    Training uses <strong>Log Loss</strong> (Cross-Entropy Loss):
+                                    J(θ) = −(1/m) Σ [ y·log(hθ(x)) + (1−y)·log(1−hθ(x)) ]
+                                </p>
+                                 <img src="assets/images/logistic_loss.png" 
+       alt="Logistic Loss (Cross-Entropy)" style="max-width:40%; margin:15px 0;">
+                                <div class="side-note">
+                                    <p>
+                                        • Unlike linear regression’s MSE, log-loss is convex → guarantees a global
+                                        minimum.<br>
+                                        • Penalizes confident wrong predictions heavily.
+                                    </p>
+                                </div>
+
+                                <h4>Python Example (Training, Evaluation, Inference)</h4>
+                                <pre><code class="language-python">
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, log_loss
+
+# 1. Load dataset (assume CSV with "Age" and "BuyInsurance")
+df = pd.read_csv("insurance.csv")
+X = df[["Age"]]           # feature(s)
+y = df["BuyInsurance"]    # 0 or 1
+
+# 2. Train model
+log_reg = LogisticRegression()
+log_reg.fit(X, y)
+
+# 3. Evaluate
+y_pred = log_reg.predict(X)
+y_prob = log_reg.predict_proba(X)[:,1]
+print("Accuracy:", accuracy_score(y, y_pred))
+print("Log Loss:", log_loss(y, y_prob))
+
+# 4. Inference (new input)
+new_age = [[35]]
+prob = log_reg.predict_proba(new_age)[0][1]
+print("Probability of Buying Insurance:", prob)
+  </code></pre>
+
+                                <div class="side-note">
+                                    <p>
+                                        <strong>Interpretation:</strong><br>
+                                        • Model outputs probability (e.g., P(Buy=1 | Age=35) = 0.31).<br>
+                                        • Accuracy = proportion correct.<br>
+                                        • Log-Loss = penalizes incorrect confident predictions.<br>
+                                        • Inference = make probability-based decision (threshold can be tuned).
+                                    </p>
+                                </div>
+
+                                <h4>Extensions</h4>
+                                <ul>
+                                    <li><strong>Softmax Regression:</strong> for multi-class classification, uses
+                                        cross-entropy loss.</li>
+                                    <li><strong>Regularized Logistic Regression:</strong> L1 (Lasso) → feature
+                                        selection, L2 (Ridge) → weight shrinkage.</li>
+                                </ul>
+
+
+                            </p-tabPanel>
+
+                            <!-- SVM -->
+                            <p-tabPanel header="SVM">
+                                <h3>Support Vector Machines (SVM)</h3>
+                                <p>Finds hyperplane that maximizes margin between classes.</p>
+                                <div class="side-note">
+                                    <p>Example: Weight vs Exercise Habit → Active vs Inactive.</p>
+                                </div>
+                            </p-tabPanel>
+
+                            <!-- KNN -->
+                            <p-tabPanel header="KNN">
+                                <h3>K-Nearest Neighbors (KNN)</h3>
+                                <p>Classifies based on majority label among nearest neighbors.</p>
+                                <div class="side-note">
+                                    <p>Example: Height → Sport preference. Neighbors vote “Basketball.”</p>
+                                </div>
+                            </p-tabPanel>
+
+                            <!-- Decision Trees -->
+                            <p-tabPanel header="Decision Trees">
+                                <h3>Decision Trees</h3>
+                                <p>Splits data via questions to reduce impurity (entropy, Gini).</p>
+                                <div class="side-note">
+                                    <p>Example: Weather → Play Tennis (Yes/No). Root split on “Sunny.”</p>
+                                </div>
+                            </p-tabPanel>
+
+                            <!-- Ensembles -->
+                            <p-tabPanel header="Ensembles">
+                                <h3>Ensemble Methods</h3>
+                                <p>Combine models to improve accuracy.</p>
+                                <ul>
+                                    <li>Bagging (Random Forests)</li>
+                                    <li>Boosting (XGBoost, AdaBoost)</li>
+                                </ul>
+                            </p-tabPanel>
+
+                            <!-- LDA -->
+                            <p-tabPanel header="LDA">
+                                <h3>Linear Discriminant Analysis (LDA)</h3>
+                                <p>Supervised method for classification & dimensionality reduction.</p>
+                                <div class="side-note">
+                                    <h4>What is Projection?</h4>
+                                    <p>Transforms features into a new axis that maximizes class separation.</p>
+                                    <img src="assets/images/lda_projection.png" alt="LDA Projection Example"
+                                        style="max-width:50%; margin:15px 0;">
+                                </div>
+                            </p-tabPanel>
+                        </p-tabView>
+                    </div>
+
+                    <!-- UNSUPERVISED -->
+                    <div class="section">
+                        <h2>Unsupervised Learning</h2>
+                        <p>No labels. Goal = discover hidden structure (clusters, patterns).</p>
+                        <p-tabView>
+                            <p-tabPanel header="K-Means">
+                                <h3>K-Means Clustering</h3>
+                                <p>Groups data into k clusters, minimizing distance to centroids.</p>
+                                <div class="side-note">
+                                    <p>Example: Shoe sizes [36,37,38,44,45,46], k=2 → two clusters at 37 and 45.</p>
+                                </div>
+                            </p-tabPanel>
+                        </p-tabView>
+                    </div>
+
+                    <!-- SEMI-SUPERVISED -->
+                    <div class="section">
+                        <h2>Semi-Supervised Learning</h2>
+                        <p-tabView>
+                            <p-tabPanel header="Overview">
+                                <p>Uses small labeled dataset + large unlabeled dataset.</p>
+                                <div class="side-note">
+                                    <p>Example: Medical imaging → 500 labeled + 10,000 unlabeled scans.</p>
+                                </div>
+                            </p-tabPanel>
+                        </p-tabView>
+                    </div>
+
+                    <!-- OVERFITTING / UNDERFITTING -->
+                    <div class="section">
+                        <h2>Overfitting vs Underfitting</h2>
+                        <p-tabView>
+                            <p-tabPanel header="Overview">
+                                <p>Overfitting = memorizes noise. Underfitting = too simple.</p>
+                                <div class="side-note">
+                                    <p>Overfit: very deep tree memorizing training set.<br>Underfit: straight line for
+                                        curved data.</p>
+                                </div>
+                            </p-tabPanel>
+                        </p-tabView>
+                    </div>
+
+                    <!-- BIAS / VARIANCE -->
+                    <div class="section">
+                        <h2>Bias vs Variance</h2>
+                        <p-tabView>
+                            <p-tabPanel header="Overview">
+                                <p><strong>Bias:</strong> wrong assumptions (underfit).<br>
+                                    <strong>Variance:</strong> sensitivity to training data (overfit).
+                                </p>
+                                <div class="side-note">
+                                    <p>Example: Linear regression on non-linear curve → high bias.<br>
+                                        Deep decision tree → high variance.</p>
+                                </div>
+                            </p-tabPanel>
+                        </p-tabView>
+                    </div>
+                </p-tabPanel>
+
+
+                <!-- CLASSIFICATION & EVALUATION -->
+                <p-tabPanel header="Classification & Evaluation" class="line-height-3 m-0">
+                    <h1>Classification Models and Evaluation</h1>
+
+                    <div class="section">
+                        <h2>Dataset: MNIST</h2>
+                        <p>70,000 handwritten digits (28×28 pixels). Known as the “Hello World” of ML.</p>
+                    </div>
+
+                    <div class="section">
+                        <h2>Metrics Beyond Accuracy</h2>
+                        <p>Accuracy can be misleading (e.g., “not-5” classifier = 90%).</p>
+                        <p><strong>Confusion Matrix:</strong> rows = actual, cols = predicted. Diagonal = correct.</p>
+                        <img src="assets/images/heatmap.png" alt="Confusion Matrix Heatmap"
+                            style="max-width:20%; margin:15px 0;">
+                    </div>
+
+                    <div class="section">
+                        <h2>Core Measures</h2>
+
+                        <!-- Precision -->
+                        <h3>Precision</h3>
+                        <p>How many retrieved items are relevant (Positive Predictive Value).</p>
+                        <p><strong>Formula:</strong> TP / (TP+FP) = 50 / (50+10) = <strong>0.83</strong></p>
+                        <p><strong>Meaning:</strong> Out of all predicted positives, 83% were correct.</p>
+                        <div class="side-note">
+
+                            <p><em>Intuition:</em> “When the model says YES, how often is it right?”</p>
+                            <p><strong>When to use:</strong> When false positives are costly.<br>
+                                Example: Spam filter — better to avoid flagging real emails as spam.</p>
+                        </div>
+
+                        <!-- Recall -->
+                        <h3>Recall (Sensitivity)</h3>
+                        <p>How many relevant items are retrieved (Sensitivity, TPR).</p>
+                        <p><strong>Formula:</strong> TP / (TP+FN) = 50 / (50+5) = <strong>0.91</strong></p>
+                        <p><strong>Meaning:</strong> Out of all actual positives, 91% were detected.</p>
+                        <div class="side-note">
+                            <p><em>Intuition:</em> “When something is truly YES, how often do we catch it?”</p>
+                            <p><strong>When to use:</strong> When false negatives are costly.<br>
+                                Example: Medical diagnosis — missing a disease case is more dangerous than a false
+                                alarm.</p>
+                        </div>
+
+                        <!-- F1 Score -->
+                        <h3>F1 Score</h3>
+                        <p><strong>Formula:</strong> 2 × (Precision × Recall) / (Precision + Recall) ≈
+                            <strong>0.87</strong></p>
+                        <p><strong>Meaning:</strong> Balances precision and recall into one number.</p>
+                        <div class="side-note">
+                            <p><em>Intuition:</em> Good for imbalanced data — combines both quality and completeness.
+                            </p>
+                            <p><strong>When to use:</strong> When you need a balanced measure.<br>
+                                Example: Fraud detection — want to catch frauds (recall) without annoying customers
+                                (precision).</p>
+                        </div>
+
+                        <!-- Specificity -->
+                        <h3>Specificity (True Negative Rate)</h3>
+                        <p> Ability to correctly reject negatives (True Negative Rate).</p>
+                        <p><strong>Formula:</strong> TN / (TN+FP) = 35 / (35+10) = <strong>0.78</strong></p>
+                        <p><strong>Meaning:</strong> Out of all actual negatives, 78% were correctly identified.</p>
+                        <div class="side-note">
+                            <p><em>Intuition:</em> “When something is actually NO, how often do we say NO?”</p>
+                            <p><strong>When to use:</strong> When you must minimize false positives.<br>
+                                Example: Airport security screening — too many false alarms slow everything down.</p>
+                        </div>
+
+                        <div class="side-note">
+                            <h4>Information Retrieval Synonyms</h4>
+                            <p>
+                                • Precision = Positive Predictive Value (PPV)<br>
+                                • Recall = Sensitivity = True Positive Rate (TPR)<br>
+                                • Specificity = True Negative Rate (TNR)
+                            </p>
+                        </div>
+                        <!-- Error Rate -->
+                        <h3>Error Rate</h3>
+                        <p><strong>Formula:</strong> (FP+FN) / Total = (10+5) / 100 = <strong>0.15</strong></p>
+                        <p><strong>Meaning:</strong> 15% of all predictions were wrong.</p>
+                        <div class="side-note">
+                            <p><em>Intuition:</em> The opposite of accuracy — a simple global mistake measure.</p>
+                            <p><strong>When to use:</strong> Only when data is balanced.<br>
+                                Example: Not useful in rare-event problems like fraud detection (a model predicting “no
+                                fraud” always looks good).</p>
+                        </div>
+
+                        <!-- Key Differences -->
+                        <h3>Key Differences</h3>
+                        <ul>
+                            <li><strong>Precision vs Recall:</strong> Precision = quality of positives, Recall =
+                                coverage of positives.</li>
+                            <li><strong>F1 Score:</strong> Trade-off metric combining precision and recall.</li>
+                            <li><strong>Specificity:</strong> Focuses on negatives, opposite of recall.</li>
+                            <li><strong>Error Rate:</strong> Overall mistakes, but simplistic for imbalanced datasets.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="section">
+                        <h2>Advanced Evaluation</h2>
+
+
+
+                        <h2>ROC Curve</h2>
+                        <p>
+                            The Receiver Operating Characteristic (ROC) curve illustrates the trade-off between
+                            correctly identifying positives
+                            and incorrectly labeling negatives as positives across different thresholds.
+                        </p>
+
+                        <ul>
+                            <li><strong>True Positive Rate (TPR, Recall, Sensitivity):</strong> TP / (TP + FN)</li>
+                            <li><strong>False Positive Rate (FPR):</strong> FP / (FP + TN)</li>
+                        </ul>
+
+                        <p>
+                            Since <strong>Specificity = TN / (TN + FP)</strong>, we can also write:
+                            <br><strong>FPR = 1 – Specificity</strong>
+                        </p>
+
+
+                        <div class="side-note">
+                            <p><em>Interpretation:</em><br>
+                                • Moving the decision threshold changes both TPR and FPR.<br>
+                                • High threshold → fewer positives predicted → lower TPR, lower FPR.<br>
+                                • Low threshold → more positives predicted → higher TPR, higher FPR.
+                            </p>
+                        </div>
+
+                        <p>
+                            On the ROC curve, the x-axis is <strong>FPR</strong> (bad rate), and the y-axis is
+                            <strong>TPR</strong> (good rate).
+                            A perfect classifier reaches the top-left corner (TPR=1, FPR=0).
+                        </p>
+                        <img src="assets/images/roc_curve.png" alt="ROC Curve Example"
+                            style="max-width:30%; margin:15px 0;">
+
+                        <h3>AUC (Area Under the Curve)</h3>
+                        <p>
+                            The AUC summarizes the ROC curve as a single value:
+                        </p>
+                        <ul>
+                            <li><strong>AUC = 1.0:</strong> Perfect classifier (always ranks positives above negatives).
+                            </li>
+                            <li><strong>AUC = 0.5:</strong> Random guess (diagonal line).</li>
+                            <li><strong>AUC &gt; 0.7:</strong> Acceptable discrimination.</li>
+                            <li><strong>AUC &gt; 0.9:</strong> Excellent discrimination.</li>
+                        </ul>
+
+                    </div>
+
+
+                    <!-- Overfitting vs Underfitting -->
+                    <div class="section">
+                        <h2>Overfitting vs Underfitting</h2>
+                        <p>
+                            <strong>Overfitting:</strong> Model memorizes noise, performs well on training but poorly on
+                            test.<br>
+                            <strong>Underfitting:</strong> Model is too simple, misses patterns.
+                        </p>
+                        <div class="side-note">
+                            <p>Overfit: very deep tree memorizing training set. "H-VARy Over"<br>
+                                Underfit: straight line for curved data.</p>
+                        </div>
+                        <img src="assets/images/fits.png" alt="Underfitting vs Good Fit vs Overfitting"
+                            style="max-width:60%; margin:15px 0;">
+                    </div>
+
+                    <!-- Bias vs Variance -->
+                    <div class="section">
+                        <h2>Bias vs Variance</h2>
+                        <p><strong>Bias:</strong> Error from wrong assumptions (underfit).<br>
+                            <strong>Variance:</strong> Sensitivity to training data (overfit).
+                        </p>
+                        <div class="side-note">
+                            <p>Example: Linear regression on non-linear curve → high bias.<br>
+                                Deep decision tree → high variance.</p>
+                        </div>
+                        <img src="assets/images/bias_variance.png" alt="Bias Variance Tradeoff Curve"
+                            style="max-width:30%; margin:15px 0;">
+                    </div>
+                </p-tabPanel>
+
+
+
+                <!-- TOOLS -->
+                <p-tabPanel header="Tools" class="line-height-3 m-0">
+                    <h1>Machine Learning Tools</h1>
+                    <ul>
+                        <li>Python 3.x</li>
+                        <li>Jupyter / Google Colab</li>
+                        <li>Scikit-learn</li>
+                        <li>TensorFlow & Keras</li>
+                        <li>TensorFlow Playground</li>
+                    </ul>
+                </p-tabPanel>
+
+            </p-tabView>
+        </div>
+    </div>
+</div>
