@@ -6,6 +6,7 @@ import { MlMetricsComponent } from './ml-metrics/ml-metrics.component';
 import { HomeComponent } from './home/home.component';
 import { ReinforcementLearningComponent } from './reinforcement-learning/reinforcement-learning.component';
 import { AlgorythmsComponent } from './algorythms/algorythms.component';
+import { PythonTricksComponent } from './python-tricks/python-tricks.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -14,6 +15,9 @@ const routes: Routes = [
   { path: 'ml-metrics', component: MlMetricsComponent },
   { path: 'reinforcement-learning', component: ReinforcementLearningComponent },
   { path: 'algorythms', component: AlgorythmsComponent },
+  { path: 'python-tricks', component: PythonTricksComponent },
+
+  
 ];
 
 @NgModule({

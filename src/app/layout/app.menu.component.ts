@@ -88,6 +88,8 @@ export class AppMenuComponent implements OnInit {
                     { label: 'Time Series', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/time-series'] },
                     { label: 'Reinforcement Learning', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/reinforcement-learning'] },
                     { label: 'Algorythms', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/algorythms'] },
+                    { label: 'Python Tricks', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/python-tricks'] },
+                   
                 ]
             },
 

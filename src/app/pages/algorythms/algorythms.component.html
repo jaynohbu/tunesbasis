@@ -11,42 +11,43 @@
           <p-tabView orientation="top">
             <p-tabPanel header="Two Sum II – Sorted Array (#167)"></p-tabPanel>
             <p-tabPanel header="3Sum (#15)"></p-tabPanel>
-          <p-tabPanel header="4Sum (#18)">
-  <div class="sub-section">
-    <h2>4Sum (#18)</h2>
+            <p-tabPanel header="4Sum (#18)">
+              <div class="sub-section">
+                <h2>4Sum (#18)</h2>
 
-    <!-- Problem Statement -->
-    <h3>Problem Statement</h3>
-    <p>
-      Given an array <code>nums</code> of <code>n</code> integers, return all unique quadruplets 
-      <code>[nums[a], nums[b], nums[c], nums[d]]</code> such that:
-    </p>
-    <ul>
-      <li><code>0 &lt;= a, b, c, d &lt; n</code></li>
-      <li><code>a, b, c, and d</code> are distinct indices</li>
-      <li><code>nums[a] + nums[b] + nums[c] + nums[d] == target</code></li>
-    </ul>
-    <p>Answer must not contain duplicate quadruplets.</p>
+                <!-- Problem Statement -->
+                <h3>Problem Statement</h3>
+                <p>
+                  Given an array <code>nums</code> of <code>n</code> integers, return all unique quadruplets
+                  <code>[nums[a], nums[b], nums[c], nums[d]]</code> such that:
+                </p>
+                <ul>
+                  <li><code>0 &lt;= a, b, c, d &lt; n</code></li>
+                  <li><code>a, b, c, and d</code> are distinct indices</li>
+                  <li><code>nums[a] + nums[b] + nums[c] + nums[d] == target</code></li>
+                </ul>
+                <p>Answer must not contain duplicate quadruplets.</p>
 
-    <!-- Approach -->
-    <h3>Approach</h3>
-    <ul>
-      <li>Sort the array to handle duplicates easily.</li>
-      <li>Fix the first number (<code>i</code>), skipping duplicates.</li>
-      <li>Fix the second number (<code>j</code>), skipping duplicates.</li>
-      <li>Use two pointers (<code>left</code>, <code>right</code>) for the remaining two numbers.</li>
-      <li>Move pointers inward depending on the current sum:
-        <ul>
-          <li>If <code>total == target</code> → save quadruplet and move both pointers (skip duplicates).</li>
-          <li>If <code>total &lt; target</code> → move <code>left</code> forward to increase sum.</li>
-          <li>If <code>total &gt; target</code> → move <code>right</code> backward to decrease sum.</li>
-        </ul>
-      </li>
-    </ul>
+                <!-- Approach -->
+                <h3>Approach</h3>
+                <ul>
+                  <li>Sort the array to handle duplicates easily.</li>
+                  <li>Fix the first number (<code>i</code>), skipping duplicates.</li>
+                  <li>Fix the second number (<code>j</code>), skipping duplicates.</li>
+                  <li>Use two pointers (<code>left</code>, <code>right</code>) for the remaining two numbers.</li>
+                  <li>Move pointers inward depending on the current sum:
+                    <ul>
+                      <li>If <code>total == target</code> → save quadruplet and move both pointers (skip duplicates).
+                      </li>
+                      <li>If <code>total &lt; target</code> → move <code>left</code> forward to increase sum.</li>
+                      <li>If <code>total &gt; target</code> → move <code>right</code> backward to decrease sum.</li>
+                    </ul>
+                  </li>
+                </ul>
 
-    <!-- Code -->
-    <h3>Code (Python)</h3>
-    <pre>
+                <!-- Code -->
+                <h3>Code (Python)</h3>
+                <pre>
 from typing import List
 
 class Solution:
@@ -81,22 +82,22 @@ class Solution:
         return res
     </pre>
 
-    <!-- Graphic -->
-    <h3>Two-Pointer Traversal Illustration</h3>
-    <img src="assets/images/four_sum_explained.png"
-        alt="4Sum Two-Pointer Illustration"
-        style="max-width:70%; margin:15px 0;">
+                <!-- Graphic -->
+                <h3>Two-Pointer Traversal Illustration</h3>
+                <img src="assets/images/four_sum_explained.png" alt="4Sum Two-Pointer Illustration"
+                  style="max-width:70%; margin:15px 0;">
 
-    <div>
-      <p>The graphic shows:</p>
-      <ul>
-        <li>Outer loops fix <code>i</code> and <code>j</code>.</li>
-        <li>Two pointers (<code>left</code>, <code>right</code>) move inward inside the sorted subarray.</li>
-        <li>Duplicates are skipped to avoid repeating quadruplets.</li>
-      </ul>
-    </div>
-  </div>
-</p-tabPanel>
+                <div>
+                  <p>The graphic shows:</p>
+                  <ul>
+                    <li>Outer loops fix <code>i</code> and <code>j</code>.</li>
+                    <li>Two pointers (<code>left</code>, <code>right</code>) move inward inside the sorted subarray.
+                    </li>
+                    <li>Duplicates are skipped to avoid repeating quadruplets.</li>
+                  </ul>
+                </div>
+              </div>
+            </p-tabPanel>
 
             <p-tabPanel header="Container With Most Water (#11)"></p-tabPanel>
             <p-tabPanel header="Trapping Rain Water (#42)"></p-tabPanel>
@@ -107,7 +108,61 @@ class Solution:
         <p-accordionTab header="Fast & Slow Pointers">
           <h1>Cycle Detection & Midpoint Problems</h1>
           <p-tabView orientation="top">
-            <p-tabPanel header="Linked List Cycle (#141)"></p-tabPanel>
+            <p-tabPanel header="Linked List Cycle (#141)">
+              <h3>Detecting a Cycle with Floyd's Algorithm</h3>
+
+              <p>
+                In this problem you’re given <code>head</code>, the head of a linked list, and you must return
+                <code>true</code> if the list contains a cycle and <code>false</code> otherwise.
+                A cycle exists if, by following <code>next</code> pointers, you can arrive at the same node again.
+              </p>
+
+              <h4>How the Algorithm Works</h4>
+
+              <p>Floyd’s “Tortoise and Hare” uses two pointers:</p>
+              <ul>
+                <li><strong>slow</strong> moves 1 node per loop</li>
+                <li><strong>fast</strong> moves 2 nodes per loop</li>
+              </ul>
+
+              <p>
+                Inside a cycle of length <code>k</code> you can describe their positions as
+                <code>s<sub>i</sub></code> and <code>f<sub>i</sub></code>, and the gap between them as:
+              </p>
+
+              <p style="text-align:center;">
+                <code>d<sub>i</sub> = (f<sub>i</sub> − s<sub>i</sub>) mod k</code>
+              </p>
+
+              <p>
+                Each iteration increases this difference by one modulo <code>k</code>:
+                <code>d<sub>i+1</sub> = (d<sub>i</sub> + 1) mod k</code>.
+                Because the cycle length is finite, this gap eventually becomes 0, which means
+                <code>fast</code> and <code>slow</code> are on the same node and a cycle is detected.
+              </p>
+
+              <h4>Python Implementation</h4>
+
+              <pre><code class="language-python">
+class Solution:
+    def hasCycle(self, head: Optional[ListNode]) -> bool:
+        slow = head
+        fast = head
+        while fast and fast.next:            # loop until fast runs out
+            slow = slow.next                 # +1 step
+            fast = fast.next.next            # +2 steps
+            if slow == fast:                 # same node ⇒ d_i = 0
+                return True
+        return False                         # fast hit None ⇒ no cycle
+  </code></pre>
+
+              <p>
+                The check <code>if slow == fast</code> is effectively testing whether
+                <code>d<sub>i</sub> = 0</code>. If the list has no cycle, <code>fast</code> reaches
+                <code>None</code> and the loop exits.
+              </p>
+            </p-tabPanel>
+
             <p-tabPanel header="Linked List Cycle II (#142)"></p-tabPanel>
             <p-tabPanel header="Happy Number (#202)"></p-tabPanel>
             <p-tabPanel header="Middle of the Linked List (#876)"></p-tabPanel>
@@ -217,56 +272,58 @@ class Solution:
           <p-tabView orientation="top">
             <p-tabPanel header="Spiral Matrix (#54)">
 
-                <div class="sub-section">
-  <h2>Spiral Matrix Traversal (#54)</h2>
+              <div class="sub-section">
+                <h2>Spiral Matrix Traversal (#54)</h2>
 
-  <!-- Problem Statement -->
-  <h3>Problem Statement</h3>
-  <p>
-    Given an <code>m x n</code> matrix, return all elements of the matrix in spiral order.
-  </p>
-  <pre>
+                <!-- Problem Statement -->
+                <h3>Problem Statement</h3>
+                <p>
+                  Given an <code>m x n</code> matrix, return all elements of the matrix in spiral order.
+                </p>
+                <pre>
   [[1, 2, 3],
    [4, 5, 6],
    [7, 8, 9]]
   </pre>
-  <p>Output: <code>[1, 2, 3, 6, 9, 8, 7, 4, 5]</code></p>
+                <p>Output: <code>[1, 2, 3, 6, 9, 8, 7, 4, 5]</code></p>
 
-  <!-- Approach -->
-  <h3>Approach</h3>
-  <ul>
-    <li>Maintain 4 boundaries: <code>top</code>, <code>bottom</code>, <code>left</code>, <code>right</code>.</li>
-    <li>Traverse in order:
-      <ol>
-        <li>Left → Right across the <code>top</code> row</li>
-        <li>Top → Bottom down the <code>right</code> column</li>
-        <li>Right → Left across the <code>bottom</code> row</li>
-        <li>Bottom → Top up the <code>left</code> column</li>
-      </ol>
-    </li>
-    <li>After each pass, move the boundary inward.</li>
-    <li>Stop when <code>top &gt; bottom</code> or <code>left &gt; right</code>.</li>
-  </ul>
+                <!-- Approach -->
+                <h3>Approach</h3>
+                <ul>
+                  <li>Maintain 4 boundaries: <code>top</code>, <code>bottom</code>, <code>left</code>,
+                    <code>right</code>.</li>
+                  <li>Traverse in order:
+                    <ol>
+                      <li>Left → Right across the <code>top</code> row</li>
+                      <li>Top → Bottom down the <code>right</code> column</li>
+                      <li>Right → Left across the <code>bottom</code> row</li>
+                      <li>Bottom → Top up the <code>left</code> column</li>
+                    </ol>
+                  </li>
+                  <li>After each pass, move the boundary inward.</li>
+                  <li>Stop when <code>top &gt; bottom</code> or <code>left &gt; right</code>.</li>
+                </ul>
 
-  <div>
-    <p>Important boundary checks:</p>
-    <ul>
-      <li>After going <strong>down the right column</strong>, check <code>if top &lt;= bottom</code>  
-          → ensures there’s still a row before moving back left across the bottom.</li>
-      <li>After going <strong>left across the bottom row</strong>, check <code>if left &lt;= right</code>  
-          → ensures there’s still a column before moving back up.</li>
-    </ul>
-  </div>
+                <div>
+                  <p>Important boundary checks:</p>
+                  <ul>
+                    <li>After going <strong>down the right column</strong>, check <code>if top &lt;= bottom</code>
+                      → ensures there’s still a row before moving back left across the bottom.</li>
+                    <li>After going <strong>left across the bottom row</strong>, check <code>if left &lt;= right</code>
+                      → ensures there’s still a column before moving back up.</li>
+                  </ul>
+                </div>
 
-  <p>
-    When traversing backwards (right → left or bottom → top), we use  
-    <code>range(right, left - 1, -1)</code>.  
-    The <code>left - 1</code> ensures <code>left</code> is included since Python’s <code>range</code> excludes the stop index.
-  </p>
+                <p>
+                  When traversing backwards (right → left or bottom → top), we use
+                  <code>range(right, left - 1, -1)</code>.
+                  The <code>left - 1</code> ensures <code>left</code> is included since Python’s <code>range</code>
+                  excludes the stop index.
+                </p>
 
-  <!-- Code -->
-  <h3>Code (Python)</h3>
-  <pre>
+                <!-- Code -->
+                <h3>Code (Python)</h3>
+                <pre>
 from typing import List
 
 class Solution:
@@ -299,12 +356,11 @@ class Solution:
 
   </pre>
 
-  <!-- Diagram -->
-  <h3>Traversal Diagram</h3>
-  <img src="assets/images/spiral_matrix_traversal_explained.png"
-       alt="Spiral Matrix Diagram"
-       style="max-width:60%; margin:15px 0;">
-</div>
+                <!-- Diagram -->
+                <h3>Traversal Diagram</h3>
+                <img src="assets/images/spiral_matrix_traversal_explained.png" alt="Spiral Matrix Diagram"
+                  style="max-width:60%; margin:15px 0;">
+              </div>
 
             </p-tabPanel>
             <p-tabPanel header="Spiral Matrix II (#59)"></p-tabPanel>
@@ -318,7 +374,79 @@ class Solution:
         <p-accordionTab header="Linked List Reversal">
           <h1>In-place Linked List Reversals</h1>
           <p-tabView orientation="top">
-            <p-tabPanel header="Reverse Linked List (#206)"></p-tabPanel>
+            <p-tabPanel header="Reverse Linked List (#206)">
+
+      <div class="sub-section">
+        <h2>Reverse Linked List In-Place (#206)</h2>
+
+        <!-- Problem Statement -->
+        <h3>Problem Statement</h3>
+        <p>
+          Given the <code>head</code> of a singly linked list, reverse the list in-place and return the new head.
+        </p>
+
+        <pre>
+1 → 2 → 3 → 4 → 5 → null
+        </pre>
+        <p>Output: <code>5 → 4 → 3 → 2 → 1 → null</code></p>
+
+        <!-- Approach -->
+        <h3>Approach</h3>
+        <ul>
+          <li>Use two pointers <code>prev</code> and <code>curr</code>.</li>
+          <li>Initially <code>prev = None</code>, <code>curr = head</code>.</li>
+          <li>Iterate through the list:
+            <ol>
+              <li>Save <code>curr.next</code> in a temporary variable <code>next_node</code>.</li>
+              <li>Reverse the pointer: <code>curr.next = prev</code>.</li>
+              <li>Move <code>prev</code> forward to <code>curr</code>.</li>
+              <li>Move <code>curr</code> forward to <code>next_node</code>.</li>
+            </ol>
+          </li>
+          <li>At the end, <code>prev</code> points to the new head of the reversed list.</li>
+        </ul>
+
+        <div>
+          <p>Key points:</p>
+          <ul>
+            <li>The reversal happens in-place (no extra list is created).</li>
+            <li>Always store <code>curr.next</code> before reversing it or you will lose the rest of the list.</li>
+            <li>When <code>curr</code> becomes <code>None</code>, <code>prev</code> is the new head.</li>
+          </ul>
+        </div>
+
+        <!-- Code -->
+        <h3>Code (Python)</h3>
+        <pre>
+from typing import Optional
+
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        prev = None
+        curr = head
+
+        while curr:
+            next_node = curr.next    # save next node
+            curr.next = prev         # reverse pointer
+            prev = curr              # move prev forward
+            curr = next_node         # move curr forward
+
+        return prev  # new head of reversed list
+        </pre>
+
+        <!-- Diagram -->
+        <h3>Reversal Diagram</h3>
+        <img src="assets/images/reverse_linked_list_explained.png" 
+             alt="Reverse Linked List Diagram"
+             style="max-width:60%; margin:15px 0;">
+      </div>
+
+    </p-tabPanel>
             <p-tabPanel header="Reverse Linked List II (#92)"></p-tabPanel>
             <p-tabPanel header="Reverse Nodes in k-Group (#25)"></p-tabPanel>
             <p-tabPanel header="Rotate List (#61)"></p-tabPanel>
@@ -334,8 +462,215 @@ class Solution:
             <p-tabPanel header="Longest Common Subsequence (#1143)"></p-tabPanel>
             <p-tabPanel header="Longest Increasing Subsequence (#300)"></p-tabPanel>
             <p-tabPanel header="Subset Sum (Classic)"></p-tabPanel>
-            <p-tabPanel header="Matrix Chain Multiplication (Classic)"></p-tabPanel>
-            <p-tabPanel header="0/1 Knapsack (Classic)"></p-tabPanel>
+        <p-tabPanel header="Matrix Chain Multiplication (Classic)">
+  <div class="sub-section">
+    
+    
+    <h3>Problem setup</h3>
+    <ul>
+      <li>We have matrices A0..A(n-1)</li>
+      <li>One array p of length n+1 encodes sizes: Ai has shape p[i] × p[i+1]</li>
+      <li>Cost rule: multiplying a×b by b×c costs a · b · c</li>
+    </ul>
+
+    <h3>Shape of the DP table (n = 3 matrices → indices 0..2)</h3>
+    <pre>
+j =   0          1            2
+i=0  [ 0 ,    dp[0][1] ,   dp[0][2] ]
+i=1  [  X ,      0     ,   dp[1][2] ]
+i=2  [  X ,      X     ,      0     ]
+    </pre>
+    <ul>
+      <li><code>X</code> cells are not used because they have <code>i &gt; j</code>.</li>
+      <li>We fill the upper triangle in order of increasing subchain length: 2, then 3, ..., up to n.</li>
+      <li>Final answer for the whole chain is the top-right cell <code>dp[0][n-1]</code>.</li>
+    </ul>
+<div class="side-note"> <p>
+      Make a DP table where <code>i</code> is the <em>start</em> index and <code>j</code> is the <em>end</em> index of the subchain.
+      We only care about pairs with <code>j ≥ i</code>. Rows below the diagonal (<code>i &gt; j</code>) are unused.
+      The diagonal (<code>i = j</code>) is a single matrix, so the cost is <strong>0</strong>.
+    </p></div>
+   
+
+    <h3>Recursive relation with indices</h3>
+    <p>
+      Let dp[i][j] be the minimum cost for Ai..Aj. For any split k with i ≤ k &lt; j:
+    </p>
+    <pre><img src="assets/images/mcm.png"></pre>
+    <p>
+      Index intuition: Ai..Ak results in shape p[i] × p[k+1], and Ak+1..Aj results in p[k+1] × p[j+1],
+      so merging them costs p[i] · p[k+1] · p[j+1].
+    </p>
+
+    <h3>Mini example</h3>
+    <p>
+      p = [10, 30, 5, 60] → A0 is 10×30, A1 is 30×5, A2 is 5×60. We need dp[0][2].
+    </p>
+    <pre><code>// k = 0
+dp[0][0] = 0
+dp[1][2] = 30*5*60 = 9000
+merge     = p[0]*p[1]*p[3] = 10*30*60 = 18000
+total     = 0 + 9000 + 18000 = 27000
+
+// k = 1
+dp[0][1] = 10*30*5 = 1500
+dp[2][2] = 0
+merge     = p[0]*p[2]*p[3] = 10*5*60 = 3000
+total     = 1500 + 0 + 3000 = 4500   ← minimum
+
+Answer: dp[0][2] = 4500
+    </code></pre>
+
+    <h3>How the code fills the table</h3>
+    <ol>
+      <li>Create an n×n table of zeros: dp = [[0]*n for _ in range(n)]. Diagonal is already zero.</li>
+      <li>Loop subchain length from 2 to n. For each length, slide the window:
+        <ul>
+          <li>i = start, j = i + length - 1</li>
+          <li>try all split points k in i..j-1</li>
+          <li>cost = dp[i][k] + dp[k+1][j] + p[i] * p[k+1] * p[j+1]</li>
+          <li>dp[i][j] = minimum cost over k</li>
+        </ul>
+      </li>
+      <li>Return dp[0][n-1].</li>
+    </ol>
+
+    <h3>Bottom-up DP code, Python</h3>
+    <pre><code>from math import inf
+
+def matrix_chain_min_cost(p):
+    # p has length n+1, A_i has shape p[i] x p[i+1]
+    n = len(p) - 1
+    dp = [[0]*n for _ in range(n)]
+    for length in range(2, n+1):             # subchain length
+        for i in range(0, n - length + 1):   # start
+            j = i + length - 1               # end
+            best = float('inf')
+            for k in range(i, j):            # split
+                cost = dp[i][k] + dp[k+1][j] + p[i]*p[k+1]*p[j+1]
+                if cost < best:
+                    best = cost
+            dp[i][j] = best
+    return dp[0][n-1]
+    </code></pre>
+  </div>
+</p-tabPanel>
+
+     <p-tabPanel header="0/1 Knapsack (Classic)">
+  <h3>Problem Statement</h3>
+  <p>
+    You have <code>n</code> items. Item <code>i</code> has weight <code>wi</code> and value <code>vi</code>.
+    A knapsack can hold at most capacity <code>M</code>. Choose a subset of items to maximize total value
+    without exceeding <code>M</code>. Each item can be taken at most once (0/1).
+  </p>
+
+  <h4>Notation</h4>
+  <ul>
+    <li><code>M</code> — maximum capacity of the knapsack.</li>
+    <li><code>c</code> — current capacity (table column), with <code>0 ≤ c ≤ M</code>.</li>
+    <li><code>wi</code>, <code>vi</code> — weight and value of item <code>i</code> (for <code>i = 1..n</code>).</li>
+    <li><code>F(i, c)</code> — best (maximum) value using the first <code>i</code> items within capacity <code>c</code>.</li>
+  </ul>
+
+  <h4>Recursive Relation (DP)</h4>
+  <pre><code>Base cases:
+F(0, c) = 0                 for all 0 ≤ c ≤ M
+F(i, 0) = 0                 for all 0 ≤ i ≤ n
+
+Recurrence:
+if wi &gt; c:
+    F(i, c) = F(i - 1, c)   # item i doesn't fit → skip
+else:
+    F(i, c) = max(
+        F(i - 1, c),        # skip item i
+        vi + F(i - 1, c - wi)   # take item i → use leftover capacity c - wi
+    )
+</code></pre>
+
+  <div class="side-note">
+    At capacity <code>c</code>, either <em>skip</em> item <code>i</code> and keep the previous best,
+    or <em>take</em> it, consuming <code>wi</code> capacity and adding <code>vi</code> to the best we could do
+    with the leftover <code>c - wi</code> using earlier items.
+  </div>
+
+  <h3>Worked Mini-Example</h3>
+  <p>Items: A(1,1), B(3,4), C(4,5). &nbsp; <code>M = 5</code></p>
+  <style>
+    .knapsack-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .knapsack-table th, .knapsack-table td { border: 1px solid #ddd; padding: 6px 8px; }
+    .knapsack-table thead th { background: #f6f7f9; text-align: center; }
+    .knapsack-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .side-note { background:#fafafa; border-left:3px solid #ccc; padding:10px 12px; margin:10px 0; }
+  </style>
+  <table class="knapsack-table">
+    <thead>
+      <tr>
+        <th>Items ↓ / Cap →</th>
+        <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><em>0 items</em></td>
+        <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+        <td class="num">0</td><td class="num">0</td><td class="num">0</td>
+      </tr>
+      <tr>
+        <td>Only A (1,1)</td>
+        <td class="num">0</td><td class="num">1</td><td class="num">1</td>
+        <td class="num">1</td><td class="num">1</td><td class="num">1</td>
+      </tr>
+      <tr>
+        <td>A + B (3,4)</td>
+        <td class="num">0</td><td class="num">1</td><td class="num">1</td>
+        <td class="num">4</td><td class="num">5</td><td class="num">5</td>
+      </tr>
+      <tr>
+        <td>A + B + C (4,5)</td>
+        <td class="num">0</td><td class="num">1</td><td class="num">1</td>
+        <td class="num">4</td><td class="num">5</td><td class="num"><strong>6</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    At <code>c = 5</code>, taking C adds <code>v3 = 5</code> and leaves <code>5 - w3 = 1</code>;
+    the best with earlier items at <code>c = 1</code> is A (value 1) → total <strong>6</strong>.
+  </p>
+
+  <hr>
+
+  <h3>Implementation (Python · 2D DP)</h3>
+  <pre><code class="language-python">from typing import List
+
+class Solution:
+    def knapSack01_2D(self, M: int, weights: List[int], values: List[int]) -> int:
+        # M: max capacity
+        # c: current capacity (0..M)
+        # weights[i-1] = wi, values[i-1] = vi
+        # dp[i][c] = F(i, c): best value using first i items within capacity c
+
+        n = len(weights)
+        dp = [[0] * (M + 1) for _ in range(n + 1)]  # (n+1) x (M+1) table with base row/col = 0
+
+        for i in range(1, n + 1):
+            wi, vi = weights[i - 1], values[i - 1]
+            for c in range(M + 1):
+                if wi <= c:
+                    # F(i, c) = max( F(i-1, c), vi + F(i-1, c - wi) )
+                    dp[i][c] = max(dp[i - 1][c], vi + dp[i - 1][c - wi])
+                else:
+                    # doesn't fit → F(i, c) = F(i-1, c)
+                    dp[i][c] = dp[i - 1][c]
+        return dp[n][M]
+</code></pre>
+
+  
+
+
+</p-tabPanel>
+
+
+
           </p-tabView>
         </p-accordionTab>
 
@@ -391,3 +726,5 @@ class Solution:
     </div>
   </div>
 </div>
+
+ 

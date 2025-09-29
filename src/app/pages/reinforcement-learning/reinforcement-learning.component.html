@@ -2,133 +2,528 @@
     <div class="col-12 md:col-12">
         <div class="card">
             <h5>Reinforcement Learning</h5>
+
             <p-tabView orientation="left">
 
-                <!-- INTRODUCTION -->
+                <!-- INTRODUCTION TAB -->
                 <p-tabPanel header="Introduction" class="line-height-3 m-0">
-                    <h1>Introduction to Reinforcement Learning</h1>
+                    <section class="ml-intro">
+                        <p>
+                            In reinforcement learning (RL), an <strong>agent</strong> interacts with an
+                            <strong>environment</strong> over time.
+                            At each step, the agent receives the current <strong>state</strong> (a description of the
+                            environment),
+                            chooses an <strong>action</strong> according to its <strong>policy</strong>, and the
+                            environment returns a
+                            <strong>reward</strong> and the <strong>next state</strong>.
+                        </p>
 
-                    <p-tabView orientation="top">
+                        <p>
+                            Unlike <strong>supervised learning</strong>, where a model is trained once on a fixed
+                            dataset of
+                            <em>labeled examples</em>,
+                            <mark>Reinforcement Learning (RL) learns while interacting</mark> with its environment.
+                            After each action it
+                            <strong>updates internal parameters</strong>
+                            (stored inside a <span style="color:#2a6ebb; font-weight:bold;">table</span>,
+                            <span style="color:#2a6ebb; font-weight:bold;">function approximator</span>,
+                            or <span style="color:#2a6ebb; font-weight:bold;">neural network</span>)
+                            that represent its <strong>policy</strong> or its <strong>value function</strong>.
+                        </p>
 
-                     
-                        <!-- Chapter 4 -->
-                        <p-tabPanel header="Cross-Entropy Method">
-                            <div class="sub-section">
-                                <h3>Cross-Entropy Method (CEM)</h3>
-                                <p>
-                                    The Cross-Entropy Method is a stochastic optimization technique.
-                                    It evaluates a population of solutions, keeps the best (“elite”) samples,
-                                    and updates the distribution toward them by minimizing cross-entropy.
-                                    In this context the model’s policy is a parameterized distribution
-                                    <code>q(x; θ)</code>, and the elite samples define the target distribution
-                                    <code>p(x)</code>.
-                                    Each iteration adjusts <code>θ</code> to minimize the cross-entropy:
-                                </p>
-                                <p style="text-align:center;">
-                                    <code>min<sub>θ</sub> H(p, q<sub>θ</sub>) = – Σ p(x) log q(x; θ)</code>
-                                </p>
-                                <p>
-                                    This minimization “cross-entrophies away” bad behaviors by steadily
-                                    concentrating the probability mass of <code>q(x; θ)</code> on the elite
-                                    (high-reward) regions of <code>p(x)</code>, thereby optimizing the policy step by
-                                    step.
-                                </p>
+                        <p>
+                            This <mark>stored representation is the agent’s “memory” of how to act</mark>;
+                            it accumulates <strong>experience</strong> instead of being given
+                            <em>correct answers</em>.
+                        </p>
+                        <p>
+                            Over time the agent improves its policy so that it chooses actions that maximize the total
+                            (cumulative) reward.
+                            Some algorithms do this by estimating a <strong>value function</strong>—how good it is to be
+                            in a state or to take a
+                            specific action—which then guides the policy,
+                            while others directly optimize the policy itself.
+                            This continual, trial-and-error updating is what distinguishes RL from other
+                            machine-learning paradigms.
+                        </p>
 
 
-                                <h4>Formula (Cross-Entropy): Viewing One's Own Uncertainty in Comparison with Others =
-                                    Additional Information Burden</h4>
+                        <!-- AGENT–ENVIRONMENT GRAPHIC -->
+                        <div style="text-align:center; margin: 2em 0;">
+                            <svg width="500" height="200">
+                                <!-- Agent box -->
+                                <rect x="50" y="60" width="120" height="80" fill="#4F9EFF" stroke="#333"
+                                    stroke-width="2" rx="10" />
+                                <text x="110" y="105" font-size="14" text-anchor="middle" fill="#fff">Agent</text>
 
-                                <p>
-                                    H(p, q) = – Σ p(x) log q(x)
-                                    <br>
-                                    • Measures how well q approximates true distribution p.
-                                    <br>
-                                    • Equivalent to "extra bits" needed if samples come from p but described by q".
-                                    <br>
-                                    • This Additional Information Burden represents the Cross-Entropy.
-                                </p>
+                                <!-- Environment box -->
+                                <rect x="330" y="60" width="120" height="80" fill="#A3D977" stroke="#333"
+                                    stroke-width="2" rx="10" />
+                                <text x="390" y="105" font-size="14" text-anchor="middle" fill="#fff">Environment</text>
 
-                                <img src="assets/images/cross_entropy_example.png" alt="Cross-Entropy p vs q Example"
-                                    style="max-width:50%; margin:15px 0;">
+                                <!-- Action arrow -->
+                                <line x1="170" y1="80" x2="330" y2="80" stroke="#333" stroke-width="2"
+                                    marker-end="url(#arrowhead)" />
+                                <text x="250" y="70" font-size="12" text-anchor="middle">Action</text>
 
-                                <div class="side-note">
-                                    <h4>Why “Cross”?</h4>
-                                    <p>
-                                        It’s called <strong>cross-entropy</strong> because it “crosses” two
-                                        distributions:
-                                        the <strong>true distribution (p)</strong> and the <strong>model distribution
-                                            (q)</strong>.
-                                        It’s not about impurity, but about mismatch between two probability views.
-                                    </p>
-                                </div>
+                                <!-- State/Reward arrow -->
+                                <line x1="330" y1="120" x2="170" y2="120" stroke="#333" stroke-width="2"
+                                    marker-end="url(#arrowhead2)" />
+                                <text x="250" y="140" font-size="12" text-anchor="middle">State + Reward</text>
 
-                                <div class="side-note">
-                                    <h4>Information Theory View</h4>
-                                    <p>
-                                        • Entropy H(p): average number of bits to encode events from p. <br>
-                                        • Cross-Entropy H(p,q): bits needed if we use q to encode p. <br>
-                                        • KL Divergence: H(p,q) – H(p) = wasted extra bits.
-                                    </p>
-                                    <p>
-                                        👉 Cross-Entropy answers: “How inefficient is my model q when the world really
-                                        follows p?”
-                                    </p>
-                                </div>
+                                <defs>
+                                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5"
+                                        orient="auto">
+                                        <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                                    </marker>
+                                    <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="0" refY="3.5"
+                                        orient="auto">
+                                        <polygon points="10 0, 0 3.5, 10 7" fill="#333" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+                     <div class="side-note">
+  <h3>Types of Reinforcement Learning</h3>
 
-                                <div class="side-note">
-                                    <h4>Why the log?</h4>
-                                    <p>
-                                        Information content = –log₂(p).
-                                        • Common events (p high) → small information.
-                                        • Rare events (p low) → large information.
-                                    </p>
-                                    <img src="assets/images/information_content.png" alt="Information Content Curve"
-                                        style="max-width:50%; margin:15px 0;">
-                                    <p>
-                                        Example points: p=0.5 → 1 bit, p=0.25 → 2 bits, p=0.1 → 3.32 bits.
-                                        This explains why log is natural: it maps probability to “bits of surprise.”
-                                    </p>
-                                </div>
+  <ul>
+    <li>
+      <strong>Model-based:</strong>
+      <mark>
+        Methods that <em>build an internal model of state transitions and/or rewards</em>
+        to <em>predict or simulate what will happen next</em> and plan ahead.
+      </mark>
+    </li>
 
-                                <div class="side-note">
-                                    <h4>Intuition Summary</h4>
-                                    <ul>
-                                        <li>Entropy = baseline uncertainty of true distribution p.</li>
-                                        <li>Cross-Entropy = coding cost when using q for p.</li>
-                                        <li>KL Divergence = inefficiency (extra cost) from mismatch.</li>
-                                    </ul>
-                                </div>
-                            </div>
+    <li>
+      <strong>Model-free:</strong>
+      The Cross-Entropy Method does <em>not</em> build such a model;
+      it learns directly from experience without
+      <mark>predicting or simulating the environment</mark>.
+    </li>
 
-                        </p-tabPanel>
+    <li>
+      <strong>Policy-based:</strong>
+      Learns the <em>policy itself</em> — a probability distribution over actions for each state —
+      instead of first estimating Q-values and then deriving a policy.
+    </li>
 
-                    </p-tabView>
+    <li>
+      <strong>On-policy:</strong>
+      Uses <em>fresh data generated by the current policy</em> for its updates,
+      unlike off-policy methods that can learn from old or other policies’ data.
+    </li>
+  </ul>
+
+  <p>
+    <em>Policy-based</em> describes <strong>what</strong> the method learns (a direct policy vs. a value function),
+    whereas <em>on-policy</em> describes <strong>how</strong> the data is collected
+    (fresh data from the current policy vs. replay/other policies).
+  </p>
+</div>
+
+
+                    </section>
+
+
                 </p-tabPanel>
 
-                <!-- PART 2 -->
+                <!-- CROSS-ENTROPY METHOD TAB -->
+                <p-tabPanel header="Cross-Entropy Method">
+                    <div class="sub-section">
+                        <h3>Cross-Entropy Method (CEM)</h3>
+                        <p>
+                            The Cross-Entropy Method is a stochastic optimization technique. It evaluates a population
+                            of solutions,
+                            keeps the best (“elite”) samples, and updates the distribution toward them by minimizing
+                            cross-entropy. In
+                            this context the model’s policy is a parameterized distribution <code>q(x; θ)</code>, and
+                            the elite samples
+                            define the target distribution <code>p(x)</code>. Each iteration adjusts <code>θ</code> to
+                            minimize the
+                            cross-entropy:
+                        </p>
+                        <p style="text-align:center;">
+                            <code>min<sub>θ</sub> H(p, q<sub>θ</sub>) = – Σ p(x) log q(x; θ)</code>
+                        </p>
+                        <p>
+                            This minimization “cross-entrophies away” bad behaviors by steadily concentrating the
+                            probability mass of
+                            <code>q(x; θ)</code> on the elite (high-reward) regions of <code>p(x)</code>, thereby
+                            optimizing the policy
+                            step by step.
+                        </p>
+
+                        <h4>Formula (Cross-Entropy): Additional Information Burden</h4>
+                        <p>
+                            H(p, q) = – Σ p(x) log q(x)<br>
+                            • Measures how well q approximates true distribution p.<br>
+                            • Equivalent to "extra bits" needed if samples come from p but described by q".<br>
+                            • This Additional Information Burden represents the Cross-Entropy.
+                        </p>
+
+                        <img src="assets/images/cross_entropy_example.png" alt="Cross-Entropy p vs q Example"
+                            style="max-width:50%; margin:15px 0;">
+
+                        <!-- Various side notes inside Cross-Entropy Tab -->
+                        <div class="side-note">
+                            <h4>Why “Cross”?</h4>
+                            <p>
+                                It’s called <strong>cross-entropy</strong> because it “crosses” two distributions: the
+                                <strong>true distribution (p)</strong> and the <strong>model distribution (q)</strong>.
+                            </p>
+                        </div>
+
+                        <div class="side-note">
+                            <h4>Information Theory View</h4>
+                            <p>
+                                • Entropy H(p): average number of bits to encode events from p. <br>
+                                • Cross-Entropy H(p,q): bits needed if we use q to encode p. <br>
+                                • KL Divergence: H(p,q) – H(p) = wasted extra bits.
+                            </p>
+                            <p>
+                                👉 Cross-Entropy answers: “How inefficient is my model q when the world really follows
+                                p?”
+                            </p>
+                        </div>
+
+                        <div class="side-note">
+                            <h4>Why the log?</h4>
+                            <p>
+                                Information content = –log₂(p).
+                                • Common events (p high) → small information.
+                                • Rare events (p low) → large information.
+                            </p>
+                            <img src="assets/images/information_content.png" alt="Information Content Curve"
+                                style="max-width:50%; margin:15px 0;">
+                            <p>
+                                Example points: p=0.5 → 1 bit, p=0.25 → 2 bits, p=0.1 → 3.32 bits. This explains why log
+                                is natural: it
+                                maps probability to “bits of surprise.”
+                            </p>
+                        </div>
+
+                        <div class="side-note">
+                            <h4>Intuition Summary</h4>
+                            <ul>
+                                <li>Entropy = baseline uncertainty of true distribution p.</li>
+                                <li>Cross-Entropy = coding cost when using q for p.</li>
+                                <li>KL Divergence = inefficiency (extra cost) from mismatch.</li>
+                            </ul>
+                        </div>
+                        <!-- SIDE NOTE ABOUT CEM -->
+                        <div class="side-note">
+                            <h3>Key Characteristics of the Cross-Entropy Method</h3>
+
+                            <p>
+                                Put together, the <strong>Cross-Entropy Method</strong> belongs at the
+                                <mark>intersection of model-free + policy-based + on-policy</mark>.
+                            </p>
+                        </div>
+                        <div class="side-note">
+                            <h3>Where the Cross-Entropy Method Fits</h3>
+                            <p>
+                                The <strong>Cross-Entropy Method</strong> belongs in the <strong>model-free</strong> +
+                                <strong>policy-based</strong> + <strong>on-policy</strong> category of reinforcement
+                                learning.
+                            </p>
+                            <ul>
+                                <li><strong>Model-free:</strong> Does not build a model of state transitions or rewards.
+                                </li>
+                                <li><strong>Policy-based:</strong> Directly learns the policy instead of Q-values.</li>
+                                <li><strong>On-policy:</strong> Requires fresh data from the current policy at each
+                                    iteration.</li>
+                            </ul>
+                            <p>
+                                In the three-circle diagram of RL approaches, it sits exactly at the intersection of all
+                                three circles.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ===================== CartPole Problem Section ===================== -->
+                <section class="cartpole-description">
+  <h2>CartPole Environment and Cross-Entropy Method</h2>
+
+  <p>
+    The <strong>CartPole</strong> environment continuously provides the agent with a state vector describing what is happening —
+    how far the cart is from the center, how fast it is moving, how tilted the pole is and how quickly it is tipping.
+    At first the policy (for example, a small neural network trained with the <strong>Cross-Entropy Method</strong>)
+    picks actions almost at random, outputting rough probabilities for pushing the cart left or right.
+  </p>
+
+  <p>
+    Each <strong>step</strong> is one such interaction — seeing a state, taking an action, and receiving the next state and reward —
+    while an <strong>episode</strong> is the full run of many steps from start until the pole falls or the time limit ends.
+    After running many episodes the method scores each run by its total reward and then
+    <strong>throws away the low-reward (“non-elite”) episodes</strong>, keeping only the highest-reward (“elite”) ones.
+    These elite episodes define a new “target” action distribution <span>p</span> — what good behaviour looks like — and the
+    network parameters of its current policy <span>q<sub>&theta;</sub></span> are updated so that its output probabilities in similar states
+    become closer to that elite distribution.
+  </p>
+
+  <p>
+    This process — <em>discarding the “extra bits” of information from poor episodes and aligning with the elite distribution</em> —
+    is exactly why it’s called the <strong>Cross-Entropy Method</strong>:
+    it minimises the cross-entropy between the model’s distribution <span>q<sub>&theta;</sub></span> and the empirical distribution
+    <span>p</span> from elite episodes, effectively removing (“compressing away”) the inefficient, low-reward behaviours and
+    concentrating probability mass on high-reward behaviours.
+    With every round the random guesses become more informed, and the policy gradually learns which moves keep the pole balanced,
+    without ever building a physics model of the environment but purely by shifting its action probabilities toward those seen
+    in successful trajectories.
+  </p>
+</section>
+
+                    <!-- ===================== CartPole Code Samples (no imports) ===================== -->
+                    <section class="cartpole-code">
+                        <h2>CartPole Cross-Entropy Python Code</h2>
+
+                        <ng-container ngNonBindable>
+                            <h3>1. The Policy Network</h3>
+                            <pre><code class="language-python">
+class Net(nn.Module):
+    def __init__(self, obs_size: int, hidden_size: int, n_actions: int):
+        super(Net, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(obs_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, n_actions)
+        )
+    def forward(self, x: torch.Tensor):
+        return self.net(x)
+    </code></pre>
+                        </ng-container>
+
+                        <ng-container ngNonBindable>
+                            <h3>2. Episode Data Structures</h3>
+                            <pre><code class="language-python">
+@dataclass
+class EpisodeStep:
+    observation: np.ndarray
+    action: int
+
+@dataclass
+class Episode:
+    reward: float
+    steps: tt.List[EpisodeStep]
+    </code></pre>
+                        </ng-container>
+
+                        <ng-container ngNonBindable>
+                            <h3>3. Collecting Batches of Episodes</h3>
+                            <pre><code class="language-python">
+def iterate_batches(env: gym.Env, net: Net, batch_size: int) -> tt.Generator[tt.List[Episode], None, None]:
+    batch: tt.List[Episode] = []
+    episode_reward = 0.0
+    episode_steps: tt.List[EpisodeStep] = []
+    obs, _ = env.reset()
+    sm = nn.Softmax(dim=1)
+
+    while True:
+        obs_v = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)
+        logits_v = net(obs_v)
+        act_probs_v = sm(logits_v)
+        act_probs = act_probs_v.detach().cpu().numpy()[0]
+        action = np.random.choice(len(act_probs), p=act_probs)
+
+        next_obs, reward, terminated, truncated, _ = env.step(action)
+        is_done = terminated or truncated
+        episode_reward += float(reward)
+        episode_steps.append(EpisodeStep(observation=obs, action=action))
+
+        if is_done:
+            batch.append(Episode(reward=episode_reward, steps=episode_steps))
+            episode_reward = 0.0
+            episode_steps = []
+            next_obs, _ = env.reset()
+            if len(batch) == batch_size:
+                yield batch
+                batch = []
+        obs = next_obs
+    </code></pre>
+                        </ng-container>
+
+                        <ng-container ngNonBindable>
+                            <h3>4. Filtering for Elite Episodes</h3>
+                            <pre><code class="language-python">
+def filter_batch(batch: tt.List[Episode], percentile: float):
+    rewards = [e.reward for e in batch]
+    reward_bound = float(np.percentile(rewards, percentile))
+    reward_mean = float(np.mean(rewards))
+    train_obs, train_act = [], []
+    for episode in batch:
+        if episode.reward < reward_bound:
+            continue
+        train_obs.extend([step.observation for step in episode.steps])
+        train_act.extend([step.action for step in episode.steps])
+    train_obs_v = torch.FloatTensor(np.vstack(train_obs))
+    train_act_v = torch.LongTensor(train_act)
+    return train_obs_v, train_act_v, reward_bound, reward_mean
+    </code></pre>
+                        </ng-container>
+
+                        <ng-container ngNonBindable>
+                            <h3>5. Main Training Loop</h3>
+                            <pre><code class="language-python">
+if __name__ == "__main__":
+    env = gym.make("CartPole-v1")
+    obs_size = env.observation_space.shape[0]
+    n_actions = int(env.action_space.n)
+    net = Net(obs_size, HIDDEN_SIZE, n_actions)
+    print(net)
+    objective = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(params=net.parameters(), lr=0.01)
+    writer = SummaryWriter(comment="-cartpole")
+
+    for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
+        obs_v, acts_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
+        optimizer.zero_grad()
+        action_scores_v = net(obs_v)
+        loss_v = objective(action_scores_v, acts_v)
+        loss_v.backward()
+        optimizer.step()
+       
+        if reward_m > 475:
+            print("Solved!")
+            break
+    writer.close()
+    </code></pre>
+                        </ng-container>
+
+                    </section>
+                </p-tabPanel>
+
+                <!-- VALUE-BASED + OTHER METHODS TAB -->
                 <p-tabPanel header="Value-based Methods + Other Methods" class="line-height-3 m-0">
                     <h1>Value-based Methods and Other Approaches</h1>
 
                     <p-tabView orientation="top">
 
-                        <!-- Chapter 5 -->
-                        <p-tabPanel header="Bellman Equation">
-                            <div class="sub-section">
-                                <h3>Tabular Learning and the Bellman Equation</h3>
-                                <p>Value functions, Bellman equation, Q-iteration, FrozenLake experiments.</p>
-                            </div>
-                        </p-tabPanel>
+                     <p-tabPanel header="Bellman Equation">
+  <div class="sub-section">
+    <h3>Tabular Learning and the Bellman Equation</h3>
+    <p>
+      We want a simple rule for “how good things are” so an agent can choose better actions.
+      The key idea is:
+      <strong>Value now = reward now + discounted value later</strong>.
+    </p>
 
-                        <!-- Chapter 6 -->
+    <!-- Intuition -->
+    <h4>🔹 Intuition</h4>
+    <p>
+      From a state <code>s</code>, if you take an action <code>a</code> you get an immediate reward
+      <code>r(s,a)</code> and land in a next state <code>s'</code> whose “goodness” is captured by its value.
+      So a specific action’s quality is:
+      <code>Q(s,a) = r(s,a) + γ · V(s')</code>.
+    </p>
+
+    <!-- Small inline diagram -->
+    <div style="margin:1rem 0; border:1px solid #e5e7eb; border-radius:12px; padding:12px;">
+      <svg viewBox="0 0 660 200" width="100%" height="auto" role="img" aria-label="Bellman diagram">
+        <!-- Nodes -->
+        <rect x="30"  y="70"  rx="10" ry="10" width="130" height="60" fill="#f0f9ff" stroke="#60a5fa"/>
+        <text x="95" y="105" text-anchor="middle" font-size="16">State s</text>
+
+        <rect x="260" y="20"  rx="10" ry="10" width="150" height="50" fill="#eef2ff" stroke="#818cf8"/>
+        <text x="335" y="50" text-anchor="middle" font-size="14">Action a</text>
+
+        <rect x="480" y="70"  rx="10" ry="10" width="150" height="60" fill="#ecfccb" stroke="#84cc16"/>
+        <text x="555" y="95" text-anchor="middle" font-size="16">Next State s'</text>
+        <text x="555" y="115" text-anchor="middle" font-size="13">value V(s')</text>
+
+        <!-- Arrows -->
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
+          </marker>
+        </defs>
+
+        <line x1="160" y1="100" x2="260" y2="45" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="210" y="70" text-anchor="middle" font-size="13">choose</text>
+
+        <line x1="410" y1="45" x2="480" y2="100" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="445" y="70" text-anchor="middle" font-size="13">leads to</text>
+
+        <!-- Rewards and formula -->
+        <text x="335" y="95" text-anchor="middle" font-size="13">reward r(s,a)</text>
+        <text x="335" y="150" text-anchor="middle" font-size="15">
+          Q(s,a) = r(s,a) + γ · V(s')
+        </text>
+      </svg>
+    </div>
+
+    <!-- Bellman equations -->
+    <h4>🔹 Bellman (Easy Form)</h4>
+    <ul>
+      <li><strong>Action Value (optimal):</strong> <code>Q*(s,a) = r(s,a) + γ · max<sub>a'</sub> Q*(s',a')</code></li>
+      <li><strong>State Value (optimal):</strong> <code>V*(s) = max<sub>a</sub> Q*(s,a)</code></li>
+    </ul>
+    <p style="margin-top:-6px;">
+      (Under a fixed policy π, replace the <code>max</code> with an average:
+      <code>V<sup>π</sup>(s) = Σ<sub>a</sub> π(a|s) · Q<sup>π</sup>(s,a)</code>.)
+    </p>
+
+    <!-- Clear distinction note -->
+    <h4>🔹 State Value vs Action Value (the key distinction)</h4>
+    <div class="side-note" style="border-left:4px solid #22c55e; padding-left:12px;">
+      <p style="margin:0.2rem 0;">
+        <strong>V(s):</strong> “How good is it to be in state <em>s</em> if I follow my plan (policy) from now on?”
+      </p>
+      <p style="margin:0.2rem 0;">
+        <strong>Q(s,a):</strong> “How good is it to take this <em>specific action a</em> in state <em>s</em> right now,
+        then follow my plan?”
+      </p>
+      <p style="margin:0.2rem 0;">
+        Under a fixed policy π:
+        <code>V<sup>π</sup>(s) = Σ<sub>a</sub> π(a|s) · Q<sup>π</sup>(s,a)</code>
+        (a policy-weighted average over actions).
+      </p>
+      <p style="margin:0.2rem 0;">
+        Under the optimal policy:
+        <code>V*(s) = max<sub>a</sub> Q*(s,a)</code>
+        (pick the best first action).
+      </p>
+    </div>
+
+    <!-- Why Q(s,a) = r + γ V(s') makes sense -->
+    <h4>🔹 Why does <code>Q(s,a) = r(s,a) + γ · V(s')</code> make sense?</h4>
+    <p>
+      Taking <code>a</code> in <code>s</code> gives an immediate payoff <code>r(s,a)</code>.
+      After that you’re in <code>s'</code>, and the future from there is exactly “how good <code>s'</code> is,” i.e.,
+      <code>V(s')</code>. Discount by <code>γ</code> and add them up. That’s the total goodness of choosing <code>a</code> now.
+    </p>
+
+    <!-- Tiny numeric example -->
+    <h4>🔹 Tiny Example</h4>
+    <p>
+      Suppose from state <code>s</code>:
+      <br>• Action A: <code>r=2</code>, next state has <code>V(s')=10</code>
+      <br>• Action B: <code>r=5</code>, next state has <code>V(s')=6</code>
+      <br>With <code>γ=0.9</code>:
+      <br><code>Q(s,A)=2+0.9·10=11</code>, <code>Q(s,B)=5+0.9·6=10.4</code>
+      <br>So <code>V(s)=max(Q)=11</code> by choosing A.
+    </p>
+
+    <!-- FrozenLake note -->
+    <h4>🔹 In Practice (FrozenLake)</h4>
+    <p>
+      Each tile is a state. <strong>V(s)</strong> tells how promising the tile is overall.
+      <strong>Q(s,a)</strong> tells how promising it is to move (Left/Down/Right/Up) from that tile.
+      Tabular methods (value iteration, Q-learning) apply these equations to fill and refine the tables until they stabilize.
+    </p>
+  </div>
+</p-tabPanel>
+
+
                         <p-tabPanel header="Deep Q-Networks">
                             <div class="sub-section">
                                 <h3>Deep Q-Networks (DQN)</h3>
                                 <p>From tabular Q-learning to deep Q-learning, training loop, Pong/Atari examples,
-                                    wrappers, performance issues.</p>
+                                    wrappers,
+                                    performance issues.</p>
                             </div>
                         </p-tabPanel>
 
-                        <!-- Chapter 7 -->
                         <p-tabPanel header="Higher-level RL Libraries">
                             <div class="sub-section">
                                 <h3>Higher-level RL Libraries</h3>
@@ -136,7 +531,6 @@
                             </div>
                         </p-tabPanel>
 
-                        <!-- Chapter 8 -->
                         <p-tabPanel header="DQN Extensions">
                             <div class="sub-section">
                                 <h3>DQN Extensions</h3>
@@ -144,7 +538,6 @@
                             </div>
                         </p-tabPanel>
 
-                        <!-- Chapter 9 -->
                         <p-tabPanel header="Speeding up RL">
                             <div class="sub-section">
                                 <h3>Ways to Speed Up RL</h3>
@@ -153,7 +546,6 @@
                             </div>
                         </p-tabPanel>
 
-                        <!-- Chapter 10 -->
                         <p-tabPanel header="RL for Stock Trading">
                             <div class="sub-section">
                                 <h3>Stocks Trading Using RL</h3>

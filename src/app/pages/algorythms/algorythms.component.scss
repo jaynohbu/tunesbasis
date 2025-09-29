@@ -1,0 +1,25 @@
+
+  .knapsack-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .knapsack-table th,
+  .knapsack-table td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+     text-align: center;
+  }
+  .knapsack-table thead th {
+    background: #f6f7f9;
+    text-align: center;
+  }
+  .knapsack-table tbody th {
+    text-align: left;
+    background: #fafafa;
+    white-space: nowrap;
+  }
+  .knapsack-table td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
