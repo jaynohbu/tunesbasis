@@ -7,6 +7,7 @@ import { HomeComponent } from './home/home.component';
 import { ReinforcementLearningComponent } from './reinforcement-learning/reinforcement-learning.component';
 import { AlgorythmsComponent } from './algorythms/algorythms.component';
 import { PythonTricksComponent } from './python-tricks/python-tricks.component';
+import { MusicalDataComponent } from './musical-data/musical-data.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -16,6 +17,7 @@ const routes: Routes = [
   { path: 'reinforcement-learning', component: ReinforcementLearningComponent },
   { path: 'algorythms', component: AlgorythmsComponent },
   { path: 'python-tricks', component: PythonTricksComponent },
+  { path: 'music-data', component: MusicalDataComponent },
 
   
 ];

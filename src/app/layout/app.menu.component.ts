@@ -89,7 +89,7 @@ export class AppMenuComponent implements OnInit {
                     { label: 'Reinforcement Learning', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/reinforcement-learning'] },
                     { label: 'Algorythms', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/algorythms'] },
                     { label: 'Python Tricks', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/python-tricks'] },
-                   
+                     { label: 'Music Data Analysis',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/music-data'] },
                 ]
             },
 

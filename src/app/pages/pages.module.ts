@@ -14,6 +14,7 @@ import { AlgorythmsComponent } from './algorythms/algorythms.component';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { AccordionModule } from 'primeng/accordion';
 import { PythonTricksComponent } from './python-tricks/python-tricks.component';
+import { MusicalDataComponent } from './musical-data/musical-data.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -22,7 +23,8 @@ import { PythonTricksComponent } from './python-tricks/python-tricks.component';
     HomeComponent,
     ReinforcementLearningComponent,
     AlgorythmsComponent,
-    PythonTricksComponent
+    PythonTricksComponent,
+    MusicalDataComponent
   ],
   imports: [
     CommonModule,

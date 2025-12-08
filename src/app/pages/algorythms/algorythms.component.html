@@ -538,20 +538,36 @@ Answer: dp[0][2] = 4500
     <h3>Bottom-up DP code, Python</h3>
     <pre><code>from math import inf
 
-def matrix_chain_min_cost(p):
-    # p has length n+1, A_i has shape p[i] x p[i+1]
+from math import inf
+
+def matrix_chain_order(p):
+   
     n = len(p) - 1
     dp = [[0]*n for _ in range(n)]
-    for length in range(2, n+1):             # subchain length
-        for i in range(0, n - length + 1):   # start
-            j = i + length - 1               # end
-            best = float('inf')
-            for k in range(i, j):            # split
+    split = [[-1]*n for _ in range(n)]
+
+    for length in range(2, n+1):           # subchain length
+        for i in range(0, n - length + 1): # start
+            j = i + length - 1             # end
+            best, best_k = inf, -1
+            for k in range(i, j):          # split
                 cost = dp[i][k] + dp[k+1][j] + p[i]*p[k+1]*p[j+1]
                 if cost < best:
-                    best = cost
+                    best, best_k = cost, k
             dp[i][j] = best
-    return dp[0][n-1]
+            split[i][j] = best_k
+
+def build_parens(i, j):
+    if i == j:
+        return "A" + str(i)
+    k = split[i][j]
+    left = build_parens(i, k)
+    right = build_parens(k+1, j)
+    return "(" + left + "·" + right + ")"
+
+
+    return dp[0][n-1], build_parens(0, n-1)
+
     </code></pre>
   </div>
 </p-tabPanel>
