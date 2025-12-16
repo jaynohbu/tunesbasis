@@ -15,7 +15,6 @@
     [class.processing]="progressMode === 'processing'"
     [style.width.%]="progress"
   ></div>
-
   <div class="label">
     {{ progressMode === 'upload'
       ? 'Uploading…'
@@ -43,9 +42,35 @@
 <!-- STEM TRACKS -->
 <div *ngFor="let stem of stems" class="track">
   <div class="label">{{ stem.name }}</div>
+
   <canvas [attr.data-stem]="stem.name"></canvas>
 
-  <button (click)="toggleMute(stem.name)">
-    Mute
-  </button>
+  <div class="controls">
+    <label>
+      Volume
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemVolumes[stem.name]"
+        (input)="setStemVolume(stem.name, $any($event.target).value)"
+      />
+    </label>
+
+    <label *ngIf="isDistortable(stem.name)">
+      Distortion
+      <select
+        [value]="stemDistortion[stem.name]"
+        (change)="setDistortion(stem.name, $any($event.target).value)"
+      >
+        <option value="none">None</option>
+        <option value="light">Light</option>
+        <option value="medium">Medium</option>
+        <option value="heavy">Heavy</option>
+      </select>
+    </label>
+
+    <button (click)="toggleMute(stem.name)">Mute</button>
+  </div>
 </div>

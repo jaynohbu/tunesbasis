@@ -7,6 +7,7 @@ interface StemInfo {
 }
 
 type ProgressMode = 'upload' | 'processing' | 'done';
+type DistortionType = 'none' | 'light' | 'medium' | 'heavy';
 
 @Component({
   selector: 'app-music-player',
@@ -24,21 +25,25 @@ export class MusicPlayerComponent {
   progress = 0;
   progressMode: ProgressMode = 'upload';
   progressTimer: any = null;
-
-  readonly PROCESSING_TIME_MS = 5 * 60 * 1000; // 5 minutes
+  readonly PROCESSING_TIME_MS = 5 * 60 * 1000;
 
   /* ================= AUDIO ================= */
 
   audioCtx = new AudioContext();
   masterGain = this.audioCtx.createGain();
+
   buffers: Record<string, AudioBuffer> = {};
   stemGains: Record<string, GainNode> = {};
   sources: Record<string, AudioBufferSourceNode | null> = {};
 
+  /** ✅ NEW */
+  stemVolumes: Record<string, number> = {};
+  distortionNodes: Record<string, WaveShaperNode | null> = {};
+  stemDistortion: Record<string, DistortionType> = {};
+
   playing = false;
   startTime = 0;
   offset = 0;
-
   globalVolume = 1;
 
   constructor(private uploadService: MusicUploadService) {
@@ -64,51 +69,39 @@ export class MusicPlayerComponent {
     try {
       const res = await this.uploadService.upload(
         this.file,
-        p => {
-          // Cap upload at 90%
-          this.progress = Math.min(90, p * 0.9);
-        }
+        p => (this.progress = Math.min(90, p * 0.9))
       );
 
-      // Upload done → processing phase
       this.startProcessingProgress();
 
       this.stems = res.data.stems;
       await this.loadBuffers();
 
       this.finishProgress();
-
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
       this.resetProgress();
     }
   }
 
-  /* ================= PROCESSING PROGRESS ================= */
+  /* ================= PROCESSING BAR ================= */
 
   startProcessingProgress() {
     this.progressMode = 'processing';
-
     const start = Date.now();
+
     this.progressTimer = setInterval(() => {
       const elapsed = Date.now() - start;
       const ratio = elapsed / this.PROCESSING_TIME_MS;
-
-      // Progress 90 → 99
       this.progress = Math.min(99, 90 + ratio * 9);
-
     }, 500);
   }
 
   finishProgress() {
     clearInterval(this.progressTimer);
-    this.progressMode = 'done';
     this.loading = false;
-
-    // hide bar after short delay
-    setTimeout(() => {
-      this.progress = 0;
-    }, 500);
+    this.progressMode = 'done';
+    setTimeout(() => (this.progress = 0), 500);
   }
 
   resetProgress() {
@@ -126,10 +119,16 @@ export class MusicPlayerComponent {
       const buffer = await this.audioCtx.decodeAudioData(arr);
       this.buffers[stem.name] = buffer;
 
-      const g = this.audioCtx.createGain();
-      g.gain.value = 1;
-      g.connect(this.masterGain);
-      this.stemGains[stem.name] = g;
+      const gain = this.audioCtx.createGain();
+      gain.gain.value = 1;
+      gain.connect(this.masterGain);
+
+      this.stemGains[stem.name] = gain;
+      this.stemVolumes[stem.name] = 1;
+
+      /** ✅ NEW */
+      this.distortionNodes[stem.name] = null;
+      this.stemDistortion[stem.name] = 'none';
 
       requestAnimationFrame(() =>
         this.drawWaveform(stem.name, buffer)
@@ -150,7 +149,15 @@ export class MusicPlayerComponent {
     Object.keys(this.buffers).forEach(name => {
       const src = this.audioCtx.createBufferSource();
       src.buffer = this.buffers[name];
-      src.connect(this.stemGains[name]);
+
+      const dist = this.distortionNodes[name];
+      if (dist) {
+        src.connect(dist);
+        dist.connect(this.stemGains[name]);
+      } else {
+        src.connect(this.stemGains[name]);
+      }
+
       src.start(0, this.offset);
       this.sources[name] = src;
     });
@@ -176,9 +183,47 @@ export class MusicPlayerComponent {
     this.masterGain.gain.value = v;
   }
 
+  setStemVolume(name: string, v: number) {
+    this.stemVolumes[name] = v;
+    this.stemGains[name].gain.value = v;
+  }
+
   toggleMute(name: string) {
     const g = this.stemGains[name];
-    g.gain.value = g.gain.value > 0 ? 0 : 1;
+    g.gain.value = g.gain.value > 0 ? 0 : this.stemVolumes[name];
+  }
+
+  /* ================= DISTORTION ================= */
+
+  isDistortable(name: string) {
+    return name === 'guitar' || name === 'piano';
+  }
+
+  setDistortion(name: string, type: DistortionType) {
+    this.stemDistortion[name] = type;
+
+    if (type === 'none') {
+      this.distortionNodes[name] = null;
+      return;
+    }
+
+    const ws = this.audioCtx.createWaveShaper();
+    ws.curve = this.makeDistortionCurve(
+      type === 'light' ? 50 :
+      type === 'medium' ? 150 : 400
+    );
+    ws.oversample = '4x';
+    this.distortionNodes[name] = ws;
+  }
+
+  makeDistortionCurve(amount: number) {
+    const n = 44100;
+    const curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = Math.tanh(amount * x);
+    }
+    return curve;
   }
 
   /* ================= WAVEFORM ================= */
