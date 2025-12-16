@@ -1,0 +1,113 @@
+/* ===============================
+   PROGRESS BAR
+================================ */
+
+.progress {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  background: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 12px 0;
+
+  .bar {
+    height: 100%;
+    transition: width 0.4s ease;
+
+    &.upload {
+      background: #2196f3; // blue
+    }
+
+    &.processing {
+      background: #ff9800; // orange
+    }
+  }
+
+  .label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #000;
+    pointer-events: none;
+  }
+}
+
+
+/* ===============================
+   CONTROLS
+================================ */
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+button {
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+  padding: 6px 12px;
+  cursor: pointer;
+
+  &.active {
+    background: #4caf50;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+
+/* ===============================
+   TRACKS & WAVEFORMS
+================================ */
+
+.track {
+  margin: 16px 0;
+}
+
+.track-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.wave-wrapper {
+  position: relative;
+}
+
+canvas {
+  width: 100%;
+  height: 80px;
+  background: #111;
+  display: block;
+}
+
+.cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: red;
+  pointer-events: none;
+}
+
+
+/* ===============================
+   LABELS
+================================ */
+
+.label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}

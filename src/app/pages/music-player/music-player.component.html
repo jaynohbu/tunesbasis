@@ -1,0 +1,51 @@
+<input type="file" accept="audio/*" (change)="onFileSelected($event)" />
+
+<button
+  (click)="upload()"
+  [disabled]="!file || loading"
+>
+  {{ loading ? 'Working…' : 'Upload & Analyze' }}
+</button>
+
+<!-- PROGRESS BAR -->
+<div *ngIf="loading" class="progress">
+  <div
+    class="bar"
+    [class.upload]="progressMode === 'upload'"
+    [class.processing]="progressMode === 'processing'"
+    [style.width.%]="progress"
+  ></div>
+
+  <div class="label">
+    {{ progressMode === 'upload'
+      ? 'Uploading…'
+      : 'Processing audio… (this may take a few minutes)' }}
+  </div>
+</div>
+
+<!-- GLOBAL CONTROLS -->
+<div *ngIf="stems.length" class="controls">
+  <button (click)="togglePlay()">Play / Pause</button>
+
+  <label>
+    Master Volume
+    <input
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      [value]="globalVolume"
+      (input)="setGlobalVolume($any($event.target).value)"
+    />
+  </label>
+</div>
+
+<!-- STEM TRACKS -->
+<div *ngFor="let stem of stems" class="track">
+  <div class="label">{{ stem.name }}</div>
+  <canvas [attr.data-stem]="stem.name"></canvas>
+
+  <button (click)="toggleMute(stem.name)">
+    Mute
+  </button>
+</div>
