@@ -7,7 +7,7 @@ interface StemInfo {
 }
 
 type ProgressMode = 'upload' | 'processing' | 'done';
-type DistortionType = 'none' | 'light' | 'medium' | 'heavy';
+type KnobParam = 'pregain' | 'tone' | 'distortion';
 
 @Component({
   selector: 'app-music-player',
@@ -18,6 +18,8 @@ export class MusicPlayerComponent {
 
   file!: File;
   stems: StemInfo[] = [];
+cursorPercent = 0;
+cursorRaf: number | null = null;
 
   /* ================= PROGRESS ================= */
 
@@ -33,18 +35,29 @@ export class MusicPlayerComponent {
   masterGain = this.audioCtx.createGain();
 
   buffers: Record<string, AudioBuffer> = {};
-  stemGains: Record<string, GainNode> = {};
   sources: Record<string, AudioBufferSourceNode | null> = {};
 
-  /** ✅ NEW */
-  stemVolumes: Record<string, number> = {};
+  pregainNodes: Record<string, GainNode> = {};
+  toneNodes: Record<string, BiquadFilterNode> = {};
+  stemGains: Record<string, GainNode> = {};
   distortionNodes: Record<string, WaveShaperNode | null> = {};
-  stemDistortion: Record<string, DistortionType> = {};
+
+  stemVolumes: Record<string, number> = {};
+  stemBypassLED: Record<string, boolean> = {};
+
+  /** 🔧 ALL DIAL VALUES LIVE HERE */
+  stemKnobs: Record<string, {
+    pregain: number;
+    tone: number;
+    distortion: number;
+  }> = {};
 
   playing = false;
   startTime = 0;
   offset = 0;
   globalVolume = 1;
+  stemMuted: Record<string, boolean> = {};
+
 
   constructor(private uploadService: MusicUploadService) {
     this.masterGain.connect(this.audioCtx.destination);
@@ -73,26 +86,21 @@ export class MusicPlayerComponent {
       );
 
       this.startProcessingProgress();
-
       this.stems = res.data.stems;
       await this.loadBuffers();
-
       this.finishProgress();
-    } catch (e) {
-      console.error(e);
+
+    } catch {
       this.resetProgress();
     }
   }
-
-  /* ================= PROCESSING BAR ================= */
 
   startProcessingProgress() {
     this.progressMode = 'processing';
     const start = Date.now();
 
     this.progressTimer = setInterval(() => {
-      const elapsed = Date.now() - start;
-      const ratio = elapsed / this.PROCESSING_TIME_MS;
+      const ratio = (Date.now() - start) / this.PROCESSING_TIME_MS;
       this.progress = Math.min(99, 90 + ratio * 9);
     }, 500);
   }
@@ -101,7 +109,7 @@ export class MusicPlayerComponent {
     clearInterval(this.progressTimer);
     this.loading = false;
     this.progressMode = 'done';
-    setTimeout(() => (this.progress = 0), 500);
+    setTimeout(() => (this.progress = 0), 600);
   }
 
   resetProgress() {
@@ -114,21 +122,43 @@ export class MusicPlayerComponent {
   /* ================= AUDIO LOAD ================= */
 
   async loadBuffers() {
+    
     for (const stem of this.stems) {
+      this.stemMuted[stem.name] = false;
+
       const arr = await fetch(stem.url).then(r => r.arrayBuffer());
       const buffer = await this.audioCtx.decodeAudioData(arr);
       this.buffers[stem.name] = buffer;
 
+      const pregain = this.audioCtx.createGain();
+      const tone = this.audioCtx.createBiquadFilter();
       const gain = this.audioCtx.createGain();
+
+      pregain.gain.value = 1;
+      tone.type = 'lowpass';
+      tone.frequency.value = 6000;
       gain.gain.value = 1;
+
+      pregain.connect(tone);
+      tone.connect(gain);
       gain.connect(this.masterGain);
 
+      this.pregainNodes[stem.name] = pregain;
+      this.toneNodes[stem.name] = tone;
       this.stemGains[stem.name] = gain;
-      this.stemVolumes[stem.name] = 1;
 
-      /** ✅ NEW */
-      this.distortionNodes[stem.name] = null;
-      this.stemDistortion[stem.name] = 'none';
+      this.stemVolumes[stem.name] = 1;
+      this.stemBypassLED[stem.name] = false;
+
+      this.stemKnobs[stem.name] = {
+        pregain: 0.3,
+        tone: 0.7,
+        distortion: 0
+      };
+
+      this.setKnob(stem.name, 'pregain', 0.3);
+      this.setKnob(stem.name, 'tone', 0.7);
+      this.setKnob(stem.name, 'distortion', 0);
 
       requestAnimationFrame(() =>
         this.drawWaveform(stem.name, buffer)
@@ -141,21 +171,68 @@ export class MusicPlayerComponent {
   togglePlay() {
     this.playing ? this.pause() : this.play();
   }
+startCursorLoop() {
+  const duration = this.getDuration();
+  const tick = () => {
+    if (!this.playing) return;
+
+    const t =
+      this.offset +
+      (this.audioCtx.currentTime - this.startTime);
+
+    this.cursorPercent = Math.min(100, (t / duration) * 100);
+    this.cursorRaf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+seekFromWave(e: MouseEvent, stemName: string) {
+  const wrapper = e.currentTarget as HTMLElement;
+  const rect = wrapper.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+
+  const duration = this.getDuration();
+  this.offset = Math.max(0, Math.min(duration, ratio * duration));
+
+  if (this.playing) {
+    this.stopSources();
+    this.play();
+  } else {
+    this.cursorPercent = ratio * 100;
+  }
+}
+getDuration(): number {
+  const first = Object.values(this.buffers)[0];
+  return first ? first.duration : 1;
+}
+
+stopCursorLoop() {
+  if (this.cursorRaf) {
+    cancelAnimationFrame(this.cursorRaf);
+    this.cursorRaf = null;
+  }
+}
 
   play() {
     this.startTime = this.audioCtx.currentTime;
     this.playing = true;
-
+    this.startCursorLoop();
+ 
     Object.keys(this.buffers).forEach(name => {
       const src = this.audioCtx.createBufferSource();
       src.buffer = this.buffers[name];
 
+      const pregain = this.pregainNodes[name];
+      const tone = this.toneNodes[name];
+      const gain = this.stemGains[name];
       const dist = this.distortionNodes[name];
-      if (dist) {
-        src.connect(dist);
-        dist.connect(this.stemGains[name]);
+
+      src.connect(pregain);
+
+      if (dist && !this.stemBypassLED[name]) {
+        pregain.connect(dist);
+        dist.connect(tone);
       } else {
-        src.connect(this.stemGains[name]);
+        pregain.connect(tone);
       }
 
       src.start(0, this.offset);
@@ -163,20 +240,22 @@ export class MusicPlayerComponent {
     });
   }
 
-  pause() {
-    this.offset += this.audioCtx.currentTime - this.startTime;
-    this.stopSources();
-    this.playing = false;
-  }
+pause() {
+  this.offset += this.audioCtx.currentTime - this.startTime;
+  this.stopSources();
+  this.stopCursorLoop();
+  this.playing = false;
+}
 
-  stopSources() {
-    Object.values(this.sources).forEach(s => {
-      try { s?.stop(); } catch {}
-    });
-    this.sources = {};
-  }
+stopSources() {
+  Object.values(this.sources).forEach(s => {
+    try { s?.stop(); } catch {}
+  });
+  this.sources = {};
+}
 
-  /* ================= VOLUME ================= */
+
+  /* ================= CONTROLS ================= */
 
   setGlobalVolume(v: number) {
     this.globalVolume = v;
@@ -188,32 +267,72 @@ export class MusicPlayerComponent {
     this.stemGains[name].gain.value = v;
   }
 
-  toggleMute(name: string) {
-    const g = this.stemGains[name];
-    g.gain.value = g.gain.value > 0 ? 0 : this.stemVolumes[name];
-  }
+toggleMute(name: string) {
+  const g = this.stemGains[name];
 
-  /* ================= DISTORTION ================= */
+  this.stemMuted[name] = !this.stemMuted[name];
+
+  g.gain.value = this.stemMuted[name]
+    ? 0
+    : this.stemVolumes[name];
+}
 
   isDistortable(name: string) {
     return name === 'guitar' || name === 'piano';
   }
 
-  setDistortion(name: string, type: DistortionType) {
-    this.stemDistortion[name] = type;
+  /* ================= KNOBS ================= */
 
-    if (type === 'none') {
-      this.distortionNodes[name] = null;
-      return;
+  setKnob(stem: string, param: KnobParam, value: number) {
+    this.stemKnobs[stem][param] = value;
+
+    if (param === 'pregain') {
+      this.pregainNodes[stem].gain.value = 1 + value * 10;
     }
 
-    const ws = this.audioCtx.createWaveShaper();
-    ws.curve = this.makeDistortionCurve(
-      type === 'light' ? 50 :
-      type === 'medium' ? 150 : 400
-    );
-    ws.oversample = '4x';
-    this.distortionNodes[name] = ws;
+    if (param === 'tone') {
+      this.toneNodes[stem].frequency.value = 500 + value * 8000;
+    }
+
+    if (param === 'distortion') {
+      if (value === 0) {
+        this.distortionNodes[stem] = null;
+        return;
+      }
+      const ws = this.audioCtx.createWaveShaper();
+      ws.curve = this.makeDistortionCurve(60 + value * 300);
+      ws.oversample = '4x';
+      this.distortionNodes[stem] = ws;
+    }
+  }
+
+  resetKnob(stem: string, param: KnobParam) {
+    const defaults = { pregain: 0.3, tone: 0.7, distortion: 0 };
+    this.setKnob(stem, param, defaults[param]);
+  }
+
+  toggleBypassLED(stem: string) {
+    this.stemBypassLED[stem] = !this.stemBypassLED[stem];
+  }
+
+  knobDrag(e: MouseEvent, stem: string, param: KnobParam) {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startVal = this.stemKnobs[stem][param];
+
+    const move = (ev: MouseEvent) => {
+      const delta = (startY - ev.clientY) / 150;
+      const v = Math.min(1, Math.max(0, startVal + delta));
+      this.setKnob(stem, param, v);
+    };
+
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
   }
 
   makeDistortionCurve(amount: number) {

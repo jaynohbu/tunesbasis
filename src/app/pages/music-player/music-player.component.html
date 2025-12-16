@@ -1,4 +1,10 @@
-<input type="file" accept="audio/*" (change)="onFileSelected($event)" />
+<!-- ================= FILE UPLOAD ================= -->
+
+<input
+  type="file"
+  accept="audio/*"
+  (change)="onFileSelected($event)"
+/>
 
 <button
   (click)="upload()"
@@ -7,7 +13,8 @@
   {{ loading ? 'Working…' : 'Upload & Analyze' }}
 </button>
 
-<!-- PROGRESS BAR -->
+<!-- ================= PROGRESS BAR ================= -->
+
 <div *ngIf="loading" class="progress">
   <div
     class="bar"
@@ -15,6 +22,7 @@
     [class.processing]="progressMode === 'processing'"
     [style.width.%]="progress"
   ></div>
+
   <div class="label">
     {{ progressMode === 'upload'
       ? 'Uploading…'
@@ -22,7 +30,8 @@
   </div>
 </div>
 
-<!-- GLOBAL CONTROLS -->
+<!-- ================= GLOBAL CONTROLS ================= -->
+
 <div *ngIf="stems.length" class="controls">
   <button (click)="togglePlay()">Play / Pause</button>
 
@@ -39,12 +48,25 @@
   </label>
 </div>
 
-<!-- STEM TRACKS -->
+<!-- ================= STEM TRACKS ================= -->
+
 <div *ngFor="let stem of stems" class="track">
+
   <div class="label">{{ stem.name }}</div>
 
-  <canvas [attr.data-stem]="stem.name"></canvas>
+  <!-- WAVEFORM -->
+  <div
+    class="wave-wrapper"
+    (click)="seekFromWave($event, stem.name)"
+  >
+    <canvas [attr.data-stem]="stem.name"></canvas>
+    <div
+      class="cursor"
+      [style.left.%]="cursorPercent"
+    ></div>
+  </div>
 
+  <!-- PER-STEM CONTROLS -->
   <div class="controls">
     <label>
       Volume
@@ -58,19 +80,63 @@
       />
     </label>
 
-    <label *ngIf="isDistortable(stem.name)">
-      Distortion
-      <select
-        [value]="stemDistortion[stem.name]"
-        (change)="setDistortion(stem.name, $any($event.target).value)"
-      >
-        <option value="none">None</option>
-        <option value="light">Light</option>
-        <option value="medium">Medium</option>
-        <option value="heavy">Heavy</option>
-      </select>
-    </label>
+    <button
+      (click)="toggleMute(stem.name)"
+      [class.active]="stemMuted[stem.name]"
+    >
+      {{ stemMuted[stem.name] ? 'Unmute' : 'Mute' }}
+    </button>
+  </div>
 
-    <button (click)="toggleMute(stem.name)">Mute</button>
+  <!-- ================= PEDAL / KNOBS ================= -->
+
+  <div *ngIf="isDistortable(stem.name)" class="knob-panel">
+
+    <!-- PREGAIN -->
+    <div class="knob-group">
+      <div
+        class="knob"
+        [style.--rot]="stemKnobs[stem.name].pregain * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'pregain')"
+        (dblclick)="resetKnob(stem.name, 'pregain')"
+      ></div>
+      <button (click)="resetKnob(stem.name, 'pregain')">Reset</button>
+      <span>Pre</span>
+    </div>
+
+    <!-- TONE -->
+    <div class="knob-group">
+      <div
+        class="knob"
+        [style.--rot]="stemKnobs[stem.name].tone * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'tone')"
+        (dblclick)="resetKnob(stem.name, 'tone')"
+      ></div>
+      <button (click)="resetKnob(stem.name, 'tone')">Reset</button>
+      <span>Tone</span>
+    </div>
+
+    <!-- DISTORTION -->
+    <div class="knob-group">
+      <div
+        class="knob"
+        [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'distortion')"
+        (dblclick)="resetKnob(stem.name, 'distortion')"
+      ></div>
+      <button (click)="resetKnob(stem.name, 'distortion')">Reset</button>
+      <span>Drive</span>
+    </div>
+
+    <!-- BYPASS LED -->
+    <div class="led-group">
+      <div
+        class="led"
+        [class.on]="!stemBypassLED[stem.name]"
+        (click)="toggleBypassLED(stem.name)"
+      ></div>
+      <span>Bypass</span>
+    </div>
+
   </div>
 </div>
