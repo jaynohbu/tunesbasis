@@ -57,16 +57,13 @@
   <!-- WAVEFORM -->
   <div
     class="wave-wrapper"
-    (click)="seekFromWave($event, stem.name)"
+    (click)="seekFromWave($event)"
   >
     <canvas [attr.data-stem]="stem.name"></canvas>
-    <div
-      class="cursor"
-      [style.left.%]="cursorPercent"
-    ></div>
+    <div class="cursor" [style.left.%]="cursorPercent"></div>
   </div>
 
-  <!-- PER-STEM CONTROLS -->
+  <!-- BASIC CONTROLS -->
   <div class="controls">
     <label>
       Volume
@@ -88,9 +85,9 @@
     </button>
   </div>
 
-  <!-- ================= PEDAL / KNOBS ================= -->
+  <!-- ================= KNOBS ================= -->
 
-  <div *ngIf="isDistortable(stem.name)" class="knob-panel">
+  <div class="knob-panel">
 
     <!-- PREGAIN -->
     <div class="knob-group">
@@ -102,6 +99,18 @@
       ></div>
       <button (click)="resetKnob(stem.name, 'pregain')">Reset</button>
       <span>Pre</span>
+    </div>
+
+    <!-- COMPRESSION -->
+    <div class="knob-group">
+      <div
+        class="knob"
+        [style.--rot]="stemKnobs[stem.name].compression * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'compression')"
+        (dblclick)="resetKnob(stem.name, 'compression')"
+      ></div>
+      <button (click)="resetKnob(stem.name, 'compression')">Reset</button>
+      <span>Comp</span>
     </div>
 
     <!-- TONE -->
@@ -116,27 +125,29 @@
       <span>Tone</span>
     </div>
 
-    <!-- DISTORTION -->
-    <div class="knob-group">
-      <div
-        class="knob"
-        [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'distortion')"
-        (dblclick)="resetKnob(stem.name, 'distortion')"
-      ></div>
-      <button (click)="resetKnob(stem.name, 'distortion')">Reset</button>
-      <span>Drive</span>
-    </div>
+    <!-- DISTORTION (ONLY GUITAR / PIANO) -->
+    <ng-container *ngIf="isDistortable(stem.name)">
+      <div class="knob-group">
+        <div
+          class="knob"
+          [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
+          (mousedown)="knobDrag($event, stem.name, 'distortion')"
+          (dblclick)="resetKnob(stem.name, 'distortion')"
+        ></div>
+        <button (click)="resetKnob(stem.name, 'distortion')">Reset</button>
+        <span>Drive</span>
+      </div>
 
-    <!-- BYPASS LED -->
-    <div class="led-group">
-      <div
-        class="led"
-        [class.on]="!stemBypassLED[stem.name]"
-        (click)="toggleBypassLED(stem.name)"
-      ></div>
-      <span>Bypass</span>
-    </div>
+      <!-- BYPASS -->
+      <div class="led-group">
+        <div
+          class="led"
+          [class.on]="!stemBypassLED[stem.name]"
+          (click)="toggleBypassLED(stem.name)"
+        ></div>
+        <span>Bypass</span>
+      </div>
+    </ng-container>
 
   </div>
 </div>
