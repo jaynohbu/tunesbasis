@@ -15,29 +15,37 @@ type KnobParam = 'pregain' | 'compression' | 'tone' | 'distortion';
   styleUrls: ['./music-player.component.scss']
 })
 export class MusicPlayerComponent implements OnInit {
-private readonly STEM_ORDER = [
-  'drums',
-  'bass',
-  'guitar',
-  'piano',
-  'vocals',
-  'other'
-];
-waveformsDrawn = 0;
-waveformsReady = false;
+  private readonly STEM_ORDER = [
+    'drums',
+    'bass',
+    'guitar',
+    'piano',
+    'vocals',
+    'other'
+  ];
+  onStemsReady(stems: { name: string; url: string }[]) {
+    this.resetPlayer();
+
+    this.stems = stems
+      .slice()
+      .sort(
+        (a, b) =>
+          this.STEM_ORDER.indexOf(a.name) -
+          this.STEM_ORDER.indexOf(b.name)
+      );
+
+    this.loadBuffers();
+  }
+
+  waveformsDrawn = 0;
+  waveformsReady = false;
 
   /* ================= FILE / STEM ================= */
 
   file!: File;
   stems: StemInfo[] = [];
 
-  /* ================= PROGRESS ================= */
 
-  loading = false;
-  progress = 0;
-  progressMode: ProgressMode = 'upload';
-  progressTimer: any = null;
-  readonly PROCESSING_TIME_MS = 5 * 60 * 1000;
 
   /* ================= AUDIO ================= */
 
@@ -99,16 +107,16 @@ waveformsReady = false;
       if (!Array.isArray(latest.stems)) return;
 
       this.resetPlayer();
-     this.stems = latest.stems
-  .slice()
-  .sort((a: any, b: any) =>
-    this.STEM_ORDER.indexOf(a.name) -
-    this.STEM_ORDER.indexOf(b.name)
-  )
-  .map((s: any) => ({
-    name: s.name,
-    url: s.url
-  }));
+      this.stems = latest.stems
+        .slice()
+        .sort((a: any, b: any) =>
+          this.STEM_ORDER.indexOf(a.name) -
+          this.STEM_ORDER.indexOf(b.name)
+        )
+        .map((s: any) => ({
+          name: s.name,
+          url: s.url
+        }));
 
       await this.loadBuffers();
     } catch (e) {
@@ -142,55 +150,7 @@ waveformsReady = false;
 
   /* ================= UPLOAD ================= */
 
-  async upload() {
-    if (!this.file || this.loading) return;
 
-    this.loading = true;
-    this.progress = 0;
-    this.progressMode = 'upload';
-
-    try {
-      const res = await this.uploadService.upload(
-        this.file,
-        p => (this.progress = Math.min(90, p * 0.9))
-      );
-
-      this.startProcessingProgress();
-
-      this.resetPlayer();
-      this.stems = res.data.stems;
-      await this.loadBuffers();
-
-      this.finishProgress();
-    } catch (e) {
-      console.error(e);
-      this.resetProgress();
-    }
-  }
-
-  startProcessingProgress() {
-    this.progressMode = 'processing';
-    const start = Date.now();
-
-    this.progressTimer = setInterval(() => {
-      const ratio = (Date.now() - start) / this.PROCESSING_TIME_MS;
-      this.progress = Math.min(99, 90 + ratio * 9);
-    }, 500);
-  }
-
-  finishProgress() {
-    clearInterval(this.progressTimer);
-    this.loading = false;
-    this.progressMode = 'done';
-    setTimeout(() => (this.progress = 0), 500);
-  }
-
-  resetProgress() {
-    clearInterval(this.progressTimer);
-    this.loading = false;
-    this.progress = 0;
-    this.progressMode = 'upload';
-  }
 
   /* ================= LOAD AUDIO ================= */
 
@@ -267,29 +227,29 @@ waveformsReady = false;
   //     this.sources[name] = src;
   //   });
   // }
-play() {
-  if (this.maxDuration === 0 || Object.keys(this.buffers).length === 0) return;
+  play() {
+    if (this.maxDuration === 0 || Object.keys(this.buffers).length === 0) return;
 
-  const now = this.audioCtx.currentTime;
-  this.startTime = now;
-  this.playing = true;
+    const now = this.audioCtx.currentTime;
+    this.startTime = now;
+    this.playing = true;
 
-  // 🔧 FORCE cursor sync at audio start
-  this.cursorPercent = (this.offset / this.maxDuration) * 100;
+    // 🔧 FORCE cursor sync at audio start
+    this.cursorPercent = (this.offset / this.maxDuration) * 100;
 
-  this.startCursorLoop();
+    this.startCursorLoop();
 
-  Object.keys(this.buffers).forEach(name => {
-    const src = this.audioCtx.createBufferSource();
-    src.buffer = this.buffers[name];
-    src.connect(this.pregainNodes[name]);
+    Object.keys(this.buffers).forEach(name => {
+      const src = this.audioCtx.createBufferSource();
+      src.buffer = this.buffers[name];
+      src.connect(this.pregainNodes[name]);
 
-    const startOffset = Math.min(this.offset, this.buffers[name].duration);
-    src.start(now, startOffset);
+      const startOffset = Math.min(this.offset, this.buffers[name].duration);
+      src.start(now, startOffset);
 
-    this.sources[name] = src;
-  });
-}
+      this.sources[name] = src;
+    });
+  }
 
   pause() {
     this.offset += this.audioCtx.currentTime - this.startTime;
@@ -302,7 +262,7 @@ play() {
 
   stopSources() {
     Object.values(this.sources).forEach(s => {
-      try { s?.stop(); } catch {}
+      try { s?.stop(); } catch { }
     });
     this.sources = {};
   }
@@ -407,89 +367,89 @@ play() {
 
   /* ================= WAVEFORM - BOLD & PROFESSIONAL ================= */
 
-drawWaveform(name: string, buffer: AudioBuffer) {
-  const canvas = document.querySelector(
-    `canvas[data-stem="${name}"]`
-  ) as HTMLCanvasElement;
-  if (!canvas) return;
+  drawWaveform(name: string, buffer: AudioBuffer) {
+    const canvas = document.querySelector(
+      `canvas[data-stem="${name}"]`
+    ) as HTMLCanvasElement;
+    if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-  // Ensure canvas resolution matches displayed size
-  const cssWidth = canvas.clientWidth;
-  const cssHeight = canvas.clientHeight;
+    // Ensure canvas resolution matches displayed size
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
 
-  if (cssWidth === 0 || cssHeight === 0) return;
+    if (cssWidth === 0 || cssHeight === 0) return;
 
-  // Handle HiDPI / scaling correctly
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(cssWidth * dpr);
-  canvas.height = Math.floor(cssHeight * dpr);
-  ctx.scale(dpr, dpr);
+    // Handle HiDPI / scaling correctly
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(cssWidth * dpr);
+    canvas.height = Math.floor(cssHeight * dpr);
+    ctx.scale(dpr, dpr);
 
-  const width = cssWidth;
-  const height = cssHeight;
-  const centerY = height / 2;
+    const width = cssWidth;
+    const height = cssHeight;
+    const centerY = height / 2;
 
-  // --- Mix to mono (time-accurate) ---
-  let data: Float32Array;
+    // --- Mix to mono (time-accurate) ---
+    let data: Float32Array;
 
-  if (buffer.numberOfChannels > 1) {
-    const ch0 = buffer.getChannelData(0);
-    const ch1 = buffer.getChannelData(1);
-    const len = ch0.length;
+    if (buffer.numberOfChannels > 1) {
+      const ch0 = buffer.getChannelData(0);
+      const ch1 = buffer.getChannelData(1);
+      const len = ch0.length;
 
-    data = new Float32Array(len);
-    for (let i = 0; i < len; i++) {
-      data[i] = (ch0[i] + ch1[i]) * 0.5;
-    }
-  } else {
-    data = buffer.getChannelData(0);
-  }
-
-  const totalSamples = data.length;
-
-  // 🔴 CRITICAL: never allow blockSize = 0
-  const samplesPerPixel = Math.max(
-    1,
-    Math.floor(totalSamples / width)
-  );
-
-  // --- Clear ---
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#1e1e1e';
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = '#4caf50';
-
-  // --- Draw waveform ---
-  for (let x = 0; x < width; x++) {
-    const start = x * samplesPerPixel;
-    const end = Math.min(start + samplesPerPixel, totalSamples);
-
-    let min = 1.0;
-    let max = -1.0;
-
-    for (let i = start; i < end; i++) {
-      const v = data[i];
-      if (v < min) min = v;
-      if (v > max) max = v;
+      data = new Float32Array(len);
+      for (let i = 0; i < len; i++) {
+        data[i] = (ch0[i] + ch1[i]) * 0.5;
+      }
+    } else {
+      data = buffer.getChannelData(0);
     }
 
-    const yTop = centerY + min * centerY;
-    const yBottom = centerY + max * centerY;
+    const totalSamples = data.length;
 
-    ctx.fillRect(x, yTop, 1, Math.max(1, yBottom - yTop));
+    // 🔴 CRITICAL: never allow blockSize = 0
+    const samplesPerPixel = Math.max(
+      1,
+      Math.floor(totalSamples / width)
+    );
+
+    // --- Clear ---
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#4caf50';
+
+    // --- Draw waveform ---
+    for (let x = 0; x < width; x++) {
+      const start = x * samplesPerPixel;
+      const end = Math.min(start + samplesPerPixel, totalSamples);
+
+      let min = 1.0;
+      let max = -1.0;
+
+      for (let i = start; i < end; i++) {
+        const v = data[i];
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+
+      const yTop = centerY + min * centerY;
+      const yBottom = centerY + max * centerY;
+
+      ctx.fillRect(x, yTop, 1, Math.max(1, yBottom - yTop));
+    }
+
+    // --- Waveform readiness tracking ---
+    this.waveformsDrawn++;
+
+    if (this.waveformsDrawn === this.stems.length) {
+      this.waveformsReady = true;
+    }
   }
 
-  // --- Waveform readiness tracking ---
-  this.waveformsDrawn++;
 
-  if (this.waveformsDrawn === this.stems.length) {
-    this.waveformsReady = true;
-  }
-}
-
-  
 }

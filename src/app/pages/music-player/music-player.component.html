@@ -1,44 +1,18 @@
-<!-- ================= FILE UPLOAD ================= -->
+<!-- ================= UPLOAD COMPONENT ================= -->
 
-<input
-  type="file"
-  accept="audio/*"
-  (change)="onFileSelected($event)"
-/>
-
-<button
-  (click)="upload()"
-  [disabled]="!file || loading"
->
-  {{ loading ? 'Working…' : 'Upload & Analyze' }}
-</button>
-
-<!-- ================= PROGRESS BAR ================= -->
-
-<div *ngIf="loading" class="progress">
-  <div
-    class="bar"
-    [class.upload]="progressMode === 'upload'"
-    [class.processing]="progressMode === 'processing'"
-    [style.width.%]="progress"
-  ></div>
-
-  <div class="label">
-    {{ progressMode === 'upload'
-      ? 'Uploading…'
-      : 'Processing audio… (this may take a few minutes)' }}
-  </div>
-</div>
+<music-upload
+  (stemsReady)="onStemsReady($event)">
+</music-upload>
 
 <!-- ================= GLOBAL CONTROLS ================= -->
 
 <div *ngIf="stems.length" class="controls">
-<button
-  (click)="togglePlay()"
-  [disabled]="!waveformsReady"
->
-  Play / Pause
-</button>
+  <button
+    (click)="togglePlay()"
+    [disabled]="!waveformsReady"
+  >
+    Play / Pause
+  </button>
 
   <label>
     Master Volume

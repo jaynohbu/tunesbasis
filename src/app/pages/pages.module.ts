@@ -16,6 +16,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { PythonTricksComponent } from './python-tricks/python-tricks.component';
 import { MusicalDataComponent } from './musical-data/musical-data.component';
 import { MusicPlayerComponent } from './music-player/music-player.component';
+import { MusicUploadComponent } from '../components/music-upload/music-upload.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -26,7 +27,8 @@ import { MusicPlayerComponent } from './music-player/music-player.component';
     AlgorythmsComponent,
     PythonTricksComponent,
     MusicalDataComponent,
-    MusicPlayerComponent
+    MusicPlayerComponent,
+    MusicUploadComponent
   ],
   imports: [
     CommonModule,
