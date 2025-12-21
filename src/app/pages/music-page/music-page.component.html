@@ -1,0 +1,51 @@
+<div class="music-page">
+
+  <!-- UPLOAD PANEL -->
+  <div class="upload-panel">
+    <input
+      type="file"
+      accept="audio/*"
+      (change)="onFileSelected($event)"
+    />
+
+    <button
+      (click)="upload()"
+      [disabled]="uploadDisabled"
+    >
+      {{ uploading || processing ? 'Working…' : 'Upload & Analyze' }}
+    </button>
+
+    <!-- PROGRESS BAR -->
+    <div *ngIf="uploading || processing" class="progress">
+      <div
+        class="bar"
+        [style.width.%]="progress"
+      ></div>
+      <div class="label">{{ progressLabel }}</div>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="songs.length === 0 && !uploading" class="empty">
+    No songs yet. Upload one to begin.
+  </div>
+
+  <!-- SONG LIST -->
+  <ul class="song-list" *ngIf="songs.length > 0">
+    <li
+      *ngFor="let song of songs"
+      (click)="selectSong(song)"
+      [class.active]="song === selectedSong"
+    >
+      {{ song.originalName }}
+      <span class="status">{{ song.status }}</span>
+    </li>
+  </ul>
+
+  <!-- PLAYER -->
+  <app-music-player
+    *ngIf="selectedSong"
+    [song]="selectedSong"
+  ></app-music-player>
+
+</div>

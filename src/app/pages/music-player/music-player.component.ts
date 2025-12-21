@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MusicUploadService } from 'src/app/services/music-upload.service';
 
 interface StemInfo {
@@ -14,19 +14,32 @@ type KnobParam = 'pregain' | 'compression' | 'tone' | 'distortion';
   templateUrl: './music-player.component.html',
   styleUrls: ['./music-player.component.scss']
 })
-export class MusicPlayerComponent {
+export class MusicPlayerComponent implements OnInit {
+private readonly STEM_ORDER = [
+  'drums',
+  'bass',
+  'guitar',
+  'piano',
+  'vocals',
+  'other'
+];
+waveformsDrawn = 0;
+waveformsReady = false;
+
+  /* ================= FILE / STEM ================= */
 
   file!: File;
   stems: StemInfo[] = [];
 
-  cursorPercent = 0;
-  cursorRaf: number | null = null;
+  /* ================= PROGRESS ================= */
 
   loading = false;
   progress = 0;
   progressMode: ProgressMode = 'upload';
   progressTimer: any = null;
   readonly PROCESSING_TIME_MS = 5 * 60 * 1000;
+
+  /* ================= AUDIO ================= */
 
   audioCtx = new AudioContext();
   masterGain = this.audioCtx.createGain();
@@ -40,6 +53,8 @@ export class MusicPlayerComponent {
   stemGains: Record<string, GainNode> = {};
   distortionNodes: Record<string, WaveShaperNode | null> = {};
 
+  /* ================= UI STATE ================= */
+
   stemVolumes: Record<string, number> = {};
   stemMuted: Record<string, boolean> = {};
   stemBypassLED: Record<string, boolean> = {};
@@ -51,19 +66,81 @@ export class MusicPlayerComponent {
     distortion: number;
   }> = {};
 
+  /* ================= TRANSPORT ================= */
+
   playing = false;
   startTime = 0;
   offset = 0;
   globalVolume = 1;
 
+  cursorPercent = 0;
+  cursorRaf: number | null = null;
+
+  // Cached maximum duration across all stems
+  private maxDuration = 0;
+
   constructor(private uploadService: MusicUploadService) {
     this.masterGain.connect(this.audioCtx.destination);
   }
+
+  /* ================= INIT ================= */
+
+  async ngOnInit() {
+    await this.loadLatestSavedSong();
+  }
+
+  async loadLatestSavedSong() {
+    try {
+      const res = await this.uploadService.listSongs();
+      const songs = res?.data ?? [];
+      if (!songs.length) return;
+
+      const latest = songs[songs.length - 1];
+      if (!Array.isArray(latest.stems)) return;
+
+      this.resetPlayer();
+     this.stems = latest.stems
+  .slice()
+  .sort((a: any, b: any) =>
+    this.STEM_ORDER.indexOf(a.name) -
+    this.STEM_ORDER.indexOf(b.name)
+  )
+  .map((s: any) => ({
+    name: s.name,
+    url: s.url
+  }));
+
+      await this.loadBuffers();
+    } catch (e) {
+      console.error('Failed to load saved song', e);
+    }
+  }
+
+  resetPlayer() {
+    this.stopSources();
+    this.buffers = {};
+    this.pregainNodes = {};
+    this.compressorNodes = {};
+    this.toneNodes = {};
+    this.stemGains = {};
+    this.distortionNodes = {};
+    this.stemVolumes = {};
+    this.stemMuted = {};
+    this.stemBypassLED = {};
+    this.stemKnobs = {};
+    this.offset = 0;
+    this.cursorPercent = 0;
+    this.maxDuration = 0;
+  }
+
+  /* ================= FILE ================= */
 
   onFileSelected(e: Event) {
     const input = e.target as HTMLInputElement;
     if (input.files?.length) this.file = input.files[0];
   }
+
+  /* ================= UPLOAD ================= */
 
   async upload() {
     if (!this.file || this.loading) return;
@@ -79,10 +156,14 @@ export class MusicPlayerComponent {
       );
 
       this.startProcessingProgress();
+
+      this.resetPlayer();
       this.stems = res.data.stems;
       await this.loadBuffers();
+
       this.finishProgress();
-    } catch {
+    } catch (e) {
+      console.error(e);
       this.resetProgress();
     }
   }
@@ -101,7 +182,7 @@ export class MusicPlayerComponent {
     clearInterval(this.progressTimer);
     this.loading = false;
     this.progressMode = 'done';
-    setTimeout(() => (this.progress = 0), 600);
+    setTimeout(() => (this.progress = 0), 500);
   }
 
   resetProgress() {
@@ -111,11 +192,17 @@ export class MusicPlayerComponent {
     this.progressMode = 'upload';
   }
 
+  /* ================= LOAD AUDIO ================= */
+
   async loadBuffers() {
+    this.maxDuration = 0;
+
     for (const stem of this.stems) {
       const arr = await fetch(stem.url).then(r => r.arrayBuffer());
       const buffer = await this.audioCtx.decodeAudioData(arr);
       this.buffers[stem.name] = buffer;
+
+      this.maxDuration = Math.max(this.maxDuration, buffer.duration);
 
       const pregain = this.audioCtx.createGain();
       const comp = this.audioCtx.createDynamicsCompressor();
@@ -124,7 +211,6 @@ export class MusicPlayerComponent {
 
       comp.threshold.value = 0;
       comp.ratio.value = 1;
-
       tone.type = 'lowpass';
       tone.frequency.value = 6000;
 
@@ -137,6 +223,7 @@ export class MusicPlayerComponent {
       this.compressorNodes[stem.name] = comp;
       this.toneNodes[stem.name] = tone;
       this.stemGains[stem.name] = gain;
+      this.distortionNodes[stem.name] = null;
 
       this.stemVolumes[stem.name] = 1;
       this.stemMuted[stem.name] = false;
@@ -149,32 +236,65 @@ export class MusicPlayerComponent {
         distortion: 0
       };
 
-      requestAnimationFrame(() =>
-        this.drawWaveform(stem.name, buffer)
-      );
+      requestAnimationFrame(() => this.drawWaveform(stem.name, buffer));
     }
+
+    console.log('Max duration:', this.maxDuration.toFixed(3) + 's');
   }
+
+  /* ================= PLAYBACK ================= */
 
   togglePlay() {
     this.playing ? this.pause() : this.play();
   }
 
-  play() {
-    this.startTime = this.audioCtx.currentTime;
-    this.playing = true;
-    this.startCursorLoop();
+  // play() {
+  //   if (this.maxDuration === 0 || Object.keys(this.buffers).length === 0) return;
 
-    Object.keys(this.buffers).forEach(name => {
-      const src = this.audioCtx.createBufferSource();
-      src.buffer = this.buffers[name];
-      src.connect(this.pregainNodes[name]);
-      src.start(0, this.offset);
-      this.sources[name] = src;
-    });
-  }
+  //   const now = this.audioCtx.currentTime;
+  //   this.startTime = now;
+  //   this.playing = true;
+  //   this.startCursorLoop();
+
+  //   Object.keys(this.buffers).forEach(name => {
+  //     const src = this.audioCtx.createBufferSource();
+  //     src.buffer = this.buffers[name];
+  //     src.connect(this.pregainNodes[name]);
+
+  //     const startOffset = Math.min(this.offset, this.buffers[name].duration);
+  //     src.start(now, startOffset);
+
+  //     this.sources[name] = src;
+  //   });
+  // }
+play() {
+  if (this.maxDuration === 0 || Object.keys(this.buffers).length === 0) return;
+
+  const now = this.audioCtx.currentTime;
+  this.startTime = now;
+  this.playing = true;
+
+  // 🔧 FORCE cursor sync at audio start
+  this.cursorPercent = (this.offset / this.maxDuration) * 100;
+
+  this.startCursorLoop();
+
+  Object.keys(this.buffers).forEach(name => {
+    const src = this.audioCtx.createBufferSource();
+    src.buffer = this.buffers[name];
+    src.connect(this.pregainNodes[name]);
+
+    const startOffset = Math.min(this.offset, this.buffers[name].duration);
+    src.start(now, startOffset);
+
+    this.sources[name] = src;
+  });
+}
 
   pause() {
     this.offset += this.audioCtx.currentTime - this.startTime;
+    this.offset = Math.min(this.offset, this.maxDuration);
+
     this.stopSources();
     this.stopCursorLoop();
     this.playing = false;
@@ -187,6 +307,50 @@ export class MusicPlayerComponent {
     this.sources = {};
   }
 
+  /* ================= CURSOR ================= */
+
+  startCursorLoop() {
+    if (this.maxDuration === 0) return;
+
+    const tick = () => {
+      if (!this.playing) return;
+
+      const elapsed = this.offset + (this.audioCtx.currentTime - this.startTime);
+      const ratio = elapsed / this.maxDuration;
+      this.cursorPercent = Math.min(100, Math.max(0, ratio * 100));
+
+      this.cursorRaf = requestAnimationFrame(tick);
+    };
+
+    tick();
+  }
+
+  stopCursorLoop() {
+    if (this.cursorRaf !== null) {
+      cancelAnimationFrame(this.cursorRaf);
+      this.cursorRaf = null;
+    }
+  }
+
+  seekFromWave(e: MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+
+    this.offset = ratio * this.maxDuration;
+    this.cursorPercent = ratio * 100;
+
+    if (this.playing) {
+      this.stopSources();
+      this.play();
+    }
+  }
+
+  getDuration(): number {
+    return this.maxDuration || 1;
+  }
+
+  /* ================= MIX ================= */
+
   setGlobalVolume(v: number) {
     this.globalVolume = v;
     this.masterGain.gain.value = v;
@@ -194,14 +358,15 @@ export class MusicPlayerComponent {
 
   setStemVolume(name: string, v: number) {
     this.stemVolumes[name] = v;
-    this.stemGains[name].gain.value = v;
+    this.stemGains[name].gain.value = this.stemMuted[name] ? 0 : v;
   }
 
   toggleMute(name: string) {
     this.stemMuted[name] = !this.stemMuted[name];
-    this.stemGains[name].gain.value =
-      this.stemMuted[name] ? 0 : this.stemVolumes[name];
+    this.stemGains[name].gain.value = this.stemMuted[name] ? 0 : this.stemVolumes[name];
   }
+
+  /* ================= KNOBS ================= */
 
   isDistortable(name: string) {
     return name === 'guitar' || name === 'piano';
@@ -209,46 +374,10 @@ export class MusicPlayerComponent {
 
   setKnob(stem: string, param: KnobParam, value: number) {
     this.stemKnobs[stem][param] = value;
-
-    if (param === 'pregain') {
-      this.pregainNodes[stem].gain.value = 1 + value * 10;
-    }
-
-    if (param === 'compression') {
-      const c = this.compressorNodes[stem];
-      if (value === 0) {
-        c.threshold.value = 0;
-        c.ratio.value = 1;
-      } else {
-        c.threshold.value = -20 - value * 20;
-        c.ratio.value = 1 + value * 7;
-      }
-    }
-
-    if (param === 'tone') {
-      this.toneNodes[stem].frequency.value = 500 + value * 8000;
-    }
-
-    if (param === 'distortion') {
-      if (!this.isDistortable(stem)) return;
-      if (value === 0) {
-        this.distortionNodes[stem] = null;
-        return;
-      }
-      const ws = this.audioCtx.createWaveShaper();
-      ws.curve = this.makeDistortionCurve(60 + value * 300);
-      ws.oversample = '4x';
-      this.distortionNodes[stem] = ws;
-    }
   }
 
   resetKnob(stem: string, param: KnobParam) {
-    const defaults = {
-      pregain: 0.3,
-      compression: 0,
-      tone: 0.7,
-      distortion: 0
-    };
+    const defaults = { pregain: 0.3, compression: 0, tone: 0.7, distortion: 0 };
     this.setKnob(stem, param, defaults[param]);
   }
 
@@ -276,76 +405,91 @@ export class MusicPlayerComponent {
     window.addEventListener('mouseup', up);
   }
 
-  makeDistortionCurve(amount: number) {
-    const n = 44100;
-    const curve = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const x = (i * 2) / n - 1;
-      curve[i] = Math.tanh(amount * x);
+  /* ================= WAVEFORM - BOLD & PROFESSIONAL ================= */
+
+drawWaveform(name: string, buffer: AudioBuffer) {
+  const canvas = document.querySelector(
+    `canvas[data-stem="${name}"]`
+  ) as HTMLCanvasElement;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // Ensure canvas resolution matches displayed size
+  const cssWidth = canvas.clientWidth;
+  const cssHeight = canvas.clientHeight;
+
+  if (cssWidth === 0 || cssHeight === 0) return;
+
+  // Handle HiDPI / scaling correctly
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(cssWidth * dpr);
+  canvas.height = Math.floor(cssHeight * dpr);
+  ctx.scale(dpr, dpr);
+
+  const width = cssWidth;
+  const height = cssHeight;
+  const centerY = height / 2;
+
+  // --- Mix to mono (time-accurate) ---
+  let data: Float32Array;
+
+  if (buffer.numberOfChannels > 1) {
+    const ch0 = buffer.getChannelData(0);
+    const ch1 = buffer.getChannelData(1);
+    const len = ch0.length;
+
+    data = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      data[i] = (ch0[i] + ch1[i]) * 0.5;
     }
-    return curve;
+  } else {
+    data = buffer.getChannelData(0);
   }
 
-  startCursorLoop() {
-    const duration = this.getDuration();
-    const tick = () => {
-      if (!this.playing) return;
-      const t = this.offset + (this.audioCtx.currentTime - this.startTime);
-      this.cursorPercent = Math.min(100, (t / duration) * 100);
-      this.cursorRaf = requestAnimationFrame(tick);
-    };
-    tick();
-  }
+  const totalSamples = data.length;
 
-  stopCursorLoop() {
-    if (this.cursorRaf) cancelAnimationFrame(this.cursorRaf);
-    this.cursorRaf = null;
-  }
+  // 🔴 CRITICAL: never allow blockSize = 0
+  const samplesPerPixel = Math.max(
+    1,
+    Math.floor(totalSamples / width)
+  );
 
-  seekFromWave(e: MouseEvent) {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    this.offset = ratio * this.getDuration();
-    if (this.playing) {
-      this.stopSources();
-      this.play();
-    }
-  }
+  // --- Clear ---
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#1e1e1e';
+  ctx.fillRect(0, 0, width, height);
 
-  getDuration(): number {
-    const first = Object.values(this.buffers)[0];
-    return first ? first.duration : 1;
-  }
+  ctx.fillStyle = '#4caf50';
 
-  drawWaveform(name: string, buffer: AudioBuffer) {
-    const canvas = document.querySelector(
-      `canvas[data-stem="${name}"]`
-    ) as HTMLCanvasElement;
-    if (!canvas) return;
+  // --- Draw waveform ---
+  for (let x = 0; x < width; x++) {
+    const start = x * samplesPerPixel;
+    const end = Math.min(start + samplesPerPixel, totalSamples);
 
-    const ctx = canvas.getContext('2d')!;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
+    let min = 1.0;
+    let max = -1.0;
 
-    const data = buffer.getChannelData(0);
-    const step = Math.ceil(data.length / w);
-    const amp = h / 2;
-
-    ctx.clearRect(0, 0, w, h);
-    ctx.beginPath();
-
-    for (let i = 0; i < w; i++) {
-      let min = 1, max = -1;
-      for (let j = 0; j < step; j++) {
-        const v = data[i * step + j] || 0;
-        min = Math.min(min, v);
-        max = Math.max(max, v);
-      }
-      ctx.moveTo(i, (1 + min) * amp);
-      ctx.lineTo(i, (1 + max) * amp);
+    for (let i = start; i < end; i++) {
+      const v = data[i];
+      if (v < min) min = v;
+      if (v > max) max = v;
     }
 
-    ctx.strokeStyle = '#4caf50';
-    ctx.stroke();
+    const yTop = centerY + min * centerY;
+    const yBottom = centerY + max * centerY;
+
+    ctx.fillRect(x, yTop, 1, Math.max(1, yBottom - yTop));
   }
+
+  // --- Waveform readiness tracking ---
+  this.waveformsDrawn++;
+
+  if (this.waveformsDrawn === this.stems.length) {
+    this.waveformsReady = true;
+  }
+}
+
+  
 }
