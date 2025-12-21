@@ -1,0 +1,29 @@
+<!-- FILE SELECT -->
+<input
+  type="file"
+  accept="audio/*"
+  (change)="onFileSelected($event)"
+/>
+
+<button
+  (click)="upload()"
+  [disabled]="!file || loading"
+>
+  {{ loading ? 'Working…' : 'Upload & Analyze' }}
+</button>
+
+<!-- PROGRESS -->
+<div *ngIf="loading" class="progress">
+  <div
+    class="bar"
+    [class.upload]="progressMode === 'upload'"
+    [class.processing]="progressMode === 'processing'"
+    [style.width.%]="progress"
+  ></div>
+
+  <div class="label">
+    {{ progressMode === 'upload'
+      ? 'Uploading…'
+      : 'Processing audio… (this may take a few minutes)' }}
+  </div>
+</div>
