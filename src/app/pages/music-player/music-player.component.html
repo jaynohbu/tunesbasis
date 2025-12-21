@@ -1,29 +1,20 @@
 <!-- ================= UPLOAD COMPONENT ================= -->
 
-<music-upload
-  (stemsReady)="onStemsReady($event)">
+<music-upload (stemsReady)="onStemsReady($event)">
 </music-upload>
 
 <!-- ================= GLOBAL CONTROLS ================= -->
 
 <div *ngIf="stems.length" class="controls">
-  <button
-    (click)="togglePlay()"
-    [disabled]="!waveformsReady"
-  >
-    Play / Pause
-  </button>
+  <p-button [label]="playing ? 'Pause' : 'Play'" [icon]="playing ? 'pi pi-pause' : 'pi pi-play'"
+    [disabled]="!waveformsReady" (onClick)="togglePlay()">
+  </p-button>
+
 
   <label>
     Master Volume
-    <input
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      [value]="globalVolume"
-      (input)="setGlobalVolume($any($event.target).value)"
-    />
+    <input type="range" min="0" max="1" step="0.01" [value]="globalVolume"
+      (input)="setGlobalVolume($any($event.target).value)" />
   </label>
 </div>
 
@@ -34,10 +25,7 @@
   <div class="label">{{ stem.name }}</div>
 
   <!-- WAVEFORM -->
-  <div
-    class="wave-wrapper"
-    (click)="seekFromWave($event)"
-  >
+  <div class="wave-wrapper" (click)="seekFromWave($event)">
     <canvas [attr.data-stem]="stem.name"></canvas>
     <div class="cursor" [style.left.%]="cursorPercent"></div>
   </div>
@@ -46,84 +34,64 @@
   <div class="controls">
     <label>
       Volume
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        [value]="stemVolumes[stem.name]"
-        (input)="setStemVolume(stem.name, $any($event.target).value)"
-      />
+      <input type="range" min="0" max="1" step="0.01" [value]="stemVolumes[stem.name]"
+        (input)="setStemVolume(stem.name, $any($event.target).value)" />
     </label>
 
-    <button
-      (click)="toggleMute(stem.name)"
-      [class.active]="stemMuted[stem.name]"
-    >
-      {{ stemMuted[stem.name] ? 'Unmute' : 'Mute' }}
-    </button>
+    <p-button [label]="stemMuted[stem.name] ? 'Unmute' : 'Mute'"
+      [icon]="stemMuted[stem.name] ? 'pi pi-volume-up' : 'pi pi-volume-off'" [styleClass]="stemMuted[stem.name]
+    ? 'p-button-secondary'
+    : 'p-button-danger'" size="small" (onClick)="toggleMute(stem.name)">
+    </p-button>
+
+
   </div>
 
   <!-- ================= KNOBS ================= -->
 
-  <div class="knob-panel">
+  <div class="knob-panel" *ngIf="stemKnobs[stem.name]">
 
     <!-- PREGAIN -->
     <div class="knob-group">
-      <div
-        class="knob"
-        [style.--rot]="stemKnobs[stem.name].pregain * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'pregain')"
-        (dblclick)="resetKnob(stem.name, 'pregain')"
-      ></div>
-      <button (click)="resetKnob(stem.name, 'pregain')">Reset</button>
+      <div class="knob" [style.--rot]="stemKnobs[stem.name].pregain * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'pregain')" (dblclick)="resetKnob(stem.name, 'pregain')"></div>
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'pregain')">
+      </p-button>
+
       <span>Pre</span>
     </div>
 
     <!-- COMPRESSION -->
     <div class="knob-group">
-      <div
-        class="knob"
-        [style.--rot]="stemKnobs[stem.name].compression * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'compression')"
-        (dblclick)="resetKnob(stem.name, 'compression')"
-      ></div>
-      <button (click)="resetKnob(stem.name, 'compression')">Reset</button>
+      <div class="knob" [style.--rot]="stemKnobs[stem.name].compression * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'compression')" (dblclick)="resetKnob(stem.name, 'compression')"></div>
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'compression')">
+      </p-button>
       <span>Comp</span>
     </div>
 
     <!-- TONE -->
     <div class="knob-group">
-      <div
-        class="knob"
-        [style.--rot]="stemKnobs[stem.name].tone * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'tone')"
-        (dblclick)="resetKnob(stem.name, 'tone')"
-      ></div>
-      <button (click)="resetKnob(stem.name, 'tone')">Reset</button>
+      <div class="knob" [style.--rot]="stemKnobs[stem.name].tone * 270 + 'deg'"
+        (mousedown)="knobDrag($event, stem.name, 'tone')" (dblclick)="resetKnob(stem.name, 'tone')"></div>
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'tone')">
+      </p-button>
       <span>Tone</span>
     </div>
 
     <!-- DISTORTION (ONLY GUITAR / PIANO) -->
     <ng-container *ngIf="isDistortable(stem.name)">
       <div class="knob-group">
-        <div
-          class="knob"
-          [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
-          (mousedown)="knobDrag($event, stem.name, 'distortion')"
-          (dblclick)="resetKnob(stem.name, 'distortion')"
-        ></div>
-        <button (click)="resetKnob(stem.name, 'distortion')">Reset</button>
+        <div class="knob" [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
+          (mousedown)="knobDrag($event, stem.name, 'distortion')" (dblclick)="resetKnob(stem.name, 'distortion')"></div>
+        <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'distortion')">
+        </p-button>
         <span>Drive</span>
       </div>
 
       <!-- BYPASS -->
       <div class="led-group">
-        <div
-          class="led"
-          [class.on]="!stemBypassLED[stem.name]"
-          (click)="toggleBypassLED(stem.name)"
-        ></div>
+        <div class="led" [class.on]="!stemBypassLED[stem.name]" (click)="toggleBypassLED(stem.name)"></div>
         <span>Bypass</span>
       </div>
     </ng-container>

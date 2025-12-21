@@ -1,29 +1,56 @@
-<!-- FILE SELECT -->
+<!-- ================= FILE SELECT ================= -->
+
 <input
   type="file"
   accept="audio/*"
+  hidden
+  #fileInput
   (change)="onFileSelected($event)"
 />
 
-<button
-  (click)="upload()"
+<p-button
+  label="Choose Audio"
+  icon="pi pi-folder-open"
+  styleClass="p-button-outlined"
+  [disabled]="loading"
+  (onClick)="fileInput.click()">
+</p-button>
+
+<span class="file-name p-ml-2" *ngIf="file">
+  {{ file.name }}
+</span>
+
+<!-- ================= UPLOAD BUTTON ================= -->
+
+<p-button
+  label="Upload & Analyze"
+  icon="pi pi-upload"
+  class="p-ml-2"
+  [loading]="loading"
   [disabled]="!file || loading"
->
-  {{ loading ? 'Working…' : 'Upload & Analyze' }}
-</button>
+  (onClick)="upload()">
+</p-button>
 
-<!-- PROGRESS -->
-<div *ngIf="loading" class="progress">
-  <div
-    class="bar"
-    [class.upload]="progressMode === 'upload'"
-    [class.processing]="progressMode === 'processing'"
-    [style.width.%]="progress"
-  ></div>
+<!-- ================= PROGRESS ================= -->
 
-  <div class="label">
+<div *ngIf="loading" class="p-mt-3">
+
+  <!-- Uploading (determinate) -->
+  <p-progressBar
+    *ngIf="progressMode === 'upload'"
+    [value]="progress">
+  </p-progressBar>
+
+  <!-- Processing (indeterminate) -->
+  <p-progressBar
+    *ngIf="progressMode === 'processing'"
+    mode="indeterminate">
+  </p-progressBar>
+
+  <div class="p-text-secondary p-mt-2">
     {{ progressMode === 'upload'
       ? 'Uploading…'
       : 'Processing audio… (this may take a few minutes)' }}
   </div>
+
 </div>
