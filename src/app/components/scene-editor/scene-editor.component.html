@@ -1,0 +1,69 @@
+<p-panel header="Scene Editor">
+
+  <!-- Global interval -->
+  <div class="scene-toolbar">
+    <span>Default interval:</span>
+
+    <p-dropdown
+      [options]="intervalOptions"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="globalInterval">
+    </p-dropdown>
+
+    <p-button
+      label="Apply to all"
+      icon="pi pi-check"
+      class="p-ml-2"
+      (onClick)="applyGlobalInterval()">
+    </p-button>
+  </div>
+
+  <!-- Scene list -->
+  <p-orderList
+    [value]="scene.items"
+    [dragdrop]="true"
+    listStyle="max-height:300px"
+  >
+
+    <ng-template let-item let-i="index" pTemplate="item">
+      <div class="scene-row">
+
+        <div class="song-name">
+          {{ item.song.originalName }}
+        </div>
+
+        <div class="interval">
+          <input
+            type="number"
+            pInputText
+            [(ngModel)]="item.intervalSec"
+            min="0"
+          />
+          <span class="unit">sec</span>
+        </div>
+
+        <div class="controls">
+          <p-button
+            icon="pi pi-arrow-up"
+            (onClick)="moveUp(i)">
+          </p-button>
+
+          <p-button
+            icon="pi pi-arrow-down"
+            (onClick)="moveDown(i)">
+          </p-button>
+
+          <p-button
+            icon="pi pi-times"
+            severity="danger"
+            (onClick)="remove(i)">
+          </p-button>
+        </div>
+
+      </div>
+    </ng-template>
+
+  </p-orderList>
+
+</p-panel>

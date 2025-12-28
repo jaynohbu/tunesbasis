@@ -90,7 +90,7 @@ export class AppMenuComponent implements OnInit {
                     { label: 'Algorythms', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/algorythms'] },
                     { label: 'Python Tricks', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/python-tricks'] },
                     { label: 'Music Data Analysis',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/music-data'] },
-                    { label: 'Music Player Demo',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/music-player'] },
+                    { label: 'Music Player Demo',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/dashboard'] },
                 ]
             },
 

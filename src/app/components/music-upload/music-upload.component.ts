@@ -14,10 +14,22 @@ type ProgressMode = 'upload' | 'processing' | 'done';
   styleUrls: ['./music-upload.component.scss']
 })
 export class MusicUploadComponent {
+
+  /* ================= EVENTS ================= */
+
+  /** 업로드 시작 (UI / disable 용) */
+  @Output() uploadStarted = new EventEmitter<void>();
+
+  /** ❗ Player 즉시 로드용 (stems URL만 필요) */
   @Output() stemsReady = new EventEmitter<StemInfo[]>();
-@Output() uploadStarted = new EventEmitter<void>();
-@Output() uploadFinished = new EventEmitter<StemInfo[]>();
-@Output() uploadFailed = new EventEmitter<any>();
+
+  /** 🔥 분석 + 저장 완료 → songs / scene reload 시점 */
+  @Output() processCompleted = new EventEmitter<void>();
+
+  /** 실패 */
+  @Output() uploadFailed = new EventEmitter<any>();
+
+  /* ================= STATE ================= */
 
   file!: File;
 
@@ -26,9 +38,12 @@ export class MusicUploadComponent {
   progressMode: ProgressMode = 'upload';
   progressTimer: any = null;
 
+  /** 백엔드 분석 최대 예상 시간 */
   readonly PROCESSING_TIME_MS = 5 * 60 * 1000;
 
   constructor(private uploadService: MusicUploadService) {}
+
+  /* ================= FILE ================= */
 
   onFileSelected(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -37,33 +52,45 @@ export class MusicUploadComponent {
     }
   }
 
+  /* ================= UPLOAD ================= */
+
   async upload() {
-  if (!this.file || this.loading) return;
+    if (!this.file || this.loading) return;
 
-  this.loading = true;
-  this.progress = 0;
-  this.progressMode = 'upload';
+    this.loading = true;
+    this.progress = 0;
+    this.progressMode = 'upload';
 
-  this.uploadStarted.emit(); // 🔥 Player에게 알림
+    this.uploadStarted.emit();
 
-  try {
-    const res = await this.uploadService.upload(
-      this.file,
-      p => (this.progress = Math.min(90, p * 0.9))
-    );
+    try {
+      /* 1️⃣ Upload */
+      const res = await this.uploadService.upload(
+        this.file,
+        p => (this.progress = Math.min(90, p))
+      );
 
-    this.startProcessingProgress();
+      /* 2️⃣ Processing progress (fake but UX-friendly) */
+      this.startProcessingProgress();
 
-    // 🔥 핵심: 업로드 + 처리 완료 후 Player에 전달
-    this.uploadFinished.emit(res.data.stems);
+      /* 3️⃣ 🔊 Player can load stems immediately */
+      this.stemsReady.emit(res.data.stems);
 
-    this.finishProgress();
-  } catch (e) {
-    this.uploadFailed.emit(e);
-    this.resetProgress();
+      /* 4️⃣ ✅ 분석 + 저장 완료 시점
+       *     - songs reload
+       *     - scene check / create
+       */
+      this.processCompleted.emit();
+
+      this.finishProgress();
+
+    } catch (e) {
+      this.uploadFailed.emit(e);
+      this.resetProgress();
+    }
   }
-}
 
+  /* ================= PROGRESS ================= */
 
   startProcessingProgress() {
     this.progressMode = 'processing';
@@ -79,7 +106,11 @@ export class MusicUploadComponent {
     clearInterval(this.progressTimer);
     this.loading = false;
     this.progressMode = 'done';
-    setTimeout(() => (this.progress = 0), 500);
+
+    setTimeout(() => {
+      this.progress = 0;
+      this.progressMode = 'upload';
+    }, 500);
   }
 
   resetProgress() {

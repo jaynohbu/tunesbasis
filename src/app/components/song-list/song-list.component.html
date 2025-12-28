@@ -1,0 +1,19 @@
+<p-panel header="Songs">
+  <p-listbox
+     [options]="songs || []"
+    optionLabel="originalName"
+    [style]="{ width: '100%', maxHeight: '240px', overflow: 'auto' }"
+    [(ngModel)]="activeSongId"
+  >
+    <ng-template let-song pTemplate="item">
+      <div class="song-row">
+        <span>{{ song.originalName }}</span>
+        <p-button
+          icon="pi pi-play"
+          size="small"
+          (onClick)="load.emit(song)">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-listbox>
+</p-panel>

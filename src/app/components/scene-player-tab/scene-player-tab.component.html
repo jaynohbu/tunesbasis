@@ -1,0 +1,45 @@
+<div class="scene-container">
+
+  <!-- ================= Overlay toggle ================= -->
+  <p-button
+    class="overlay-toggle"
+    icon="pi pi-list"
+    label="Songs"
+    styleClass="p-button-sm p-button-outlined"
+    (onClick)="toggleOverlay()">
+  </p-button>
+
+  <!-- ================= Player ================= -->
+  <music-player [scene]="scene"></music-player>
+
+  <!-- ================= Overlay ================= -->
+  <div class="overlay" *ngIf="overlayOpen">
+
+    <h3>{{ scene.name }}</h3>
+
+    <ul class="song-list">
+      <li
+        *ngFor="let item of scene.items; let i = index"
+        [class.active]="isSelected(i)"
+        (click)="onSelectSong(i)">
+
+        <span class="song-name">
+          {{ item.song.originalName }}
+        </span>
+
+        <!-- Load button (only for selected row) -->
+        <p-button
+          *ngIf="isSelected(i)"
+          label="Load"
+          icon="pi pi-play"
+          class="load-btn"
+          styleClass="p-button-sm p-button-success"
+          (onClick)="onLoadSong(); $event.stopPropagation()">
+        </p-button>
+
+      </li>
+    </ul>
+
+  </div>
+
+</div>

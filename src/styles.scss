@@ -1,20 +1,52 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================
+   PrimeFlex variables
+   ============================================================ */
 
-$gutter: 1rem; //for primeflex grid system
+$gutter: 1rem;
+
+
+/* ============================================================
+   PrimeNG THEME (REQUIRED — MUST COME FIRST)
+   ============================================================ */
+
+/* You may change theme later, but ONE is REQUIRED */
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+
+
+/* ============================================================
+   PrimeNG Core
+   ============================================================ */
+
+@import "primeng/resources/primeng.min.css";
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.scss";
+
+
+/* ============================================================
+   Application Layout (after PrimeNG)
+   ============================================================ */
+
 @import "assets/layout/styles/layout/layout.scss";
 
-/* PrimeNG */
-@import "../node_modules/primeng/resources/primeng.min.css";
-@import "../node_modules/primeflex/primeflex.scss";
-@import "../node_modules/primeicons/primeicons.css";
 
-/* Code Highlight */
-@import "../node_modules/prismjs/themes/prism-coy.css";
+/* ============================================================
+   Demo / Misc
+   ============================================================ */
 
-/* Demos */
 @import "assets/demo/styles/flags/flags.css";
 @import "assets/demo/styles/badges.scss";
 
+
+/* ============================================================
+   Prism (code highlight)
+   ============================================================ */
+
+@import "prismjs/themes/prism-coy.css";
+
+
+/* ============================================================
+   Global typography & helpers
+   ============================================================ */
 
 h1 {
   color: #2c3e50;
@@ -30,12 +62,13 @@ ul {
 }
 
 .section {
-  background: #fff;
+  background: #ffffff;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
 .side-note {
   background: #eef6ff;
   border-left: 5px solid #3498db;
@@ -48,6 +81,7 @@ ul {
   margin-top: 0;
   color: #2c3e50;
 }
+
 .examples {
   background: #fef9e7;
   border-left: 5px solid #f39c12;
@@ -64,4 +98,68 @@ ul {
 .examples h4 {
   margin-bottom: 5px;
   color: #7d6608;
+}
+
+
+/* ============================================================
+   PrimeNG TabView – Professional Borders (FINAL OVERRIDES)
+   ============================================================ */
+
+/* Outer tab container */
+.p-tabview {
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* Tab header bar */
+.p-tabview-nav {
+  background: #f7f8f9;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+/* Remove default spacing */
+.p-tabview-nav li {
+  margin: 0;
+}
+
+/* Tab button */
+.p-tabview-nav li .p-tabview-nav-link {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+
+  border: none;
+  border-right: 1px solid #e2e2e2;
+  background: transparent;
+
+  color: #555555;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+/* Last tab no border */
+.p-tabview-nav li:last-child .p-tabview-nav-link {
+  border-right: none;
+}
+
+/* Hover */
+.p-tabview-nav li .p-tabview-nav-link:hover {
+  background: #eef1f3;
+  color: #222222;
+}
+
+/* Active tab */
+.p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  background: #ffffff;
+  color: #1f1f1f;
+  font-weight: 600;
+  border-bottom: 2px solid #4caf50;
+}
+
+/* Panel area */
+.p-tabview-panels {
+  padding: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e2e2;
 }

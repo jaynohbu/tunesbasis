@@ -23,7 +23,24 @@ export interface SongDTO {
   createdAt: string;
   updatedAt: string;
   audioKey: string;
-  stems: Record<string, string>; // 🔒 IMPORTANT
+  stems: Record<string, string>;
+}
+
+/* ================= SCENE TYPES ================= */
+
+export interface SceneItemDTO {
+  songId: string;
+  order: number;
+  intervalSec: number;
+  soundState?: any;
+}
+
+export interface SceneDTO {
+  sceneId: string;
+  name: string;
+  items: SceneItemDTO[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -48,18 +65,54 @@ export class MusicUploadService {
           const raw = Math.round((evt.loaded / evt.total) * 100);
           const capped = Math.min(raw, 90);
 
-          // 🔒 ensure Angular updates UI
           this.zone.run(() => onProgress(capped));
         }
       }
     );
   }
 
-  /* ================= LIST SONGS ================= */
+  /* ================= SONGS ================= */
 
   listSongs(): Promise<AxiosResponse<SongDTO[]>> {
     return axios.get<SongDTO[]>(
       `${environment.apiBaseUrl}/songs`
+    );
+  }
+
+  /* ================= SCENES ================= */
+
+  listScenes(): Promise<AxiosResponse<SceneDTO[]>> {
+    return axios.get<SceneDTO[]>(
+      `${environment.apiBaseUrl}/scenes`
+    );
+  }
+
+  getScene(sceneId: string): Promise<AxiosResponse<SceneDTO>> {
+    return axios.get<SceneDTO>(
+      `${environment.apiBaseUrl}/scenes/${sceneId}`
+    );
+  }
+
+  createScene(payload: {
+    name: string;
+    items: SceneItemDTO[];
+  }): Promise<AxiosResponse<SceneDTO>> {
+    return axios.post<SceneDTO>(
+      `${environment.apiBaseUrl}/scenes`,
+      payload
+    );
+  }
+
+  updateScene(
+    sceneId: string,
+    payload: {
+      name?: string;
+      items?: SceneItemDTO[];
+    }
+  ): Promise<AxiosResponse<void>> {
+    return axios.put<void>(
+      `${environment.apiBaseUrl}/scenes/${sceneId}`,
+      payload
     );
   }
 }

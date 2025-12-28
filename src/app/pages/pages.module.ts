@@ -6,7 +6,7 @@ import { PagesRoutingModule } from './pages-routing.module';
 import { TabViewModule } from 'primeng/tabview';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { AccordionModule } from 'primeng/accordion';
-       // ✅ ADD
+// ✅ ADD
 import { ProgressBarModule } from 'primeng/progressbar';// ✅ ADD
 import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
@@ -24,6 +24,14 @@ import { MusicalDataComponent } from './musical-data/musical-data.component';
 import { MusicPlayerComponent } from './music-player/music-player.component';
 import { MusicUploadComponent } from '../components/music-upload/music-upload.component';
 import { ToggleButtonModule } from 'primeng/togglebutton';
+import { SongListComponent } from '../components/song-list/song-list.component';
+import { ListboxModule } from 'primeng/listbox';
+import { PanelModule } from 'primeng/panel';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { SceneEditorComponent } from '../components/scene-editor/scene-editor.component';
+import { DropdownModule } from 'primeng/dropdown';
+import { OrderListModule } from 'primeng/orderlist';
+import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-player-tab.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -36,6 +44,10 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
     MusicalDataComponent,
     MusicPlayerComponent,
     MusicUploadComponent,
+    SongListComponent,
+    DashboardComponent,
+    SceneEditorComponent,
+    ScenePlayerTabComponent
   ],
   imports: [
     CommonModule,
@@ -44,8 +56,13 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
     TabViewModule,
     PanelMenuModule,
     AccordionModule,
-    ButtonModule,          // ✅ REQUIRED
-    ProgressBarModule      // ✅ REQUIRED
+    ButtonModule,
+    ProgressBarModule,
+    FormsModule,
+    PanelModule,
+    ListboxModule,
+    DropdownModule,
+    OrderListModule,
   ]
 })
-export class PagesModule {}
+export class PagesModule { }

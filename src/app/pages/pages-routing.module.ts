@@ -9,6 +9,7 @@ import { AlgorythmsComponent } from './algorythms/algorythms.component';
 import { PythonTricksComponent } from './python-tricks/python-tricks.component';
 import { MusicalDataComponent } from './musical-data/musical-data.component';
 import { MusicPlayerComponent } from './music-player/music-player.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -19,8 +20,8 @@ const routes: Routes = [
   { path: 'algorythms', component: AlgorythmsComponent },
   { path: 'python-tricks', component: PythonTricksComponent },
   { path: 'music-data', component: MusicalDataComponent },
-{ path: 'music-player', component: MusicPlayerComponent },
-  
+  { path: 'music-player', component: MusicPlayerComponent },
+  { path: 'dashboard', component: DashboardComponent },
 ];
 
 @NgModule({

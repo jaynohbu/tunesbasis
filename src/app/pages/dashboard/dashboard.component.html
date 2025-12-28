@@ -1,0 +1,21 @@
+<!-- ================= UPLOAD ================= -->
+<music-upload
+  (uploadFinished)="onProcessCompleted()"
+  (uploadFailed)="onUploadFailed($event)">
+</music-upload>
+
+
+<p-tabView [(activeIndex)]="activeSceneIndex">
+
+  <p-tabPanel
+    *ngFor="let scene of scenes; let i = index"
+    [header]="scene.name">
+<scene-player-tab
+  [scene]="scene">
+</scene-player-tab>
+
+
+  </p-tabPanel>
+
+</p-tabView>
+
