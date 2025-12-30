@@ -1,30 +1,52 @@
-.scene-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+/* scene-editor.component.scss */
+
+:host {
+  display: block;
+  height: 100%;
 }
 
-.scene-row {
+.scene-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Title (if any) */
+.scene-editor h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Song list */
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.song-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
 }
 
-.song-name {
-  flex: 1;
-  font-weight: 500;
+.song-list li.active {
+  background: #e8f5ec;
+  border-color: #4caf50;
 }
 
-.interval {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: 120px;
-}
-
-.controls {
-  display: flex;
-  gap: 0.25rem;
+.load-btn {
+  margin-left: 12px;
 }

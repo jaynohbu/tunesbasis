@@ -1,14 +1,21 @@
 <div class="scene-container">
 
-  <!-- ================= Overlay toggle ================= -->
- <!-- Overlay toggle -->
-<p-button
-  class="overlay-toggle"
-  icon="pi pi-list"
-  label="Songs"
-  styleClass="p-button-sm p-button-outlined"
-  (onClick)="overlayOpen = !overlayOpen">
-</p-button>
+  <!-- ================= Scene Actions ================= -->
+  <div class="scene-actions" *ngIf="!overlayOpen">
+    <p-button
+      icon="pi pi-save"
+      label="Update Scene"
+      styleClass="p-button-sm p-button-success"
+      (onClick)="onUpdateScene()">
+    </p-button>
+
+    <p-button
+      icon="pi pi-list"
+      label="Songs"
+      styleClass="p-button-sm p-button-outlined"
+      (onClick)="toggleOverlay()">
+    </p-button>
+  </div>
 
   <!-- ================= Player ================= -->
   <music-player [scene]="scene"></music-player>
@@ -16,31 +23,21 @@
   <!-- ================= Overlay ================= -->
   <div class="overlay" *ngIf="overlayOpen">
 
-    <h3>{{ scene.name }}</h3>
+    <!-- Close button -->
+    <p-button
+      icon="pi pi-times"
+      class="overlay-close"
+      styleClass="p-button-sm p-button-text"
+      (onClick)="toggleOverlay()">
+    </p-button>
 
-    <ul class="song-list">
-      <li
-        *ngFor="let item of scene.items; let i = index"
-        [class.active]="isSelected(i)"
-        (click)="onSelectSong(i)">
-
-        <span class="song-name">
-          {{ item.song.originalName }}
-        </span>
-
-        <!-- Load button appears only for selected row -->
-      <p-button
-  *ngIf="isSelected(i)"
-  label="Load"
-  icon="pi pi-play"
-  class="load-btn"
-  styleClass="p-button-sm p-button-success"
-  (onClick)="onLoadSong(); $event.stopPropagation()">
-</p-button>
-
-
-      </li>
-    </ul>
+    <scene-editor
+      [scene]="scene"
+      [selectedIndex]="selectedIndex"
+      (selectSong)="selectedIndex = $event"
+      (loadSong)="onLoadSong($event)"
+      (sceneChange)="onSceneChange($event)">
+    </scene-editor>
 
   </div>
 

@@ -18,10 +18,10 @@ export class ScenePlayerTabComponent implements AfterViewInit {
 
   @Input() scene!: Scene;
 
-  /** 🔥 emit updated scene to parent */
+  /** emit updated scene to parent */
   @Output() sceneUpdated = new EventEmitter<Scene>();
 
-  /** 🔥 real player instance (child component) */
+  /** real player instance */
   @ViewChild(MusicPlayerComponent)
   player!: MusicPlayerComponent;
 
@@ -32,53 +32,50 @@ export class ScenePlayerTabComponent implements AfterViewInit {
   selectedIndex: number | null = null;
 
   ngAfterViewInit(): void {
-    console.log('[TAB] MusicPlayer bound:', !!this.player);
+    console.log('[ScenePlayerTab] MusicPlayer bound:', !!this.player);
   }
 
-  /* ================= SONG SELECTION ================= */
+  /* ================= SONG LOADING ================= */
 
-  onSelectSong(index: number) {
-    this.selectedIndex = index;
-  }
-
-  isSelected(index: number): boolean {
-    return this.selectedIndex === index;
-  }
-
-  /* ================= LOAD ================= */
-
-  onLoadSong() {
-    if (this.selectedIndex === null || !this.player) {
-      console.warn('[TAB] Cannot load song — player not ready');
+  onLoadSong(index: number) {
+    if (!this.player) {
+      console.warn('[ScenePlayerTab] Cannot load song — player not ready');
       return;
     }
 
-    console.log('[TAB] Load song:', this.selectedIndex);
+    console.log('[ScenePlayerTab] Load song:', index);
 
-    // 🔥 wipe previous song completely
+    this.selectedIndex = index;
+
+    // wipe previous song completely
     this.player.resetPlayer();
 
-    // 🔥 load selected song
-    this.player.loadFromScene(this.selectedIndex);
+    // load selected song
+    this.player.loadFromScene(index);
 
+    // close overlay
     this.overlayOpen = false;
   }
 
-  /* ================= UPDATE SCENE ================= */
+  /* ================= SCENE UPDATE ================= */
 
   onUpdateScene() {
     if (!this.player) {
-      console.warn('[TAB] Cannot update scene — player not ready');
+      console.warn('[ScenePlayerTab] Cannot update scene — player not ready');
       return;
     }
 
-    console.log('[TAB] Update Scene:', this.scene.name);
+    console.log('[ScenePlayerTab] Update Scene:', this.scene.name);
 
-    // 🔥 snapshot from player (already contains live stem state)
+    // snapshot from player (contains live stem state)
     const updatedScene = this.player.captureCurrentSceneState();
 
-    // 🔥 emit upward (parent saves)
+    // emit upward for persistence
     this.sceneUpdated.emit(updatedScene);
+  }
+
+  onSceneChange(scene: Scene) {
+    this.scene = scene;
   }
 
   /* ================= OVERLAY ================= */
