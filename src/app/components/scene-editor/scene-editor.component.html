@@ -1,69 +1,27 @@
-<p-panel header="Scene Editor">
+<div class="overlay">
 
-  <!-- Global interval -->
-  <div class="scene-toolbar">
-    <span>Default interval:</span>
+  <h3>{{ scene.name }}</h3>
 
-    <p-dropdown
-      [options]="intervalOptions"
-      optionLabel="label"
-      optionValue="value"
-      [(ngModel)]="globalInterval">
-    </p-dropdown>
+  <ul class="song-list">
+    <li
+      *ngFor="let item of scene.items; let i = index"
+      [class.active]="isSelected(i)"
+      (click)="onSelect(i)">
 
-    <p-button
-      label="Apply to all"
-      icon="pi pi-check"
-      class="p-ml-2"
-      (onClick)="applyGlobalInterval()">
-    </p-button>
-  </div>
+      <span class="song-name">
+        {{ item.song.originalName }}
+      </span>
 
-  <!-- Scene list -->
-  <p-orderList
-    [value]="scene.items"
-    [dragdrop]="true"
-    listStyle="max-height:300px"
-  >
+      <p-button
+        *ngIf="isSelected(i)"
+        label="Load"
+        icon="pi pi-play"
+        class="load-btn"
+        styleClass="p-button-sm p-button-success"
+        (onClick)="onLoad(i); $event.stopPropagation()">
+      </p-button>
 
-    <ng-template let-item let-i="index" pTemplate="item">
-      <div class="scene-row">
+    </li>
+  </ul>
 
-        <div class="song-name">
-          {{ item.song.originalName }}
-        </div>
-
-        <div class="interval">
-          <input
-            type="number"
-            pInputText
-            [(ngModel)]="item.intervalSec"
-            min="0"
-          />
-          <span class="unit">sec</span>
-        </div>
-
-        <div class="controls">
-          <p-button
-            icon="pi pi-arrow-up"
-            (onClick)="moveUp(i)">
-          </p-button>
-
-          <p-button
-            icon="pi pi-arrow-down"
-            (onClick)="moveDown(i)">
-          </p-button>
-
-          <p-button
-            icon="pi pi-times"
-            severity="danger"
-            (onClick)="remove(i)">
-          </p-button>
-        </div>
-
-      </div>
-    </ng-template>
-
-  </p-orderList>
-
-</p-panel>
+</div>

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MusicUploadService, SongDTO } from 'src/app/services/music-upload.service';
-import { SceneService, SceneDTO } from 'src/app/services/scene.service';
+import { SceneService, SceneDTO, SceneItemDTO } from 'src/app/services/scene.service';
 import { MusicPlayerComponent } from '../music-player/music-player.component';
 import { Scene, SceneSong } from 'src/app/model/scene';
 
@@ -232,6 +232,30 @@ export class DashboardComponent implements OnInit {
   onUploadFailed(err: any) {
     console.error('[UPLOAD] Failed:', err);
   }
+onSceneUpdated(scene: Scene) {
+  if (!scene.sceneId) return;
+
+  const itemsDTO = scene.items.map((item, index) =>
+    this.toSceneItemDTO(item, index)
+  );
+
+  return this.sceneService.updateScene(scene.sceneId, {
+    items: itemsDTO
+  });
+}
+private toSceneItemDTO(
+  item: SceneSong,
+  index: number
+): SceneItemDTO {
+  return {
+    songId: item.song.songId,
+    order: index,
+    intervalSec: item.intervalSec ?? 0,
+    soundState: item.stems   // 🔥 this is your live mix state
+  };
+}
+
+
 
   /* ================= ADD SONGS ================= */
 

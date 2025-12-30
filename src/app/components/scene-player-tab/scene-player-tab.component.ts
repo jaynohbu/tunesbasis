@@ -1,4 +1,11 @@
-import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  ViewChild,
+  AfterViewInit,
+  Output,
+  EventEmitter
+} from '@angular/core';
 import { Scene } from 'src/app/model/scene';
 import { MusicPlayerComponent } from 'src/app/pages/music-player/music-player.component';
 
@@ -11,6 +18,9 @@ export class ScenePlayerTabComponent implements AfterViewInit {
 
   @Input() scene!: Scene;
 
+  /** 🔥 emit updated scene to parent */
+  @Output() sceneUpdated = new EventEmitter<Scene>();
+
   /** 🔥 real player instance (child component) */
   @ViewChild(MusicPlayerComponent)
   player!: MusicPlayerComponent;
@@ -22,7 +32,6 @@ export class ScenePlayerTabComponent implements AfterViewInit {
   selectedIndex: number | null = null;
 
   ngAfterViewInit(): void {
-    // Optional debug
     console.log('[TAB] MusicPlayer bound:', !!this.player);
   }
 
@@ -52,8 +61,24 @@ export class ScenePlayerTabComponent implements AfterViewInit {
     // 🔥 load selected song
     this.player.loadFromScene(this.selectedIndex);
 
-    // Optional UX improvement
     this.overlayOpen = false;
+  }
+
+  /* ================= UPDATE SCENE ================= */
+
+  onUpdateScene() {
+    if (!this.player) {
+      console.warn('[TAB] Cannot update scene — player not ready');
+      return;
+    }
+
+    console.log('[TAB] Update Scene:', this.scene.name);
+
+    // 🔥 snapshot from player (already contains live stem state)
+    const updatedScene = this.player.captureCurrentSceneState();
+
+    // 🔥 emit upward (parent saves)
+    this.sceneUpdated.emit(updatedScene);
   }
 
   /* ================= OVERLAY ================= */

@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { SongDTO } from 'src/app/services/music-upload.service';
-import { Scene, SceneSong, StemSettings } from '../../model/scene';
+import { Scene } from '../../model/scene';
 
 @Component({
   selector: 'scene-editor',
@@ -9,63 +8,23 @@ import { Scene, SceneSong, StemSettings } from '../../model/scene';
 })
 export class SceneEditorComponent {
 
-  @Input() songs: SongDTO[] = [];
+  @Input() scene!: Scene;
+  @Input() selectedIndex: number | null = null;
 
+  @Output() selectSong = new EventEmitter<number>();
+  @Output() loadSong = new EventEmitter<number>();
   @Output() sceneChange = new EventEmitter<Scene>();
 
-  scene: Scene = {
-    name: 'New Scene',
-    items: []
-  };
-
-  intervalOptions = [
-    { label: '10 sec', value: 10 },
-    { label: '30 sec', value: 30 },
-    { label: '1 min', value: 60 },
-    { label: '5 min', value: 300 },
-    { label: '10 min', value: 600 },
-    { label: '30 min', value: 1800 },
-    { label: '1 hour', value: 3600 }
-  ];
-
-  globalInterval = 30;
-
-  addSong(song: SongDTO) {
-    const stems: Record<string, StemSettings> = {};
-
-    // initialize per-stem defaults
-    Object.keys(song.stems ?? {}).forEach(stem => {
-      stems[stem] = {
-        volume: 1,
-        muted: false,
-        pregain: 0.3,
-        compression: 0,
-        tone: 0.7,
-        distortion: 0
-      };
-    });
-
-    this.scene.items.push({
-      song,
-      intervalSec: this.globalInterval,
-      stems
-    });
-
-    this.emit();
+  isSelected(i: number): boolean {
+    return this.selectedIndex === i;
   }
 
-  applyGlobalInterval() {
-    this.scene.items.forEach(i => i.intervalSec = this.globalInterval);
-    this.emit();
+  onSelect(i: number) {
+    this.selectSong.emit(i);
   }
 
-  updateStem(
-    index: number,
-    stem: string,
-    patch: Partial<StemSettings>
-  ) {
-    Object.assign(this.scene.items[index].stems[stem], patch);
-    this.emit();
+  onLoad(i: number) {
+    this.loadSong.emit(i);
   }
 
   moveUp(i: number) {

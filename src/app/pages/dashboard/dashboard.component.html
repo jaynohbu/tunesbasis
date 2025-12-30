@@ -5,17 +5,18 @@
 </music-upload>
 
 
-<p-tabView [(activeIndex)]="activeSceneIndex">
+<p-tabView
+  *ngIf="scenes?.length"
+  [(activeIndex)]="activeSceneIndex">
 
   <p-tabPanel
     *ngFor="let scene of scenes; let i = index"
     [header]="scene.name">
-<scene-player-tab
-  [scene]="scene">
-</scene-player-tab>
 
+    <scene-player-tab   (sceneUpdated)="onSceneUpdated($event)" [scene]="scene"></scene-player-tab>
 
   </p-tabPanel>
 
 </p-tabView>
+
 

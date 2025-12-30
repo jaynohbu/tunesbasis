@@ -1,13 +1,14 @@
 <div class="scene-container">
 
   <!-- ================= Overlay toggle ================= -->
-  <p-button
-    class="overlay-toggle"
-    icon="pi pi-list"
-    label="Songs"
-    styleClass="p-button-sm p-button-outlined"
-    (onClick)="toggleOverlay()">
-  </p-button>
+ <!-- Overlay toggle -->
+<p-button
+  class="overlay-toggle"
+  icon="pi pi-list"
+  label="Songs"
+  styleClass="p-button-sm p-button-outlined"
+  (onClick)="overlayOpen = !overlayOpen">
+</p-button>
 
   <!-- ================= Player ================= -->
   <music-player [scene]="scene"></music-player>
@@ -27,15 +28,16 @@
           {{ item.song.originalName }}
         </span>
 
-        <!-- Load button (only for selected row) -->
-        <p-button
-          *ngIf="isSelected(i)"
-          label="Load"
-          icon="pi pi-play"
-          class="load-btn"
-          styleClass="p-button-sm p-button-success"
-          (onClick)="onLoadSong(); $event.stopPropagation()">
-        </p-button>
+        <!-- Load button appears only for selected row -->
+      <p-button
+  *ngIf="isSelected(i)"
+  label="Load"
+  icon="pi pi-play"
+  class="load-btn"
+  styleClass="p-button-sm p-button-success"
+  (onClick)="onLoadSong(); $event.stopPropagation()">
+</p-button>
+
 
       </li>
     </ul>

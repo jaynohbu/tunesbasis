@@ -22,8 +22,7 @@ type KnobParam = 'pregain' | 'compression' | 'tone' | 'distortion';
 export class MusicPlayerComponent implements OnInit, OnChanges {
 
   @Input() scene!: Scene;
-@Input() activeIndex = 0;
-
+  @Input() activeIndex = 0;
 
   stems: StemInfo[] = [];
 
@@ -36,8 +35,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
     'other'
   ];
 
-  /* ================= AUDIO ================= */
-
   audioCtx = new AudioContext();
   masterGain = this.audioCtx.createGain();
 
@@ -49,8 +46,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
   toneNodes: Record<string, BiquadFilterNode> = {};
   stemGains: Record<string, GainNode> = {};
   distortionNodes: Record<string, WaveShaperNode | null> = {};
-
-  /* ================= UI STATE ================= */
 
   globalVolume = 1;
 
@@ -65,8 +60,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
     distortion: number;
   }> = {};
 
-  /* ================= TRANSPORT ================= */
-
   playing = false;
   startTime = 0;
   offset = 0;
@@ -79,30 +72,33 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
   waveformsDrawn = 0;
   waveformsReady = false;
 
+  private isRestoring = false;
+
   constructor() {
     this.masterGain.connect(this.audioCtx.destination);
   }
 
-  /* ================= INIT ================= */
-
-  ngOnInit() {
-    // ❗ scene 은 비동기로 들어오므로 여기서 로드하지 않음
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
-    
     if (changes['scene'] && this.scene?.items?.length) {
       this.activeIndex = 0;
       this.loadFromScene(0);
     }
   }
 
-  /* ================= SCENE ================= */
+  private normalizeSceneItem(item: any) {
+    if (!item.stems && item.soundState) {
+      item.stems = item.soundState;
+    }
+  }
 
   async loadFromScene(index = 0) {
     if (!this.scene?.items?.length) return;
 
     const item = this.scene.items[index];
+    this.normalizeSceneItem(item);
+
     const song = item.song;
 
     if (!song?.stems || typeof song.stems !== 'object') {
@@ -114,21 +110,17 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
 
     const rawStems = song.stems;
 
-    // ✅ normalize to [{name,url}]
     const stemList: StemInfo[] = Array.isArray(rawStems)
-      ? rawStems
-        .filter(s => s?.name && s?.url)
-        .map(s => ({ name: s.name, url: s.url }))
+      ? rawStems.filter(s => s?.name && s?.url).map(s => ({ name: s.name, url: s.url }))
       : Object.entries(rawStems)
-        .filter(([, url]) => typeof url === 'string')
-        .map(([name, url]) => ({ name, url }));
+          .filter(([, url]) => typeof url === 'string')
+          .map(([name, url]) => ({ name, url }));
 
     this.stems = stemList.sort(
       (a, b) =>
         this.STEM_ORDER.indexOf(a.name) -
         this.STEM_ORDER.indexOf(b.name)
     );
-
 
     await this.loadBuffers();
 
@@ -138,23 +130,53 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
   }
 
   restoreStemSettings(settings: Record<string, StemSettings>) {
+    this.isRestoring = true;
+
     Object.entries(settings).forEach(([stem, cfg]) => {
       if (!this.stemKnobs[stem]) return;
 
       this.stemVolumes[stem] = cfg.volume;
       this.stemMuted[stem] = cfg.muted;
 
-      this.setStemVolume(stem, cfg.volume);
-      if (cfg.muted) this.toggleMute(stem);
+      this.stemKnobs[stem] = {
+        pregain: cfg.pregain,
+        compression: cfg.compression,
+        tone: cfg.tone,
+        distortion: cfg.distortion
+      };
 
-      this.setKnob(stem, 'pregain', cfg.pregain);
-      this.setKnob(stem, 'compression', cfg.compression);
-      this.setKnob(stem, 'tone', cfg.tone);
-      this.setKnob(stem, 'distortion', cfg.distortion);
+      this.stemGains[stem].gain.value =
+        cfg.muted ? 0 : cfg.volume;
+
+      this.pregainNodes[stem].gain.value =
+        0.2 + cfg.pregain * 3.8;
+
+      const c = this.compressorNodes[stem];
+      c.threshold.value = -60 + cfg.compression * 60;
+      c.ratio.value = 1 + cfg.compression * 19;
+
+      this.toneNodes[stem].frequency.value =
+        300 + cfg.tone * 9700;
+
+      if (this.isDistortable(stem)) {
+        let ws = this.distortionNodes[stem];
+        if (!ws) {
+          ws = this.audioCtx.createWaveShaper();
+          this.distortionNodes[stem] = ws;
+          this.toneNodes[stem].disconnect();
+          this.toneNodes[stem].connect(ws);
+          ws.connect(this.stemGains[stem]);
+        }
+        ws.curve = this.makeDistortionCurve(cfg.distortion * 50);
+      }
     });
+
+    this.isRestoring = false;
   }
 
   persistStemState(stem: string) {
+    if (this.isRestoring) return;
+
     const item = this.scene.items[this.activeIndex];
     if (!item.stems) item.stems = {};
 
@@ -168,7 +190,9 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
     };
   }
 
-  /* ================= LOAD AUDIO ================= */
+  captureCurrentSceneState(): Scene {
+    return JSON.parse(JSON.stringify(this.scene));
+  }
 
   async loadBuffers() {
     this.maxDuration = 0;
@@ -207,17 +231,11 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
         distortion: 0
       };
 
-      this.setKnob(stem.name, 'pregain', 0.3);
-      this.setKnob(stem.name, 'compression', 0);
-      this.setKnob(stem.name, 'tone', 0.7);
-
       requestAnimationFrame(() =>
         this.drawWaveform(stem.name, buffer)
       );
     }
   }
-
-  /* ================= PLAYBACK ================= */
 
   togglePlay() {
     this.playing ? this.pause() : this.play();
@@ -250,12 +268,10 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
 
   stopSources() {
     Object.values(this.sources).forEach(s => {
-      try { s?.stop(); } catch { }
+      try { s?.stop(); } catch {}
     });
     this.sources = {};
   }
-
-  /* ================= MIX ================= */
 
   setGlobalVolume(v: number) {
     this.globalVolume = Number(v);
@@ -278,8 +294,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
 
     this.persistStemState(name);
   }
-
-  /* ================= KNOBS ================= */
 
   isDistortable(name: string) {
     return name === 'guitar' || name === 'piano';
@@ -317,8 +331,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
     this.persistStemState(stem);
   }
 
-  /* ================= CURSOR ================= */
-
   startCursorLoop() {
     const tick = () => {
       if (!this.playing) return;
@@ -341,8 +353,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
       this.cursorRaf = null;
     }
   }
-
-  /* ================= WAVEFORM ================= */
 
   drawWaveform(name: string, buffer: AudioBuffer) {
     const canvas = document.querySelector<HTMLCanvasElement>(
@@ -410,8 +420,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
     }
     return curve;
   }
-
-  /* ================= PUBLIC API ================= */
 
   loadScene(scene: Scene) {
     this.scene = scene;
@@ -487,35 +495,29 @@ export class MusicPlayerComponent implements OnInit, OnChanges {
   }
 
   resetPlayer() {
-  // 🔴 STOP EVERYTHING FIRST
-  this.stopSources();
-  this.stopCursorLoop();        // ✅ MISSING
+    this.stopSources();
+    this.stopCursorLoop();
 
-  // 🔴 RESET TRANSPORT (THIS WAS THE BUG)
-  this.playing = false;         // ✅ MISSING
-  this.startTime = 0;           // ✅ MISSING
-  this.offset = 0;              // (already present, keep)
-  this.cursorPercent = 0;       // (already present, keep)
+    this.playing = false;
+    this.startTime = 0;
+    this.offset = 0;
+    this.cursorPercent = 0;
 
-  // 🔴 RESET AUDIO GRAPH (original – untouched)
-  this.buffers = {};
-  this.sources = {};
-  this.pregainNodes = {};
-  this.compressorNodes = {};
-  this.toneNodes = {};
-  this.stemGains = {};
-  this.distortionNodes = {};
+    this.buffers = {};
+    this.sources = {};
+    this.pregainNodes = {};
+    this.compressorNodes = {};
+    this.toneNodes = {};
+    this.stemGains = {};
+    this.distortionNodes = {};
 
-  // 🔴 RESET UI STATE (original – untouched)
-  this.stemVolumes = {};
-  this.stemMuted = {};
-  this.stemBypassLED = {};
-  this.stemKnobs = {};
+    this.stemVolumes = {};
+    this.stemMuted = {};
+    this.stemBypassLED = {};
+    this.stemKnobs = {};
 
-  // 🔴 RESET WAVEFORM STATE (original – untouched)
-  this.maxDuration = 0;
-  this.waveformsDrawn = 0;
-  this.waveformsReady = false;
-}
-
+    this.maxDuration = 0;
+    this.waveformsDrawn = 0;
+    this.waveformsReady = false;
+  }
 }
