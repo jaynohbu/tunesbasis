@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Scene, SceneSong, StemSettings } from 'src/app/model/scene';
 import { MusicPlayerEngine, StemInfo, KnobParam } from './music-player.engine';
+import { CachedSong } from 'src/app/services/audio-cache.service';
 
 @Component({
   selector: 'music-player',
@@ -165,17 +166,33 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     );
 
     try {
-      await this.engine.loadBuffers(this.stems);
+      const cachedSong = await this.engine.loadBuffers(this.stems, song.songId, song.originalName);
 
       console.log('[MusicPlayer.loadFromScene] Buffers loaded, drawing waveforms...');
 
-      // Draw waveforms after buffers are loaded
-      for (const stem of this.stems) {
-        const buffer = this.engine.getBuffer(stem.name);
-        if (buffer) {
+      if (cachedSong) {
+        // Use cached waveform peaks for instant rendering
+        console.log('[MusicPlayer.loadFromScene] Using cached waveform peaks');
+        for (const cachedStem of cachedSong.stems) {
           requestAnimationFrame(() =>
-            this.drawWaveform(stem.name, buffer)
+            this.drawWaveformFromPeaks(cachedStem.name, cachedStem.waveformPeaks)
           );
+        }
+
+        // Start background upgrade to full quality
+        console.log('[MusicPlayer.loadFromScene] Starting background upgrade to full quality...');
+        this.engine.upgradeToFullQuality(this.stems).then(() => {
+          console.log('[MusicPlayer.loadFromScene] ✨ Upgraded to full quality');
+        });
+      } else {
+        // Draw waveforms from buffers (first load)
+        for (const stem of this.stems) {
+          const buffer = this.engine.getBuffer(stem.name);
+          if (buffer) {
+            requestAnimationFrame(() =>
+              this.drawWaveform(stem.name, buffer)
+            );
+          }
         }
       }
 
@@ -210,6 +227,20 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   captureCurrentSceneState(): Scene {
+    // Before capturing, ensure ALL current stem settings are saved to the scene
+    const item = this.scene.items[this.activeIndex];
+    if (item) {
+      if (!item.stems) {
+        item.stems = {};
+      }
+
+      // Capture all current stem settings from engine
+      const allSettings = this.engine.getAllStemSettings();
+      Object.keys(allSettings).forEach(stemName => {
+        item.stems![stemName] = allSettings[stemName];
+      });
+    }
+
     return JSON.parse(JSON.stringify(this.scene));
   }
 
@@ -321,6 +352,43 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  drawWaveformFromPeaks(name: string, peaks: { min: number; max: number }[]) {
+    const canvas = document.querySelector<HTMLCanvasElement>(
+      `canvas[data-stem="${name}"]`
+    );
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (!w || !h) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#4caf50';
+
+    const mid = h / 2;
+    const xScale = w / peaks.length;
+
+    for (let x = 0; x < peaks.length; x++) {
+      const peak = peaks[x];
+      const xPos = Math.floor(x * xScale);
+      ctx.fillRect(xPos, mid + peak.min * mid, Math.max(1, Math.ceil(xScale)), Math.max(1, (peak.max - peak.min) * mid));
+    }
+
+    this.waveformsDrawn++;
+    if (this.waveformsDrawn === this.stems.length) {
+      this.waveformsReady = true;
+    }
+  }
+
   loadScene(scene: Scene) {
     console.log('[MusicPlayer.loadScene] Called from external source', {
       sceneName: scene.name,
@@ -374,6 +442,22 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   resetKnob(stem: string, param: KnobParam) {
     this.engine.resetKnob(stem, param);
     this.persistStemState(stem);
+  }
+
+  resetAllKnobs(stem: string) {
+    this.engine.resetKnob(stem, 'pregain');
+    this.engine.resetKnob(stem, 'compression');
+    this.engine.resetKnob(stem, 'tone');
+    if (this.isDistortable(stem)) {
+      this.engine.resetKnob(stem, 'distortion');
+    }
+    this.persistStemState(stem);
+  }
+
+  resetAllStemsAllKnobs() {
+    for (const stem of this.stems) {
+      this.resetAllKnobs(stem.name);
+    }
   }
 
   toggleBypassLED(stem: string) {

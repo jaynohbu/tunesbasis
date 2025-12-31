@@ -15,6 +15,14 @@
     <input type="range" min="0" max="1" step="0.01" [value]="globalVolume"
       (input)="setGlobalVolume($any($event.target).value)" />
   </label>
+
+  <p-button
+    label="Reset All Effects"
+    icon="pi pi-replay"
+    severity="warning"
+    size="small"
+    (onClick)="resetAllStemsAllKnobs()">
+  </p-button>
 </div>
 
 <!-- ================= STEM TRACKS ================= -->
@@ -94,6 +102,17 @@
         <span>Bypass</span>
       </div>
     </ng-container>
+
+    <!-- RESET ALL KNOBS -->
+    <div class="reset-all-group">
+      <p-button
+        label="Reset All"
+        icon="pi pi-replay"
+        severity="secondary"
+        size="small"
+        (onClick)="resetAllKnobs(stem.name)">
+      </p-button>
+    </div>
 
   </div>
 </div>
