@@ -39,11 +39,14 @@ export class ScenePlayerTabComponent implements AfterViewInit {
 
   onLoadSong(index: number) {
     if (!this.player) {
-      console.warn('[ScenePlayerTab] Cannot load song — player not ready');
+      console.warn('[ScenePlayerTab.onLoadSong] Cannot load song — player not ready');
       return;
     }
 
-    console.log('[ScenePlayerTab] Load song:', index);
+    console.log('[ScenePlayerTab.onLoadSong] User selected song at index:', index, {
+      sceneName: this.scene?.name,
+      songName: this.scene?.items[index]?.song?.originalName
+    });
 
     this.selectedIndex = index;
 
@@ -61,11 +64,11 @@ export class ScenePlayerTabComponent implements AfterViewInit {
 
   onUpdateScene() {
     if (!this.player) {
-      console.warn('[ScenePlayerTab] Cannot update scene — player not ready');
+      console.warn('[ScenePlayerTab.onUpdateScene] Cannot update scene — player not ready');
       return;
     }
 
-    console.log('[ScenePlayerTab] Update Scene:', this.scene.name);
+    console.log('[ScenePlayerTab.onUpdateScene] User clicked Update Scene:', this.scene.name);
 
     // snapshot from player (contains live stem state)
     const updatedScene = this.player.captureCurrentSceneState();
