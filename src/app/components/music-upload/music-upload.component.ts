@@ -95,17 +95,19 @@ export class MusicUploadComponent {
         this.songName.trim()
       );
 
-      /* 2️⃣ Processing progress (fake but UX-friendly) */
-      this.startProcessingProgress();
+      /* 2️⃣ Check if processing is complete or still ongoing */
+      if (res.data.status === 'processing') {
+        // Backend is processing in background - poll for completion
+        this.startProcessingProgress();
 
-      /* 3️⃣ 🔊 Player can load stems immediately */
-      this.stemsReady.emit(res.data.stems);
-
-      /* 4️⃣ ✅ 분석 + 저장 완료 시점
-       *     - songs reload
-       *     - scene check / create
-       */
-      this.processCompleted.emit();
+        const songId = res.data.songId;
+        await this.pollForSongCompletion(songId);
+      } else if (res.data.stems) {
+        // Old behavior - stems are ready immediately
+        this.startProcessingProgress();
+        this.stemsReady.emit(res.data.stems);
+        this.processCompleted.emit();
+      }
 
       this.finishProgress();
 
@@ -116,6 +118,45 @@ export class MusicUploadComponent {
       this.uploadFailed.emit(e);
       this.resetProgress();
     }
+  }
+
+  /* ================= POLLING ================= */
+
+  async pollForSongCompletion(songId: string) {
+    const maxAttempts = 60; // Poll for up to 5 minutes (every 5 seconds)
+    const pollInterval = 5000; // 5 seconds
+
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+      try {
+        // Fetch all songs to check status
+        const songsResponse = await this.uploadService.listSongs();
+        const song = songsResponse.data.find((s: any) => s.songId === songId);
+
+        if (song && song.status === 'ready' && song.stems) {
+          // Processing complete - emit stems
+          const stems = Object.entries(song.stems).map(([name, url]) => ({
+            name,
+            url: url as string
+          }));
+
+          this.stemsReady.emit(stems);
+          this.processCompleted.emit();
+          return;
+        } else if (song && song.status === 'failed') {
+          throw new Error('Backend processing failed');
+        }
+        // Otherwise, status is still 'processing' - continue polling
+      } catch (error) {
+        console.error('Error polling song status:', error);
+        // Continue polling even if one request fails
+      }
+    }
+
+    // Timeout - show completion anyway
+    console.warn('Polling timed out, processing may still be ongoing');
+    this.processCompleted.emit();
   }
 
   /* ================= PROGRESS ================= */

@@ -4,11 +4,13 @@ import { environment } from '../../environments/environment';
 
 /* ================= API TYPES ================= */
 
-/** Upload API response (unchanged behavior) */
+/** Upload API response */
 export interface UploadResponse {
   success: boolean;
   songId: string;
-  stems: {
+  status?: string; // 'processing', 'ready', 'failed'
+  message?: string;
+  stems?: {
     name: string;
     url: string;
   }[];
@@ -51,32 +53,67 @@ export class MusicUploadService {
 
   /* ================= UPLOAD ================= */
 
-  upload(
+  async upload(
     file: File,
     onProgress: (percent: number) => void,
     songName?: string
-  ) {
-    const form = new FormData();
-    form.append('file', file);
-    if (songName) {
-      form.append('songName', songName);
-    }
+  ): Promise<AxiosResponse<UploadResponse>> {
+    try {
+      // Step 1: Get presigned URL from backend
+      this.zone.run(() => onProgress(5));
 
-    return axios.post<UploadResponse>(
-      `${environment.apiBaseUrl}/upload`,
-      form,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const presignedResponse = await axios.get<{
+        songId: string;
+        presignedUrl: string;
+        s3Key: string;
+        expiresIn: number;
+      }>(`${environment.apiBaseUrl}/upload/presigned-url`, {
+        params: {
+          fileName: file.name,
+          contentType: file.type || 'audio/wav',
+          songName: songName,
+        },
+      });
+
+      const { songId, presignedUrl, s3Key } = presignedResponse.data;
+
+      // Step 2: Upload file directly to S3 using presigned URL
+      this.zone.run(() => onProgress(10));
+
+      await axios.put(presignedUrl, file, {
+        headers: {
+          'Content-Type': file.type || 'audio/wav',
+        },
         onUploadProgress: (evt) => {
           if (!evt.total) return;
 
-          const raw = Math.round((evt.loaded / evt.total) * 100);
-          const capped = Math.min(raw, 90);
+          // Map S3 upload progress to 10-80%
+          const s3Progress = Math.round((evt.loaded / evt.total) * 100);
+          const mappedProgress = 10 + Math.round(s3Progress * 0.7);
 
-          this.zone.run(() => onProgress(capped));
+          this.zone.run(() => onProgress(mappedProgress));
+        },
+      });
+
+      // Step 3: Notify backend to process the uploaded file
+      this.zone.run(() => onProgress(85));
+
+      const completeResponse = await axios.post<UploadResponse>(
+        `${environment.apiBaseUrl}/upload/complete`,
+        {
+          songId,
+          s3Key,
+          songName,
         }
-      }
-    );
+      );
+
+      this.zone.run(() => onProgress(100));
+
+      return completeResponse;
+    } catch (error) {
+      console.error('[UPLOAD] Failed:', error);
+      throw error;
+    }
   }
 
   /* ================= SONGS ================= */

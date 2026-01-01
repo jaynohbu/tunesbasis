@@ -218,9 +218,11 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
 
-      if (item.stems) {
-        console.log('[MusicPlayer.loadFromScene] Restoring stem settings...');
+      if (item.stems && Object.keys(item.stems).length > 0) {
+        console.log('[MusicPlayer.loadFromScene] Restoring stem settings...', Object.keys(item.stems));
         this.restoreStemSettings(item.stems);
+      } else {
+        console.log('[MusicPlayer.loadFromScene] No saved settings - using engine defaults');
       }
 
       console.log('[MusicPlayer.loadFromScene] ✅ Load complete');

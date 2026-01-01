@@ -38,6 +38,11 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# SSH Keys (NEVER COMMIT!)
+*.pem
+*.key
+blog-lecture.pem
+
 # Compiled files
 layout.css
 src/assets/demo/styles/badges.css

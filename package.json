@@ -5,8 +5,13 @@
         "ng": "ng",
         "start": "ng serve",
         "build": "ng build",
+        "build:dev": "ng build --configuration=dev",
+        "build:prod": "ng build --configuration=production",
         "watch": "ng build --watch --configuration development",
-        "test": "ng test"
+        "test": "ng test",
+        "deploy:dev": "./deploy-dev-quick.sh",
+        "deploy:prod": "./deploy-prod.sh",
+        "deploy:full": "./deploy-frontend.sh"
     },
     "private": true,
     "dependencies": {
