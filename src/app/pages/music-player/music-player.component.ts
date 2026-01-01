@@ -19,8 +19,12 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() scene!: Scene;
   @Input() activeIndex = 0;
+  @Input() isTabActive = false;
 
   stems: StemInfo[] = [];
+
+  /* ================= LOCALSTORAGE KEYS ================= */
+  private readonly STORAGE_KEY_SONG_INDEX = 'tunesbasis.activeSongIndex';
 
   private readonly STEM_ORDER = [
     'drums',
@@ -77,22 +81,39 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['scene'] && this.scene?.items?.length) {
-      console.log('[MusicPlayer.ngOnChanges] Scene input changed', {
-        firstChange: changes['scene'].firstChange,
-        sceneName: this.scene.name,
-        itemCount: this.scene.items.length,
-        isLoading: this.isLoading
+    // Log all changes for debugging
+    if (changes['scene']) {
+      console.log(`[MusicPlayer.ngOnChanges] scene changed for "${this.scene?.name}"`, {
+        hasItems: !!this.scene?.items?.length,
+        itemCount: this.scene?.items?.length || 0,
+        isTabActive: this.isTabActive,
+        stemsLength: this.stems?.length || 0
       });
+    }
 
-      // Only react to actual scene changes, not initial binding
-      if (changes['scene'].firstChange ||
-          changes['scene'].currentValue !== changes['scene'].previousValue) {
-        this.activeIndex = 0;
-        this.loadFromScene(0);
-      } else {
-        console.log('[MusicPlayer.ngOnChanges] Ignoring - same scene reference');
-      }
+    if (changes['isTabActive']) {
+      console.log(`[MusicPlayer.ngOnChanges] isTabActive changed for "${this.scene?.name}"`, {
+        previousValue: changes['isTabActive'].previousValue,
+        currentValue: changes['isTabActive'].currentValue,
+        hasSceneData: !!this.scene?.items?.length,
+        stemsLength: this.stems?.length || 0
+      });
+    }
+
+    // Try to load if conditions are met (check on ANY change)
+    if (this.isTabActive && this.stems?.length === 0 && this.scene?.items?.length) {
+      const restoredIndex = this.restoreActiveSongIndex(this.scene);
+      this.activeIndex = restoredIndex;
+      console.log(`[MusicPlayer.ngOnChanges] ✅ All conditions met - loading scene "${this.scene.name}" at index ${restoredIndex}`);
+      this.loadFromScene(restoredIndex);
+      return; // Exit early after triggering load
+    }
+
+    // Handle tab deactivation (stop playback)
+    if (changes['isTabActive'] && !this.isTabActive && this.engine.isPlaying()) {
+      console.log(`[MusicPlayer.ngOnChanges] Tab became inactive - stopping playback for "${this.scene?.name}"`);
+      this.engine.togglePlay();
+      this.stopCursorLoop();
     }
   }
 
@@ -129,6 +150,10 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
     this.isLoading = true;
     console.log('[MusicPlayer.loadFromScene] 🔒 Lock acquired, starting load...');
+
+    // Update activeIndex and save to localStorage
+    this.activeIndex = index;
+    this.saveActiveSongIndex();
 
     const item = this.scene.items[index];
     this.normalizeSceneItem(item);
@@ -179,11 +204,8 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
           );
         }
 
-        // Start background upgrade to full quality
-        console.log('[MusicPlayer.loadFromScene] Starting background upgrade to full quality...');
-        this.engine.upgradeToFullQuality(this.stems).then(() => {
-          console.log('[MusicPlayer.loadFromScene] ✨ Upgraded to full quality');
-        });
+        // Note: Streaming upgrade happens automatically when user presses play (500ms delay)
+        console.log('[MusicPlayer.loadFromScene] Ready for playback (will stream on play)');
       } else {
         // Draw waveforms from buffers (first load)
         for (const stem of this.stems) {
@@ -400,13 +422,13 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
       console.warn('[MusicPlayer.loadScene] ⚠️ BLOCKED - Already loading, updating scene reference only');
       // Just update the scene reference, don't load yet
       this.scene = scene;
-      this.activeIndex = 0;
+      this.activeIndex = this.restoreActiveSongIndex(scene);
       return;
     }
 
     this.scene = scene;
-    this.activeIndex = 0;
-    this.loadFromScene(0);
+    this.activeIndex = this.restoreActiveSongIndex(scene);
+    this.loadFromScene(this.activeIndex);
   }
 
   seekFromWave(e: MouseEvent) {
@@ -473,5 +495,32 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     this.waveformsDrawn = 0;
     this.waveformsReady = false;
     this.stems = [];
+  }
+
+  /* ================= LOCALSTORAGE PERSISTENCE ================= */
+
+  private restoreActiveSongIndex(scene: Scene): number {
+    const storageKey = this.getStorageKey(scene);
+    const stored = localStorage.getItem(storageKey);
+    if (stored !== null) {
+      const index = parseInt(stored, 10);
+      if (!isNaN(index) && index >= 0 && index < scene.items.length) {
+        console.log(`[STORAGE] Restored activeSongIndex for scene "${scene.name}":`, index);
+        return index;
+      }
+    }
+    return 0; // Default to first song
+  }
+
+  private saveActiveSongIndex(): void {
+    if (!this.scene) return;
+    const storageKey = this.getStorageKey(this.scene);
+    localStorage.setItem(storageKey, this.activeIndex.toString());
+    console.log(`[STORAGE] Saved activeSongIndex for scene "${this.scene.name}":`, this.activeIndex);
+  }
+
+  private getStorageKey(scene: Scene): string {
+    // Use sceneId to create unique storage key for each scene
+    return `${this.STORAGE_KEY_SONG_INDEX}.${scene.sceneId}`;
   }
 }

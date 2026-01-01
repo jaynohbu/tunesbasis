@@ -14,6 +14,7 @@ export class SceneEditorComponent {
   @Output() selectSong = new EventEmitter<number>();
   @Output() loadSong = new EventEmitter<number>();
   @Output() sceneChange = new EventEmitter<Scene>();
+  @Output() copyAsNewScene = new EventEmitter<Scene>();
 
   isSelected(i: number): boolean {
     return this.selectedIndex === i;
@@ -44,6 +45,11 @@ export class SceneEditorComponent {
   remove(i: number) {
     this.scene.items.splice(i, 1);
     this.emit();
+  }
+
+  onCopyAsNewScene() {
+    console.log('[SceneEditor.onCopyAsNewScene] User clicked Copy as New Scene for:', this.scene.name);
+    this.copyAsNewScene.emit(this.scene);
   }
 
   private emit() {

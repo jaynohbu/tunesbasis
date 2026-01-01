@@ -7,13 +7,19 @@
 
 <p-tabView
   *ngIf="scenes?.length"
-  [(activeIndex)]="activeSceneIndex">
+  [(activeIndex)]="activeSceneIndex"
+  (onChange)="onSceneTabChange($event.index)">
 
   <p-tabPanel
     *ngFor="let scene of scenes; let i = index"
     [header]="scene.name">
 
-    <scene-player-tab   (sceneUpdated)="onSceneUpdated($event)" [scene]="scene"></scene-player-tab>
+    <scene-player-tab
+      [scene]="scene"
+      [isActive]="i === activeSceneIndex"
+      (sceneUpdated)="onSceneUpdated($event)"
+      (sceneCopied)="onSceneCopied($event)">
+    </scene-player-tab>
 
   </p-tabPanel>
 

@@ -16,13 +16,26 @@ export interface StemSettings {
   distortion: number;
 }
 
+export type PlaybackMode = 'PREVIEW' | 'STREAMING';
+
 export class MusicPlayerEngine {
 
   private audioCtx: AudioContext;
   private masterGain: GainNode;
 
+  // Dual playback architecture
+  private playbackMode: PlaybackMode = 'PREVIEW';
+
+  // Cache-based (preview) sources
   private buffers: Record<string, AudioBuffer> = {};
   private sources: Record<string, AudioBufferSourceNode | null> = {};
+  private cacheGains: Record<string, GainNode> = {};
+
+  // Stream-based (high-quality) sources
+  private streamAudioElements: Record<string, HTMLAudioElement> = {};
+  private streamMediaSources: Record<string, MediaElementAudioSourceNode> = {};
+  private streamGains: Record<string, GainNode> = {};
+  private streamUrls: Record<string, string> = {};
 
   private pregainNodes: Record<string, GainNode> = {};
   private compressorNodes: Record<string, DynamicsCompressorNode> = {};
@@ -108,6 +121,11 @@ export class MusicPlayerEngine {
 
     console.log('[MusicPlayerEngine] Loading buffers for stems:', stems.map(s => s.name));
 
+    // Store stream URLs for later high-quality playback
+    stems.forEach(stem => {
+      this.streamUrls[stem.name] = stem.url;
+    });
+
     // Check cache if songId is provided
     let cachedSong: CachedSong | null = null;
     if (songId) {
@@ -164,39 +182,142 @@ export class MusicPlayerEngine {
   }
 
   /**
-   * Upgrade compressed buffers to full quality in background
-   * This allows seamless quality improvement while playing
+   * Upgrade to streaming mode (high-quality HTML5 Audio)
+   * Uses seamless crossfade to switch from cached to streamed audio
    */
-  async upgradeToFullQuality(stems: StemInfo[]): Promise<void> {
-    console.log('[MusicPlayerEngine] 📡 Starting background upgrade to full quality...');
+  private async upgradeToStreaming(): Promise<void> {
+    if (this.playbackMode === 'STREAMING') {
+      console.log('[MusicPlayerEngine] Already in streaming mode');
+      return;
+    }
 
-    const wasPlaying = this.playing;
-    const currentTime = wasPlaying ? this.getCurrentTime() : 0;
+    console.log('[MusicPlayerEngine] 📡 Starting streaming upgrade...');
 
-    for (const stem of stems) {
+    const targetTime = this.getCurrentTime();
+    const allAudioElements: HTMLAudioElement[] = [];
+
+    // Create all audio elements first
+    for (const [name, url] of Object.entries(this.streamUrls)) {
       try {
-        console.log(`[MusicPlayerEngine] Upgrading ${stem.name} to full quality...`);
-        const arr = await fetch(stem.url).then(r => r.arrayBuffer());
-        const buffer = await this.audioCtx.decodeAudioData(arr);
+        const audio = new Audio(url);
+        audio.crossOrigin = 'anonymous';
+        audio.preload = 'auto';
 
-        // Replace the compressed buffer with full quality
-        this.buffers[stem.name] = buffer;
-        this.maxDuration = Math.max(this.maxDuration, buffer.duration);
-
-        console.log(`[MusicPlayerEngine] ✅ Upgraded ${stem.name} to full quality (${buffer.duration.toFixed(2)}s)`);
-
-        // If playing, restart playback with new buffer to seamlessly swap
-        if (wasPlaying) {
-          this.pause();
-          this.offset = currentTime;
-          this.play();
-        }
+        this.streamAudioElements[name] = audio;
+        allAudioElements.push(audio);
       } catch (error) {
-        console.error(`[MusicPlayerEngine] Failed to upgrade ${stem.name}:`, error);
+        console.error(`[MusicPlayerEngine] Failed to create audio element for ${name}:`, error);
       }
     }
 
-    console.log('[MusicPlayerEngine] ✨ Background upgrade complete');
+    // Wait for all audio to be ready to play
+    await Promise.all(
+      allAudioElements.map(audio =>
+        new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            audio.removeEventListener('canplaythrough', onReady);
+            audio.removeEventListener('error', onError);
+            reject(new Error('Audio load timeout'));
+          }, 10000); // 10 second timeout
+
+          const onReady = () => {
+            clearTimeout(timeout);
+            audio.removeEventListener('canplaythrough', onReady);
+            audio.removeEventListener('error', onError);
+            resolve();
+          };
+
+          const onError = () => {
+            clearTimeout(timeout);
+            audio.removeEventListener('canplaythrough', onReady);
+            audio.removeEventListener('error', onError);
+            reject(new Error('Audio load error'));
+          };
+
+          audio.addEventListener('canplaythrough', onReady);
+          audio.addEventListener('error', onError);
+        })
+      )
+    );
+
+    // All audio ready - now set time and connect in sync
+    for (const [name, audio] of Object.entries(this.streamAudioElements)) {
+      try {
+        // Set playback position AFTER loading
+        audio.currentTime = targetTime;
+
+        // Create Web Audio source
+        const mediaSource = this.audioCtx.createMediaElementSource(audio);
+        mediaSource.connect(this.streamGains[name]);
+        this.streamMediaSources[name] = mediaSource;
+
+        console.log(`[MusicPlayerEngine] ✅ Stream ready for ${name} at ${targetTime.toFixed(2)}s`);
+      } catch (error) {
+        console.error(`[MusicPlayerEngine] Failed to setup stream for ${name}:`, error);
+      }
+    }
+
+    // Start all streams together if playing
+    if (this.playing) {
+      // Use Promise.all to start all at the exact same time
+      await Promise.all(
+        Object.values(this.streamAudioElements).map(audio => audio.play())
+      );
+    }
+
+    // Perform seamless crossfade (80ms)
+    this.crossfadeToStreaming();
+  }
+
+  /**
+   * Seamless crossfade from cache to stream
+   * No clicks, no gaps, time-aligned
+   */
+  private crossfadeToStreaming(): void {
+    const now = this.audioCtx.currentTime;
+    const fadeDuration = 0.08; // 80ms
+
+    console.log('[MusicPlayerEngine] 🎚️ Crossfading cache → stream...');
+
+    for (const name of Object.keys(this.cacheGains)) {
+      // Fade out cache
+      this.cacheGains[name].gain.linearRampToValueAtTime(0, now + fadeDuration);
+
+      // Fade in stream
+      this.streamGains[name].gain.linearRampToValueAtTime(1, now + fadeDuration);
+    }
+
+    this.playbackMode = 'STREAMING';
+    console.log('[MusicPlayerEngine] ✨ Now in STREAMING mode');
+  }
+
+  /**
+   * Crossfade back to cache (for scrubbing)
+   */
+  private crossfadeToPreview(): void {
+    const now = this.audioCtx.currentTime;
+    const fadeDuration = 0.05; // 50ms (faster for scrubbing)
+
+    console.log('[MusicPlayerEngine] 🎚️ Crossfading stream → cache...');
+
+    for (const name of Object.keys(this.cacheGains)) {
+      // Fade in cache
+      this.cacheGains[name].gain.linearRampToValueAtTime(1, now + fadeDuration);
+
+      // Fade out stream
+      this.streamGains[name].gain.linearRampToValueAtTime(0, now + fadeDuration);
+    }
+
+    this.playbackMode = 'PREVIEW';
+    console.log('[MusicPlayerEngine] ✨ Now in PREVIEW mode');
+  }
+
+  /**
+   * OLD: Upgrade compressed buffers to full quality (DEPRECATED - use streaming instead)
+   */
+  async upgradeToFullQuality(stems: StemInfo[]): Promise<void> {
+    console.log('[MusicPlayerEngine] ⚠️ upgradeToFullQuality is deprecated, use streaming mode');
+    // Keep for backward compatibility but don't use
   }
 
   /**
@@ -240,18 +361,40 @@ export class MusicPlayerEngine {
 
   /**
    * Create audio nodes for a stem (extracted for reuse)
+   *
+   * Signal flow (dual-playback):
+   *
+   * CachedSource ──> cacheGain ──┐
+   *                               ├──> pregain ──> comp ──> tone ──> stemGain ──> masterGain
+   * StreamSource ──> streamGain ──┘
    */
   private createAudioNodesForStem(stemName: string): void {
+    // Create effect chain
     const pregain = this.audioCtx.createGain();
     const comp = this.audioCtx.createDynamicsCompressor();
     const tone = this.audioCtx.createBiquadFilter();
     const gain = this.audioCtx.createGain();
 
+    // Create dual-source gains
+    const cacheGain = this.audioCtx.createGain();
+    const streamGain = this.audioCtx.createGain();
+
+    // Connect dual sources to effect chain
+    cacheGain.connect(pregain);
+    streamGain.connect(pregain);
+
+    // Connect effect chain
     pregain.connect(comp);
     comp.connect(tone);
     tone.connect(gain);
     gain.connect(this.masterGain);
 
+    // Initialize preview mode (cache active, stream silent)
+    cacheGain.gain.value = 1;
+    streamGain.gain.value = 0;
+
+    this.cacheGains[stemName] = cacheGain;
+    this.streamGains[stemName] = streamGain;
     this.pregainNodes[stemName] = pregain;
     this.compressorNodes[stemName] = comp;
     this.toneNodes[stemName] = tone;
@@ -284,19 +427,54 @@ export class MusicPlayerEngine {
     this.startTime = now;
     this.playing = true;
 
+    // Start cached sources (PREVIEW mode)
     for (const name of Object.keys(this.buffers)) {
       const src = this.audioCtx.createBufferSource();
       src.buffer = this.buffers[name];
-      src.connect(this.pregainNodes[name]);
+      src.connect(this.cacheGains[name]); // Connect to cache path
       src.start(now, Math.min(this.offset, this.buffers[name].duration));
       this.sources[name] = src;
     }
+
+    // Resume streaming sources if they exist and sync them
+    if (Object.keys(this.streamAudioElements).length > 0) {
+      Object.values(this.streamAudioElements).forEach(audio => {
+        audio.currentTime = this.offset;
+        audio.play();
+      });
+    }
+
+    // Start streaming sources in background if user plays for >500ms
+    this.scheduleStreamUpgrade();
+  }
+
+  /**
+   * Schedule background upgrade to streaming mode
+   */
+  private scheduleStreamUpgrade(): void {
+    // Only upgrade if we don't already have streams
+    if (Object.keys(this.streamAudioElements).length > 0) {
+      console.log('[MusicPlayerEngine] Streams already exist, skipping upgrade');
+      return;
+    }
+
+    setTimeout(() => {
+      if (this.playing && this.playbackMode === 'PREVIEW' && Object.keys(this.streamAudioElements).length === 0) {
+        console.log('[MusicPlayerEngine] 🎵 Initiating stream upgrade...');
+        this.upgradeToStreaming();
+      }
+    }, 500);
   }
 
   pause(): void {
     this.offset += this.audioCtx.currentTime - this.startTime;
     this.stopSources();
     this.playing = false;
+
+    // Pause streaming sources
+    Object.values(this.streamAudioElements).forEach(audio => {
+      audio.pause();
+    });
   }
 
   togglePlay(): void {
@@ -306,13 +484,35 @@ export class MusicPlayerEngine {
   seek(ratio: number): void {
     this.offset = ratio * this.maxDuration;
 
+    const wasInStreamingMode = this.playbackMode === 'STREAMING';
+
+    // Switch to preview mode for instant seeking
+    if (wasInStreamingMode) {
+      this.crossfadeToPreview();
+    }
+
+    // Sync streaming sources to new position
+    Object.values(this.streamAudioElements).forEach(audio => {
+      audio.currentTime = this.offset;
+    });
+
     if (this.playing) {
       this.stopSources();
       this.play();
+
+      // If we were in streaming mode, switch back after a brief moment
+      if (wasInStreamingMode) {
+        setTimeout(() => {
+          if (this.playing) {
+            this.crossfadeToStreaming();
+          }
+        }, 100); // 100ms delay to let seek stabilize
+      }
     }
   }
 
   private stopSources(): void {
+    // Stop cached sources
     Object.values(this.sources).forEach(s => {
       try { s?.stop(); } catch {}
     });
@@ -453,12 +653,25 @@ export class MusicPlayerEngine {
   reset(): void {
     this.stopSources();
 
+    // Clean up streaming sources
+    Object.values(this.streamAudioElements).forEach(audio => {
+      audio.pause();
+      audio.src = '';
+    });
+
     this.playing = false;
     this.startTime = 0;
     this.offset = 0;
+    this.playbackMode = 'PREVIEW';
 
     this.buffers = {};
     this.sources = {};
+    this.cacheGains = {};
+    this.streamAudioElements = {};
+    this.streamMediaSources = {};
+    this.streamGains = {};
+    this.streamUrls = {};
+
     this.pregainNodes = {};
     this.compressorNodes = {};
     this.toneNodes = {};
@@ -476,9 +689,19 @@ export class MusicPlayerEngine {
   destroy(): void {
     this.stopSources();
 
+    // Clean up streaming sources
+    Object.values(this.streamAudioElements).forEach(audio => {
+      audio.pause();
+      audio.src = '';
+    });
+
     // Close the audio context to free resources
     if (this.audioCtx.state !== 'closed') {
       this.audioCtx.close();
     }
+  }
+
+  getPlaybackMode(): PlaybackMode {
+    return this.playbackMode;
   }
 }

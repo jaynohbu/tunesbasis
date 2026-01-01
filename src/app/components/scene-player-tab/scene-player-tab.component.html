@@ -4,9 +4,16 @@
   <div class="scene-actions" *ngIf="!overlayOpen">
     <p-button
       icon="pi pi-save"
-      label="Update Scene"
+      label="Save Song Settings"
       styleClass="p-button-sm p-button-success"
       (onClick)="onUpdateScene()">
+    </p-button>
+
+    <p-button
+      icon="pi pi-copy"
+      label="Copy Scene"
+      styleClass="p-button-sm p-button-info"
+      (onClick)="onCopyScene()">
     </p-button>
 
     <p-button
@@ -18,7 +25,7 @@
   </div>
 
   <!-- ================= Player ================= -->
-  <music-player [scene]="scene"></music-player>
+  <music-player [scene]="scene" [isTabActive]="isActive"></music-player>
 
   <!-- ================= Overlay ================= -->
   <div class="overlay" *ngIf="overlayOpen">
@@ -36,7 +43,8 @@
       [selectedIndex]="selectedIndex"
       (selectSong)="selectedIndex = $event"
       (loadSong)="onLoadSong($event)"
-      (sceneChange)="onSceneChange($event)">
+      (sceneChange)="onSceneChange($event)"
+      (copyAsNewScene)="onCopyScene()">
     </scene-editor>
 
   </div>

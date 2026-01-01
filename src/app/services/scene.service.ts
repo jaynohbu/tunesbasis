@@ -63,4 +63,17 @@ export class SceneService {
       payload
     );
   }
+
+  /* ============================================================
+   * COPY SCENE
+   * ============================================================ */
+  copyScene(
+    sceneId: string,
+    newName: string
+  ): Promise<AxiosResponse<SceneDTO>> {
+    return axios.post<SceneDTO>(
+      `${this.baseUrl}/${sceneId}/copy`,
+      { name: newName }
+    );
+  }
 }

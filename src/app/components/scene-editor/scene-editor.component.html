@@ -2,6 +2,13 @@
 
   <h3>{{ scene.name }}</h3>
 
+  <p-button
+    icon="pi pi-copy"
+    label="Copy as New Scene"
+    styleClass="p-button-sm p-button-info"
+    (onClick)="onCopyAsNewScene()">
+  </p-button>
+
   <ul class="song-list">
     <li
       *ngFor="let item of scene.items; let i = index"

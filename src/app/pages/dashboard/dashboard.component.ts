@@ -1,7 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MusicUploadService, SongDTO } from 'src/app/services/music-upload.service';
 import { SceneService, SceneDTO, SceneItemDTO } from 'src/app/services/scene.service';
-import { MusicPlayerComponent } from '../music-player/music-player.component';
 import { Scene, SceneSong } from 'src/app/model/scene';
 
 @Component({
@@ -10,9 +9,6 @@ import { Scene, SceneSong } from 'src/app/model/scene';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-
-  @ViewChild(MusicPlayerComponent)
-  playList!: MusicPlayerComponent;
 
   /* ================= DATA ================= */
 
@@ -27,6 +23,9 @@ export class DashboardComponent implements OnInit {
 
   /** 🔥 Active tab index */
   activeSceneIndex = 0;
+
+  /* ================= LOCALSTORAGE KEYS ================= */
+  private readonly STORAGE_KEY_SCENE_INDEX = 'tunesbasis.activeSceneIndex';
 
   /* ================= UI ================= */
 
@@ -43,6 +42,9 @@ export class DashboardComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     console.log('[INIT] Dashboard initialized');
     console.log('===================================');
+
+    // Restore activeSceneIndex from localStorage
+    this.restoreActiveSceneIndex();
 
     // 🔥 CRITICAL FIX: reconcile on initial load as well
     await this.reloadSongsAndScenes();
@@ -137,16 +139,8 @@ export class DashboardComponent implements OnInit {
       this.activeSceneIndex = 0;
     }
 
-    /* 6️⃣ Load active scene into player */
-    setTimeout(() => {
-      const active = this.scenes[this.activeSceneIndex];
-      if (active) {
-        console.log('[PLAYER] Loading scene into player:', active.name);
-        this.playList?.loadScene(active);
-      } else {
-        console.warn('[PLAYER] No active scene to load');
-      }
-    });
+    /* 6️⃣ Scenes loaded - each tab's music-player will auto-load via ngOnChanges */
+    console.log('[RELOAD] Scenes ready - tab players will auto-load');
   }
 
   /* ================= UI ================= */
@@ -161,12 +155,29 @@ export class DashboardComponent implements OnInit {
   onSceneTabChange(index: number) {
     console.log('[TAB] Scene tab changed:', index);
     this.activeSceneIndex = index;
+    this.saveActiveSceneIndex();
 
+    // Tab's music-player already loaded via ngOnChanges - no need to reload
     const scene = this.scenes[index];
-    if (scene) {
-      console.log('[PLAYER] Loading scene from tab:', scene.name);
-      this.playList?.loadScene(scene);
+    console.log(`[TAB] Switched to "${scene?.name}" - player already loaded`);
+  }
+
+  /* ================= LOCALSTORAGE PERSISTENCE ================= */
+
+  private restoreActiveSceneIndex(): void {
+    const stored = localStorage.getItem(this.STORAGE_KEY_SCENE_INDEX);
+    if (stored !== null) {
+      const index = parseInt(stored, 10);
+      if (!isNaN(index) && index >= 0) {
+        this.activeSceneIndex = index;
+        console.log('[STORAGE] Restored activeSceneIndex:', index);
+      }
     }
+  }
+
+  private saveActiveSceneIndex(): void {
+    localStorage.setItem(this.STORAGE_KEY_SCENE_INDEX, this.activeSceneIndex.toString());
+    console.log('[STORAGE] Saved activeSceneIndex:', this.activeSceneIndex);
   }
 
   /* ================= SCENE ================= */
@@ -232,7 +243,7 @@ export class DashboardComponent implements OnInit {
   onUploadFailed(err: any) {
     console.error('[UPLOAD] Failed:', err);
   }
-onSceneUpdated(scene: Scene) {
+async onSceneUpdated(scene: Scene) {
   if (!scene.sceneId) return;
 
   const itemsDTO = scene.items.map((item, index) =>
@@ -242,6 +253,34 @@ onSceneUpdated(scene: Scene) {
   return this.sceneService.updateScene(scene.sceneId, {
     items: itemsDTO
   });
+}
+
+async onSceneCopied(scene: Scene) {
+  if (!scene.sceneId) {
+    console.error('[COPY] Cannot copy scene without sceneId');
+    return;
+  }
+
+  console.log('[COPY] Copying scene:', scene.name);
+
+  try {
+    // Create copy with default settings on backend
+    const newName = `${scene.name} (Copy)`;
+    const response = await this.sceneService.copyScene(scene.sceneId, newName);
+
+    console.log('[COPY] Scene copied successfully:', response.data.sceneId);
+
+    // Reload all scenes to get the new copy
+    await this.reloadSongsAndScenes();
+
+    // Switch to the new copied scene (it will be the last one)
+    this.activeSceneIndex = this.scenes.length - 1;
+    this.saveActiveSceneIndex();
+
+    console.log('[COPY] Switched to new scene:', this.scenes[this.activeSceneIndex]?.name);
+  } catch (error) {
+    console.error('[COPY] Failed to copy scene:', error);
+  }
 }
 private toSceneItemDTO(
   item: SceneSong,

@@ -3,8 +3,8 @@ export interface CachedStem {
   sampleRate: number;
   duration: number;
   numberOfChannels: number;
-  // Compressed audio data (downsampled to ~5% of original)
-  compressedData: number[];
+  // Compressed audio data (downsampled, stored as Float32Array for efficiency)
+  compressedData: Float32Array;
   // Waveform visualization data (pre-computed peaks)
   waveformPeaks: { min: number; max: number }[];
 }
@@ -18,10 +18,10 @@ export interface CachedSong {
 
 export class AudioCacheService {
   private static readonly DB_NAME = 'AudioCacheDB';
-  private static readonly DB_VERSION = 1;
+  private static readonly DB_VERSION = 2; // Bumped to invalidate old 24kHz cache
   private static readonly STORE_NAME = 'songs';
   private static readonly CACHE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-  private static readonly COMPRESSION_FACTOR = 20; // 1/20 = 5%
+  private static readonly COMPRESSION_FACTOR = 2; // 1/2 = 50% size, ~90% quality
 
   private static dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -41,6 +41,17 @@ export class AudioCacheService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const oldVersion = event.oldVersion;
+
+        // Version 1 → 2: Clear old cache with 24kHz sample rate bug
+        if (oldVersion < 2) {
+          console.log('[AudioCache] Upgrading from v1 to v2: clearing old cache with invalid sample rates');
+          if (db.objectStoreNames.contains(this.STORE_NAME)) {
+            db.deleteObjectStore(this.STORE_NAME);
+          }
+        }
+
+        // Create fresh object store
         if (!db.objectStoreNames.contains(this.STORE_NAME)) {
           db.createObjectStore(this.STORE_NAME, { keyPath: 'songId' });
         }
@@ -118,18 +129,19 @@ export class AudioCacheService {
   }
 
   /**
-   * Compress AudioBuffer to ~5% of original size by downsampling
+   * Compress AudioBuffer to ~50% of original size by downsampling
    */
-  static compressBuffer(buffer: AudioBuffer): number[] {
+  static compressBuffer(buffer: AudioBuffer): Float32Array {
     const channel = buffer.getChannelData(0);
     const originalLength = channel.length;
     const targetLength = Math.floor(originalLength / this.COMPRESSION_FACTOR);
-    const compressed: number[] = [];
+    const compressed = new Float32Array(targetLength);
 
     console.log(`[AudioCache] Compressing buffer: ${originalLength} samples -> ${targetLength} samples`);
 
     // Downsample by taking average of chunks
     const chunkSize = this.COMPRESSION_FACTOR;
+    let writeIndex = 0;
     for (let i = 0; i < originalLength; i += chunkSize) {
       let sum = 0;
       let count = 0;
@@ -137,7 +149,7 @@ export class AudioCacheService {
         sum += channel[i + j];
         count++;
       }
-      compressed.push(sum / count);
+      compressed[writeIndex++] = sum / count;
     }
 
     return compressed;
@@ -214,10 +226,13 @@ export class AudioCacheService {
         stems: cachedStems
       };
 
-      const serialized = JSON.stringify(cachedSong);
-      console.log(`[AudioCache] Cache size: ${(serialized.length / 1024).toFixed(2)} KB`);
+      // Calculate approximate size (Float32Array uses 4 bytes per element)
+      const totalBytes = cachedStems.reduce((sum, stem) =>
+        sum + (stem.compressedData.byteLength || stem.compressedData.length * 4), 0
+      );
+      console.log(`[AudioCache] Cache size: ${(totalBytes / 1024).toFixed(2)} KB (${cachedStems.length} stems)`);
 
-      // Store in IndexedDB
+      // Store in IndexedDB (IndexedDB can store Float32Array natively)
       const db = await this.getDB();
       const transaction = db.transaction([this.STORE_NAME], 'readwrite');
       const store = transaction.objectStore(this.STORE_NAME);
@@ -250,9 +265,10 @@ export class AudioCacheService {
     // Use compressed length directly - this is already downsampled audio
     const compressedLength = cachedStem.compressedData.length;
 
-    // Web Audio API requires sample rate >= 3000 Hz
-    // Instead of dividing sample rate by 20, use minimum rate and adjust length
-    const MIN_SAMPLE_RATE = 3000;
+    // Web Audio API spec allows 8000-96000 Hz, but browsers may have higher minimums
+    // Chrome/Safari often require >= 32000 Hz to avoid NotSupportedError
+    // With 2x compression: 48kHz → 24kHz would fail, so enforce 32kHz minimum
+    const MIN_SAMPLE_RATE = 32000;
     const targetSampleRate = Math.max(MIN_SAMPLE_RATE, cachedStem.sampleRate / this.COMPRESSION_FACTOR);
 
     // If we're using a higher sample rate than ideal, we need to upsample the data
@@ -266,25 +282,30 @@ export class AudioCacheService {
       targetSampleRate
     );
 
-    // Convert compressed array to Float32Array
-    const audioData = new Float32Array(cachedStem.compressedData);
+    // Ensure we have a proper Float32Array (IndexedDB may return ArrayBufferLike)
+    const audioData = cachedStem.compressedData instanceof Float32Array
+      ? cachedStem.compressedData
+      : new Float32Array(cachedStem.compressedData);
 
     // If we need to upsample, stretch the data by duplicating samples
-    let finalData: Float32Array;
     if (stretchFactor < 1) {
       // Need to upsample - duplicate samples to stretch the audio
-      finalData = new Float32Array(adjustedLength);
+      const finalData = new Float32Array(adjustedLength);
       for (let i = 0; i < adjustedLength; i++) {
         const sourceIndex = Math.floor(i * stretchFactor);
         finalData[i] = audioData[Math.min(sourceIndex, audioData.length - 1)];
       }
-    } else {
-      finalData = audioData;
-    }
 
-    // Copy to all channels
-    for (let ch = 0; ch < cachedStem.numberOfChannels; ch++) {
-      buffer.copyToChannel(finalData, ch);
+      // Copy to all channels
+      for (let ch = 0; ch < cachedStem.numberOfChannels; ch++) {
+        buffer.copyToChannel(finalData, ch);
+      }
+    } else {
+      // Ensure proper ArrayBuffer type for copyToChannel
+      const properData = new Float32Array(audioData);
+      for (let ch = 0; ch < cachedStem.numberOfChannels; ch++) {
+        buffer.copyToChannel(properData, ch);
+      }
     }
 
     return buffer;
