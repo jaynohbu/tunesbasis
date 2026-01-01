@@ -36,6 +36,7 @@ canvas {
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   margin: 8px 0;
@@ -45,10 +46,22 @@ button.active {
   background: #4caf50;
 }
 
+/* Reset All Effects button - distinct orange color */
+.controls ::ng-deep p-button[severity="warning"] .p-button {
+  background-color: #ff9800;
+  border-color: #ff9800;
+
+  &:hover {
+    background-color: #f57c00;
+    border-color: #f57c00;
+  }
+}
+
 /* ================= KNOBS ================= */
 
 .knob-panel {
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   margin-top: 10px;
   align-items: center;
@@ -59,6 +72,7 @@ button.active {
   flex-direction: column;
   align-items: center;
   font-size: 11px;
+  min-width: 60px;
 }
 
 .knob {
@@ -89,6 +103,33 @@ button.active {
   padding: 2px 6px;
 }
 
+/* Individual knob reset buttons - cyan/teal color */
+.knob-group ::ng-deep p-button[text] .p-button {
+  color: #00bcd4;
+
+  &:hover {
+    background-color: rgba(0, 188, 212, 0.1);
+  }
+}
+
+/* Reset All knobs button for stem - purple color */
+.reset-all-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: auto;
+}
+
+.reset-all-group ::ng-deep p-button[severity="secondary"] .p-button {
+  background-color: #9c27b0;
+  border-color: #9c27b0;
+
+  &:hover {
+    background-color: #7b1fa2;
+    border-color: #7b1fa2;
+  }
+}
+
 /* ================= LED ================= */
 
 .led-group {
@@ -115,9 +156,180 @@ button.active {
   font-weight: bold;
   margin-bottom: 4px;
 }
-p-button{
+p-button {
   margin-bottom: 10px;
   margin-top: 10px;
   margin-right: 5px;
-  margin-left: 5px;;
+  margin-left: 5px;
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  /* Global controls - prevent overlap */
+  .controls {
+    gap: 12px;
+    margin: 8px 0;
+    justify-content: flex-start;
+    row-gap: 12px;
+  }
+
+  .controls label {
+    font-size: 12px;
+    flex: 1 1 auto;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .controls input[type="range"] {
+    width: 100%;
+    min-width: 100px;
+  }
+
+  /* Hide button labels on mobile for control buttons */
+  .controls ::ng-deep .p-button-label {
+    display: none;
+  }
+
+  .controls ::ng-deep .p-button {
+    min-width: 36px;
+    padding: 0.5rem;
+    flex-shrink: 0;
+    margin: 2px 0;
+  }
+
+  /* Keep Reset All Effects button on new line if needed */
+  .controls ::ng-deep p-button[severity="warning"] {
+    flex-basis: 100%;
+    margin-top: 4px;
+  }
+
+  .controls ::ng-deep p-button[severity="warning"] .p-button {
+    width: 100%;
+  }
+
+  /* Knob panel */
+  .knob-panel {
+    gap: 12px;
+  }
+
+  .knob-group {
+    min-width: 50px;
+    font-size: 10px;
+  }
+
+  .knob {
+    width: 32px;
+    height: 32px;
+
+    &::after {
+      height: 12px;
+    }
+  }
+
+  /* Hide individual reset button labels, keep icons */
+  .knob-group ::ng-deep .p-button-label {
+    display: none;
+  }
+
+  .knob-group ::ng-deep .p-button {
+    padding: 0.25rem;
+    min-width: 24px;
+  }
+
+  /* Keep Reset All button visible but compact */
+  .reset-all-group ::ng-deep .p-button {
+    padding: 0.4rem 0.6rem;
+    font-size: 11px;
+  }
+
+  /* LED */
+  .led-group {
+    font-size: 10px;
+  }
+
+  .led {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Track label */
+  .label {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even more compact on very small screens */
+  .controls {
+    gap: 10px;
+    row-gap: 10px;
+  }
+
+  .controls label {
+    font-size: 11px;
+    min-width: 100px;
+    margin-bottom: 6px;
+  }
+
+  .controls input[type="range"] {
+    width: 100%;
+    min-width: 80px;
+  }
+
+  .controls ::ng-deep .p-button {
+    min-width: 32px;
+    padding: 0.4rem;
+    margin: 3px 0;
+  }
+
+  /* Ensure Reset All Effects button takes full width */
+  .controls ::ng-deep p-button[severity="warning"] {
+    margin-top: 6px;
+  }
+
+  .controls ::ng-deep p-button[severity="warning"] .p-button {
+    font-size: 11px;
+    padding: 0.5rem;
+  }
+
+  .knob-panel {
+    gap: 8px;
+  }
+
+  .knob-group {
+    min-width: 40px;
+    font-size: 9px;
+  }
+
+  .knob {
+    width: 28px;
+    height: 28px;
+
+    &::after {
+      height: 10px;
+    }
+  }
+
+  .knob-group ::ng-deep .p-button {
+    padding: 0.2rem;
+    min-width: 20px;
+  }
+
+  .reset-all-group ::ng-deep .p-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 10px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  /* Reduce waveform height on very small screens */
+  .wave-wrapper {
+    height: 60px;
+  }
 }

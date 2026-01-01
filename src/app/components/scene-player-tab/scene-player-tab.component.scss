@@ -16,7 +16,46 @@
   right: 12px;
   z-index: 60; /* always above player */
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: calc(100% - 24px); /* Account for left/right padding */
+}
+
+/* Mobile-friendly: Stack buttons on small screens */
+@media (max-width: 768px) {
+  .scene-actions {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+    max-width: calc(100% - 16px);
+  }
+
+  /* Hide labels on mobile, show only icons */
+  .scene-actions ::ng-deep .p-button-label {
+    display: none;
+  }
+
+  .scene-actions ::ng-deep .p-button {
+    min-width: 36px;
+    padding: 0.5rem;
+  }
+}
+
+/* Very small screens: ensure buttons don't overflow */
+@media (max-width: 480px) {
+  .scene-actions {
+    top: 4px;
+    right: 4px;
+    gap: 4px;
+    max-width: calc(100% - 8px);
+  }
+
+  .scene-actions ::ng-deep .p-button {
+    min-width: 32px;
+    padding: 0.4rem;
+  }
 }
 
 /* ================= Player ================= */

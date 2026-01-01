@@ -28,8 +28,47 @@
   class="p-ml-2"
   [loading]="loading"
   [disabled]="!file || loading"
-  (onClick)="upload()">
+  (onClick)="showSongNameDialog()">
 </p-button>
+
+<!-- ================= SONG NAME DIALOG ================= -->
+
+<p-dialog
+  header="Enter Song Name"
+  [(visible)]="displayDialog"
+  [modal]="true"
+  [style]="{width: '400px'}"
+  [closable]="true">
+
+  <div class="p-fluid">
+    <label for="songName">Song Name</label>
+    <input
+      id="songName"
+      type="text"
+      pInputText
+      [(ngModel)]="songName"
+      maxlength="40"
+      placeholder="Enter song name (max 40 characters)"
+      (keyup.enter)="confirmUpload()"
+    />
+    <small class="p-text-secondary">{{ songName.length }}/40 characters</small>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (onClick)="displayDialog = false">
+    </p-button>
+    <p-button
+      label="Upload"
+      icon="pi pi-check"
+      [disabled]="!songName.trim()"
+      (onClick)="confirmUpload()">
+    </p-button>
+  </ng-template>
+</p-dialog>
 
 <!-- ================= PROGRESS ================= -->
 

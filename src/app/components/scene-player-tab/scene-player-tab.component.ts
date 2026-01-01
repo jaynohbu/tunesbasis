@@ -27,6 +27,9 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   /** emit copy scene request to parent */
   @Output() sceneCopied = new EventEmitter<Scene>();
 
+  /** emit delete scene request to parent */
+  @Output() sceneDeleted = new EventEmitter<Scene>();
+
   /** real player instance */
   @ViewChild(MusicPlayerComponent)
   player!: MusicPlayerComponent;
@@ -84,6 +87,50 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
     this.overlayOpen = false;
   }
 
+  onDeleteSong(index: number) {
+    if (!this.player) {
+      console.warn('[ScenePlayerTab.onDeleteSong] Cannot delete song — player not ready');
+      return;
+    }
+
+    console.log('[ScenePlayerTab.onDeleteSong] User deleting song at index:', index, {
+      sceneName: this.scene?.name,
+      songName: this.scene?.items[index]?.song?.originalName
+    });
+
+    // Get current playing index
+    const currentIndex = this.player.activeIndex;
+
+    // Remove the song from the scene
+    this.scene.items.splice(index, 1);
+
+    // Determine next song to load
+    let nextIndex = index;
+    if (nextIndex >= this.scene.items.length) {
+      nextIndex = this.scene.items.length - 1; // Move to last song
+    }
+
+    // If we deleted the currently playing song, load the next one
+    if (index === currentIndex) {
+      if (this.scene.items.length > 0) {
+        console.log('[ScenePlayerTab.onDeleteSong] Loading next song at index:', nextIndex);
+        this.player.resetPlayer();
+        this.player.loadFromScene(nextIndex);
+        this.selectedIndex = nextIndex;
+      } else {
+        console.log('[ScenePlayerTab.onDeleteSong] No songs left in scene');
+        this.player.resetPlayer();
+        this.selectedIndex = null;
+      }
+    } else if (index < currentIndex) {
+      // If we deleted a song before the current one, adjust the current index
+      this.player.activeIndex = currentIndex - 1;
+    }
+
+    // Save the updated scene
+    this.sceneUpdated.emit(this.scene);
+  }
+
   /* ================= SAVE SONG SETTINGS ================= */
 
   onUpdateScene() {
@@ -102,7 +149,15 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   }
 
   onSceneChange(scene: Scene) {
+    console.log('[ScenePlayerTab.onSceneChange] Scene changed, saving to backend');
     this.scene = scene;
+    // Save the updated scene to backend
+    this.sceneUpdated.emit(this.scene);
+  }
+
+  onSongRenamed() {
+    console.log('[ScenePlayerTab.onSongRenamed] Song was renamed');
+    // No need to emit anything, the song name is already updated in the scene object
   }
 
   /* ================= COPY SCENE ================= */
@@ -112,6 +167,15 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
 
     // emit upward to dashboard to create a copy with default settings
     this.sceneCopied.emit(this.scene);
+  }
+
+  /* ================= DELETE SCENE ================= */
+
+  onDeleteScene() {
+    console.log('[ScenePlayerTab.onDeleteScene] User clicked Delete Scene for:', this.scene.name);
+
+    // emit upward to dashboard to delete the scene
+    this.sceneDeleted.emit(this.scene);
   }
 
   /* ================= OVERLAY ================= */

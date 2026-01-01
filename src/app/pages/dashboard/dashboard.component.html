@@ -11,14 +11,48 @@
   (onChange)="onSceneTabChange($event.index)">
 
   <p-tabPanel
-    *ngFor="let scene of scenes; let i = index"
-    [header]="scene.name">
+    *ngFor="let scene of scenes; let i = index">
+
+    <ng-template pTemplate="header">
+      <span *ngIf="editingSceneIndex !== i" class="scene-tab-header">
+        {{ scene.name }}
+        <p-button
+          icon="pi pi-pencil"
+          styleClass="p-button-sm p-button-text p-button-rounded"
+          (onClick)="startEditingScene(i); $event.stopPropagation()">
+        </p-button>
+      </span>
+
+      <span *ngIf="editingSceneIndex === i" class="scene-tab-header-edit">
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="editingSceneName"
+          maxlength="40"
+          (keyup.enter)="saveEditingScene(i); $event.stopPropagation()"
+          (keyup.escape)="cancelEditingScene(); $event.stopPropagation()"
+          (click)="$event.stopPropagation()"
+          #sceneNameInput
+        />
+        <p-button
+          icon="pi pi-check"
+          styleClass="p-button-sm p-button-success p-button-text"
+          (onClick)="saveEditingScene(i); $event.stopPropagation()">
+        </p-button>
+        <p-button
+          icon="pi pi-times"
+          styleClass="p-button-sm p-button-danger p-button-text"
+          (onClick)="cancelEditingScene(); $event.stopPropagation()">
+        </p-button>
+      </span>
+    </ng-template>
 
     <scene-player-tab
       [scene]="scene"
       [isActive]="i === activeSceneIndex"
       (sceneUpdated)="onSceneUpdated($event)"
-      (sceneCopied)="onSceneCopied($event)">
+      (sceneCopied)="onSceneCopied($event)"
+      (sceneDeleted)="onSceneDeleted($event)">
     </scene-player-tab>
 
   </p-tabPanel>

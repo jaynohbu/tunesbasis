@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Scene } from '../../model/scene';
+import { MusicUploadService } from '../../services/music-upload.service';
 
 @Component({
   selector: 'scene-editor',
@@ -15,6 +16,15 @@ export class SceneEditorComponent {
   @Output() loadSong = new EventEmitter<number>();
   @Output() sceneChange = new EventEmitter<Scene>();
   @Output() copyAsNewScene = new EventEmitter<Scene>();
+  @Output() deleteSong = new EventEmitter<number>();
+  @Output() songRenamed = new EventEmitter<void>();
+
+  @ViewChild('songNameInput') songNameInput?: ElementRef<HTMLInputElement>;
+
+  editingSongIndex: number | null = null;
+  editingSongName = '';
+
+  constructor(private uploadService: MusicUploadService) {}
 
   isSelected(i: number): boolean {
     return this.selectedIndex === i;
@@ -50,6 +60,57 @@ export class SceneEditorComponent {
   onCopyAsNewScene() {
     console.log('[SceneEditor.onCopyAsNewScene] User clicked Copy as New Scene for:', this.scene.name);
     this.copyAsNewScene.emit(this.scene);
+  }
+
+  onDeleteSong(i: number) {
+    console.log('[SceneEditor.onDeleteSong] User clicked Delete Song at index:', i);
+    this.deleteSong.emit(i);
+  }
+
+  startEditingSong(i: number) {
+    this.editingSongIndex = i;
+    this.editingSongName = this.scene.items[i].song.sceneName || this.scene.items[i].song.originalName;
+
+    setTimeout(() => {
+      this.songNameInput?.nativeElement.focus();
+      this.songNameInput?.nativeElement.select();
+    }, 0);
+  }
+
+  async saveEditingSong(i: number) {
+    if (!this.editingSongName.trim()) {
+      this.cancelEditingSong();
+      return;
+    }
+
+    const song = this.scene.items[i].song;
+    const newName = this.editingSongName.trim();
+
+    if (newName === (song.sceneName || song.originalName)) {
+      this.cancelEditingSong();
+      return;
+    }
+
+    try {
+      await this.uploadService.updateSong(song.songId, { sceneName: newName });
+
+      song.sceneName = newName;
+
+      this.editingSongIndex = null;
+      this.editingSongName = '';
+
+      this.songRenamed.emit();
+
+      console.log('[SceneEditor.saveEditingSong] Song renamed to:', newName);
+    } catch (error) {
+      console.error('[SceneEditor.saveEditingSong] Failed to rename song:', error);
+      this.cancelEditingSong();
+    }
+  }
+
+  cancelEditingSong() {
+    this.editingSongIndex = null;
+    this.editingSongName = '';
   }
 
   private emit() {

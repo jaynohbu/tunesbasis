@@ -38,6 +38,10 @@ export class MusicUploadComponent {
   progressMode: ProgressMode = 'upload';
   progressTimer: any = null;
 
+  /** Dialog state */
+  displayDialog = false;
+  songName = '';
+
   /** 백엔드 분석 최대 예상 시간 */
   readonly PROCESSING_TIME_MS = 5 * 60 * 1000;
 
@@ -52,6 +56,26 @@ export class MusicUploadComponent {
     }
   }
 
+  /* ================= DIALOG ================= */
+
+  showSongNameDialog() {
+    if (!this.file || this.loading) return;
+
+    // Default song name from file name (without extension)
+    const fileName = this.file.name;
+    const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+    this.songName = nameWithoutExt.substring(0, 40); // Limit to 40 chars
+
+    this.displayDialog = true;
+  }
+
+  confirmUpload() {
+    if (!this.songName.trim()) return;
+
+    this.displayDialog = false;
+    this.upload();
+  }
+
   /* ================= UPLOAD ================= */
 
   async upload() {
@@ -64,10 +88,11 @@ export class MusicUploadComponent {
     this.uploadStarted.emit();
 
     try {
-      /* 1️⃣ Upload */
+      /* 1️⃣ Upload with song name */
       const res = await this.uploadService.upload(
         this.file,
-        p => (this.progress = Math.min(90, p))
+        p => (this.progress = Math.min(90, p)),
+        this.songName.trim()
       );
 
       /* 2️⃣ Processing progress (fake but UX-friendly) */
@@ -83,6 +108,9 @@ export class MusicUploadComponent {
       this.processCompleted.emit();
 
       this.finishProgress();
+
+      // Reset song name for next upload
+      this.songName = '';
 
     } catch (e) {
       this.uploadFailed.emit(e);

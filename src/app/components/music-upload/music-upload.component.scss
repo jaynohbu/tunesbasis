@@ -27,9 +27,32 @@
     font-weight: 600;
   }
 }
-p-button{
+p-button {
   margin-bottom: 10px;
   margin-top: 10px;
   margin-right: 5px;
-  margin-left: 5px;;
+  margin-left: 5px;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  p-button {
+    margin: 8px 4px;
+  }
+
+  /* Stack buttons vertically on very small screens */
+  @media (max-width: 480px) {
+    p-button {
+      margin: 6px 2px;
+      display: block;
+      width: 100%;
+    }
+
+    .file-name {
+      display: block;
+      margin: 8px 0;
+      font-size: 12px;
+      word-break: break-word;
+    }
+  }
 }

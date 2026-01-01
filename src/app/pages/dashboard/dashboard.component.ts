@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MusicUploadService, SongDTO } from 'src/app/services/music-upload.service';
 import { SceneService, SceneDTO, SceneItemDTO } from 'src/app/services/scene.service';
 import { Scene, SceneSong } from 'src/app/model/scene';
@@ -23,6 +23,12 @@ export class DashboardComponent implements OnInit {
 
   /** 🔥 Active tab index */
   activeSceneIndex = 0;
+
+  /* ================= SCENE EDITING ================= */
+
+  @ViewChild('sceneNameInput') sceneNameInput?: ElementRef<HTMLInputElement>;
+  editingSceneIndex: number | null = null;
+  editingSceneName = '';
 
   /* ================= LOCALSTORAGE KEYS ================= */
   private readonly STORAGE_KEY_SCENE_INDEX = 'tunesbasis.activeSceneIndex';
@@ -195,12 +201,15 @@ export class DashboardComponent implements OnInit {
       soundState: {}
     }));
 
+    // Create default scene with a generic name
+    const sceneName = `Default Scene (${songs.length} songs)`;
+
     const res = await this.sceneService.createScene({
-      name: `Default Scene (${songs.length} songs)`,
+      name: sceneName,
       items
     });
 
-    console.log('[SCENE] Default scene created:', res.data.sceneId);
+    console.log('[SCENE] Default scene created:', res.data.sceneId, 'with name:', sceneName);
     return res.data;
   }
 
@@ -270,18 +279,79 @@ async onSceneCopied(scene: Scene) {
 
     console.log('[COPY] Scene copied successfully:', response.data.sceneId);
 
+    // Reset activeSceneIndex to force PrimeNG to update
+    this.activeSceneIndex = -1;
+
     // Reload all scenes to get the new copy
     await this.reloadSongsAndScenes();
 
-    // Switch to the new copied scene (it will be the last one)
-    this.activeSceneIndex = this.scenes.length - 1;
-    this.saveActiveSceneIndex();
+    // Use setTimeout to allow Angular change detection to process
+    setTimeout(() => {
+      // Switch to the new copied scene (it will be the last one)
+      this.activeSceneIndex = this.scenes.length - 1;
+      this.saveActiveSceneIndex();
 
-    console.log('[COPY] Switched to new scene:', this.scenes[this.activeSceneIndex]?.name);
+      console.log('[COPY] Switched to new scene:', this.scenes[this.activeSceneIndex]?.name);
+    }, 0);
   } catch (error) {
     console.error('[COPY] Failed to copy scene:', error);
   }
 }
+
+async onSceneDeleted(scene: Scene) {
+  if (!scene.sceneId) {
+    console.error('[DELETE] Cannot delete scene without sceneId');
+    return;
+  }
+
+  console.log('[DELETE] Deleting scene:', scene.name, 'at index:', this.activeSceneIndex);
+
+  try {
+    // Find the index of the deleted scene BEFORE deleting
+    const deletedIndex = this.activeSceneIndex;
+    const totalScenesBefore = this.scenes.length;
+
+    // Delete scene on backend
+    await this.sceneService.deleteScene(scene.sceneId);
+
+    console.log('[DELETE] Scene deleted successfully:', scene.sceneId);
+    console.log('[DELETE] Total scenes before delete:', totalScenesBefore);
+    console.log('[DELETE] Deleted index was:', deletedIndex);
+
+    // Reload all scenes
+    await this.reloadSongsAndScenes();
+
+    console.log('[DELETE] Total scenes after reload:', this.scenes.length);
+
+    // If no scenes left, reset to 0
+    if (this.scenes.length === 0) {
+      this.activeSceneIndex = 0;
+      console.log('[DELETE] No scenes left');
+      return;
+    }
+
+    // Calculate new index
+    let newIndex: number;
+    if (deletedIndex >= this.scenes.length) {
+      // Deleted the last scene, move to the new last scene
+      newIndex = this.scenes.length - 1;
+    } else {
+      // Deleted a scene in the middle or beginning, stay at same index (which now points to the next scene)
+      newIndex = deletedIndex;
+    }
+
+    console.log('[DELETE] Setting new active index to:', newIndex);
+
+    // Set the new index immediately
+    this.activeSceneIndex = newIndex;
+    this.saveActiveSceneIndex();
+
+    console.log('[DELETE] Switched to scene:', this.scenes[this.activeSceneIndex]?.name);
+  } catch (error) {
+    console.error('[DELETE] Failed to delete scene:', error);
+  }
+}
+
 private toSceneItemDTO(
   item: SceneSong,
   index: number
@@ -345,5 +415,61 @@ private toSceneItemDTO(
       ...activeSceneDTO,
       items: [...activeSceneDTO.items, ...newItems]
     };
+  }
+
+  /* ================= SCENE NAME EDITING ================= */
+
+  startEditingScene(i: number) {
+    this.editingSceneIndex = i;
+    this.editingSceneName = this.scenes[i].name;
+
+    setTimeout(() => {
+      this.sceneNameInput?.nativeElement.focus();
+      this.sceneNameInput?.nativeElement.select();
+    }, 0);
+  }
+
+  async saveEditingScene(i: number) {
+    if (!this.editingSceneName.trim()) {
+      this.cancelEditingScene();
+      return;
+    }
+
+    const scene = this.scenes[i];
+    const newName = this.editingSceneName.trim();
+
+    if (newName === scene.name) {
+      this.cancelEditingScene();
+      return;
+    }
+
+    if (!scene.sceneId) {
+      console.error('[DashboardComponent.saveEditingScene] Scene has no sceneId');
+      this.cancelEditingScene();
+      return;
+    }
+
+    try {
+      await this.sceneService.updateScene(scene.sceneId, { name: newName });
+
+      scene.name = newName;
+      const sceneDTO = this.scenesDTO.find(s => s.sceneId === scene.sceneId);
+      if (sceneDTO) {
+        sceneDTO.name = newName;
+      }
+
+      this.editingSceneIndex = null;
+      this.editingSceneName = '';
+
+      console.log('[DashboardComponent.saveEditingScene] Scene renamed to:', newName);
+    } catch (error) {
+      console.error('[DashboardComponent.saveEditingScene] Failed to rename scene:', error);
+      this.cancelEditingScene();
+    }
+  }
+
+  cancelEditingScene() {
+    this.editingSceneIndex = null;
+    this.editingSceneName = '';
   }
 }

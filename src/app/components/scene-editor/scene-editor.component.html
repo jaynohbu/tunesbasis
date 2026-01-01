@@ -15,18 +15,71 @@
       [class.active]="isSelected(i)"
       (click)="onSelect(i)">
 
-      <span class="song-name">
-        {{ item.song.originalName }}
+      <span class="song-name" *ngIf="editingSongIndex !== i">
+        {{ item.song.sceneName || item.song.originalName }}
+        <p-button
+          icon="pi pi-pencil"
+          styleClass="p-button-sm p-button-text p-button-rounded"
+          (onClick)="startEditingSong(i); $event.stopPropagation()">
+        </p-button>
       </span>
 
-      <p-button
-        *ngIf="isSelected(i)"
-        label="Load"
-        icon="pi pi-play"
-        class="load-btn"
-        styleClass="p-button-sm p-button-success"
-        (onClick)="onLoad(i); $event.stopPropagation()">
-      </p-button>
+      <span class="song-name-edit" *ngIf="editingSongIndex === i">
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="editingSongName"
+          maxlength="40"
+          (keyup.enter)="saveEditingSong(i); $event.stopPropagation()"
+          (keyup.escape)="cancelEditingSong(); $event.stopPropagation()"
+          (click)="$event.stopPropagation()"
+          #songNameInput
+        />
+        <p-button
+          icon="pi pi-check"
+          styleClass="p-button-sm p-button-success p-button-text"
+          (onClick)="saveEditingSong(i); $event.stopPropagation()">
+        </p-button>
+        <p-button
+          icon="pi pi-times"
+          styleClass="p-button-sm p-button-danger p-button-text"
+          (onClick)="cancelEditingSong(); $event.stopPropagation()">
+        </p-button>
+      </span>
+
+      <div class="song-actions">
+        <p-button
+          icon="pi pi-arrow-up"
+          class="move-btn"
+          styleClass="p-button-sm p-button-text"
+          [disabled]="i === 0"
+          (onClick)="moveUp(i); $event.stopPropagation()">
+        </p-button>
+
+        <p-button
+          icon="pi pi-arrow-down"
+          class="move-btn"
+          styleClass="p-button-sm p-button-text"
+          [disabled]="i === scene.items.length - 1"
+          (onClick)="moveDown(i); $event.stopPropagation()">
+        </p-button>
+
+        <p-button
+          *ngIf="isSelected(i)"
+          label="Load"
+          icon="pi pi-play"
+          class="load-btn"
+          styleClass="p-button-sm p-button-success"
+          (onClick)="onLoad(i); $event.stopPropagation()">
+        </p-button>
+
+        <p-button
+          icon="pi pi-trash"
+          class="delete-btn"
+          styleClass="p-button-sm p-button-danger p-button-text"
+          (onClick)="onDeleteSong(i); $event.stopPropagation()">
+        </p-button>
+      </div>
 
     </li>
   </ul>

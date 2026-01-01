@@ -17,6 +17,13 @@
     </p-button>
 
     <p-button
+      icon="pi pi-trash"
+      label="Delete Scene"
+      styleClass="p-button-sm p-button-danger"
+      (onClick)="onDeleteScene()">
+    </p-button>
+
+    <p-button
       icon="pi pi-list"
       label="Songs"
       styleClass="p-button-sm p-button-outlined"
@@ -44,7 +51,9 @@
       (selectSong)="selectedIndex = $event"
       (loadSong)="onLoadSong($event)"
       (sceneChange)="onSceneChange($event)"
-      (copyAsNewScene)="onCopyScene()">
+      (copyAsNewScene)="onCopyScene()"
+      (deleteSong)="onDeleteSong($event)"
+      (songRenamed)="onSongRenamed()">
     </scene-editor>
 
   </div>

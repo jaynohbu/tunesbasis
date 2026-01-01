@@ -11,6 +11,8 @@ import { ProgressBarModule } from 'primeng/progressbar';// ✅ ADD
 import { ButtonModule } from 'primeng/button';
 import { SliderModule } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
 
 /* Components */
 import { TimeSeriesComponent } from './time-series/time-series.component';
@@ -63,6 +65,8 @@ import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-pl
     ListboxModule,
     DropdownModule,
     OrderListModule,
+    DialogModule,
+    InputTextModule,
   ]
 })
 export class PagesModule { }

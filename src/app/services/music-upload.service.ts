@@ -19,6 +19,7 @@ export interface SongDTO {
   entityType: 'SONG';
   songId: string;
   originalName: string;
+  sceneName?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -50,9 +51,16 @@ export class MusicUploadService {
 
   /* ================= UPLOAD ================= */
 
-  upload(file: File, onProgress: (percent: number) => void) {
+  upload(
+    file: File,
+    onProgress: (percent: number) => void,
+    songName?: string
+  ) {
     const form = new FormData();
     form.append('file', file);
+    if (songName) {
+      form.append('songName', songName);
+    }
 
     return axios.post<UploadResponse>(
       `${environment.apiBaseUrl}/upload`,
@@ -76,6 +84,16 @@ export class MusicUploadService {
   listSongs(): Promise<AxiosResponse<SongDTO[]>> {
     return axios.get<SongDTO[]>(
       `${environment.apiBaseUrl}/songs`
+    );
+  }
+
+  updateSong(
+    songId: string,
+    payload: { sceneName?: string }
+  ): Promise<AxiosResponse<void>> {
+    return axios.put<void>(
+      `${environment.apiBaseUrl}/songs/${songId}`,
+      payload
     );
   }
 

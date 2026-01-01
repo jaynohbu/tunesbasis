@@ -34,12 +34,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   background: #ffffff;
   border: 1px solid #e6e6e6;
+  flex-wrap: wrap;
 }
 
 .song-list li.active {
@@ -47,6 +49,76 @@
   border-color: #4caf50;
 }
 
+/* Song name and actions container */
+.song-name,
+.song-name-edit {
+  flex: 1;
+  min-width: 0; /* Allow text to shrink */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.song-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
 .load-btn {
-  margin-left: 12px;
+  margin-left: 4px;
+}
+
+/* Mobile-friendly buttons */
+@media (max-width: 768px) {
+  .song-list li {
+    padding: 8px 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  /* Hide button labels on mobile, show only icons */
+  .song-actions ::ng-deep .p-button-label {
+    display: none;
+  }
+
+  .song-actions ::ng-deep .p-button {
+    min-width: 32px;
+    padding: 0.4rem;
+  }
+
+  .song-name ::ng-deep .p-button {
+    min-width: 28px;
+    padding: 0.3rem;
+  }
+
+  .song-name-edit ::ng-deep .p-button {
+    min-width: 28px;
+    padding: 0.3rem;
+  }
+
+  .song-name-edit input {
+    font-size: 12px;
+    padding: 0.4rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .song-list li {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .song-actions {
+    gap: 2px;
+  }
+
+  .song-actions ::ng-deep .p-button,
+  .song-name ::ng-deep .p-button,
+  .song-name-edit ::ng-deep .p-button {
+    min-width: 28px;
+    padding: 0.3rem;
+  }
 }

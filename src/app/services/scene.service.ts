@@ -76,4 +76,11 @@ export class SceneService {
       { name: newName }
     );
   }
+
+  /* ============================================================
+   * DELETE SCENE
+   * ============================================================ */
+  deleteScene(sceneId: string): Promise<AxiosResponse<void>> {
+    return axios.delete<void>(`${this.baseUrl}/${sceneId}`);
+  }
 }
