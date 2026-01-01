@@ -7,6 +7,10 @@ export interface StemSettings {
   compression: number;
   tone: number;
   distortion: number;
+  eqLow: number;
+  eqMid: number;
+  eqHigh: number;
+  reverb: number;
 }
 
 export interface SceneSong {

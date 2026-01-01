@@ -54,46 +54,77 @@
 
   </div>
 
-  <!-- ================= KNOBS ================= -->
+  <!-- ================= FADERS ================= -->
 
-  <div class="knob-panel" *ngIf="stemKnobs[stem.name]">
+  <div class="fader-panel" *ngIf="stemKnobs[stem.name]">
 
     <!-- PREGAIN -->
-    <div class="knob-group">
-      <div class="knob" [style.--rot]="stemKnobs[stem.name].pregain * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'pregain')" (dblclick)="resetKnob(stem.name, 'pregain')"></div>
+    <div class="fader-group">
+      <span class="fader-label">Pre</span>
+      <input
+        type="range"
+        class="fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].pregain"
+        (input)="setKnob(stem.name, 'pregain', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'pregain')" />
       <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'pregain')">
       </p-button>
-
-      <span>Pre</span>
     </div>
 
     <!-- COMPRESSION -->
-    <div class="knob-group">
-      <div class="knob" [style.--rot]="stemKnobs[stem.name].compression * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'compression')" (dblclick)="resetKnob(stem.name, 'compression')"></div>
+    <div class="fader-group">
+      <span class="fader-label">Comp</span>
+      <input
+        type="range"
+        class="fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].compression"
+        (input)="setKnob(stem.name, 'compression', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'compression')" />
       <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'compression')">
       </p-button>
-      <span>Comp</span>
     </div>
 
     <!-- TONE -->
-    <div class="knob-group">
-      <div class="knob" [style.--rot]="stemKnobs[stem.name].tone * 270 + 'deg'"
-        (mousedown)="knobDrag($event, stem.name, 'tone')" (dblclick)="resetKnob(stem.name, 'tone')"></div>
+    <div class="fader-group">
+      <span class="fader-label">Tone</span>
+      <input
+        type="range"
+        class="fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].tone"
+        (input)="setKnob(stem.name, 'tone', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'tone')" />
       <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'tone')">
       </p-button>
-      <span>Tone</span>
     </div>
 
     <!-- DISTORTION (ONLY GUITAR / PIANO) -->
     <ng-container *ngIf="isDistortable(stem.name)">
-      <div class="knob-group">
-        <div class="knob" [style.--rot]="stemKnobs[stem.name].distortion * 270 + 'deg'"
-          (mousedown)="knobDrag($event, stem.name, 'distortion')" (dblclick)="resetKnob(stem.name, 'distortion')"></div>
+      <div class="fader-group">
+        <span class="fader-label">Drive</span>
+        <input
+          type="range"
+          class="fader"
+          orient="vertical"
+          min="0"
+          max="1"
+          step="0.01"
+          [value]="stemKnobs[stem.name].distortion"
+          (input)="setKnob(stem.name, 'distortion', $any($event.target).value)"
+          (dblclick)="resetKnob(stem.name, 'distortion')" />
         <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'distortion')">
         </p-button>
-        <span>Drive</span>
       </div>
 
       <!-- BYPASS -->
@@ -103,7 +134,75 @@
       </div>
     </ng-container>
 
-    <!-- RESET ALL KNOBS -->
+    <!-- 3-BAND EQ -->
+    <div class="fader-group">
+      <span class="fader-label">Low</span>
+      <input
+        type="range"
+        class="fader eq-fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].eqLow"
+        (input)="setKnob(stem.name, 'eqLow', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'eqLow')" />
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'eqLow')">
+      </p-button>
+    </div>
+
+    <div class="fader-group">
+      <span class="fader-label">Mid</span>
+      <input
+        type="range"
+        class="fader eq-fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].eqMid"
+        (input)="setKnob(stem.name, 'eqMid', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'eqMid')" />
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'eqMid')">
+      </p-button>
+    </div>
+
+    <div class="fader-group">
+      <span class="fader-label">High</span>
+      <input
+        type="range"
+        class="fader eq-fader"
+        orient="vertical"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="stemKnobs[stem.name].eqHigh"
+        (input)="setKnob(stem.name, 'eqHigh', $any($event.target).value)"
+        (dblclick)="resetKnob(stem.name, 'eqHigh')" />
+      <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'eqHigh')">
+      </p-button>
+    </div>
+
+    <!-- REVERB (ONLY FOR VOCALS) -->
+    <ng-container *ngIf="stem.name === 'vocals'">
+      <div class="fader-group">
+        <span class="fader-label">Reverb</span>
+        <input
+          type="range"
+          class="fader reverb-fader"
+          orient="vertical"
+          min="0"
+          max="1"
+          step="0.01"
+          [value]="stemKnobs[stem.name].reverb"
+          (input)="setKnob(stem.name, 'reverb', $any($event.target).value)"
+          (dblclick)="resetKnob(stem.name, 'reverb')" />
+        <p-button label="Reset" icon="pi pi-refresh" size="small" text (onClick)="resetKnob(stem.name, 'reverb')">
+        </p-button>
+      </div>
+    </ng-container>
+
+    <!-- RESET ALL FADERS -->
     <div class="reset-all-group">
       <p-button
         label="Reset All"

@@ -61,7 +61,7 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  get stemKnobs(): Record<string, { pregain: number; compression: number; tone: number; distortion: number }> {
+  get stemKnobs(): Record<string, { pregain: number; compression: number; tone: number; distortion: number; eqLow: number; eqMid: number; eqHigh: number; reverb: number }> {
     return new Proxy({} as any, {
       get: (_, stem: string) => this.engine.getStemKnobs(stem)
     });
@@ -473,6 +473,10 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.isDistortable(stem)) {
       this.engine.resetKnob(stem, 'distortion');
     }
+    this.engine.resetKnob(stem, 'eqLow');
+    this.engine.resetKnob(stem, 'eqMid');
+    this.engine.resetKnob(stem, 'eqHigh');
+    this.engine.resetKnob(stem, 'reverb');
     this.persistStemState(stem);
   }
 

@@ -5,7 +5,7 @@ export interface StemInfo {
   url: string;
 }
 
-export type KnobParam = 'pregain' | 'compression' | 'tone' | 'distortion';
+export type KnobParam = 'pregain' | 'compression' | 'tone' | 'distortion' | 'eqLow' | 'eqMid' | 'eqHigh' | 'reverb';
 
 export interface StemSettings {
   volume: number;
@@ -14,6 +14,10 @@ export interface StemSettings {
   compression: number;
   tone: number;
   distortion: number;
+  eqLow: number;
+  eqMid: number;
+  eqHigh: number;
+  reverb: number;
 }
 
 export type PlaybackMode = 'PREVIEW' | 'STREAMING';
@@ -40,6 +44,12 @@ export class MusicPlayerEngine {
   private pregainNodes: Record<string, GainNode> = {};
   private compressorNodes: Record<string, DynamicsCompressorNode> = {};
   private toneNodes: Record<string, BiquadFilterNode> = {};
+  private eqLowNodes: Record<string, BiquadFilterNode> = {};
+  private eqMidNodes: Record<string, BiquadFilterNode> = {};
+  private eqHighNodes: Record<string, BiquadFilterNode> = {};
+  private reverbNodes: Record<string, ConvolverNode> = {};
+  private reverbGainNodes: Record<string, GainNode> = {};
+  private dryGainNodes: Record<string, GainNode> = {};
   private stemGains: Record<string, GainNode> = {};
   private distortionNodes: Record<string, WaveShaperNode | null> = {};
 
@@ -51,6 +61,10 @@ export class MusicPlayerEngine {
     compression: number;
     tone: number;
     distortion: number;
+    eqLow: number;
+    eqMid: number;
+    eqHigh: number;
+    reverb: number;
   }> = {};
 
   private playing = false;
@@ -107,7 +121,11 @@ export class MusicPlayerEngine {
         pregain: this.stemKnobs[stem].pregain,
         compression: this.stemKnobs[stem].compression,
         tone: this.stemKnobs[stem].tone,
-        distortion: this.stemKnobs[stem].distortion
+        distortion: this.stemKnobs[stem].distortion,
+        eqLow: this.stemKnobs[stem].eqLow,
+        eqMid: this.stemKnobs[stem].eqMid,
+        eqHigh: this.stemKnobs[stem].eqHigh,
+        reverb: this.stemKnobs[stem].reverb
       };
     }
     return settings;
@@ -362,18 +380,41 @@ export class MusicPlayerEngine {
   /**
    * Create audio nodes for a stem (extracted for reuse)
    *
-   * Signal flow (dual-playback):
+   * Signal flow (dual-playback with EQ and reverb):
    *
    * CachedSource ──> cacheGain ──┐
-   *                               ├──> pregain ──> comp ──> tone ──> stemGain ──> masterGain
-   * StreamSource ──> streamGain ──┘
+   *                               ├──> pregain ──> comp ──> tone ──> eqLow ──> eqMid ──> eqHigh ──┬──> dryGain ──┐
+   * StreamSource ──> streamGain ──┘                                                                │              ├──> stemGain ──> masterGain
+   *                                                                                                 └──> reverb ──> reverbGain ──┘
    */
   private createAudioNodesForStem(stemName: string): void {
     // Create effect chain
     const pregain = this.audioCtx.createGain();
     const comp = this.audioCtx.createDynamicsCompressor();
     const tone = this.audioCtx.createBiquadFilter();
+
+    // Create 3-band EQ
+    const eqLow = this.audioCtx.createBiquadFilter();
+    eqLow.type = 'lowshelf';
+    eqLow.frequency.value = 200;
+
+    const eqMid = this.audioCtx.createBiquadFilter();
+    eqMid.type = 'peaking';
+    eqMid.frequency.value = 1000;
+    eqMid.Q.value = 1;
+
+    const eqHigh = this.audioCtx.createBiquadFilter();
+    eqHigh.type = 'highshelf';
+    eqHigh.frequency.value = 3000;
+
+    // Create reverb (convolver) with dry/wet mix
+    const reverb = this.audioCtx.createConvolver();
+    const reverbGain = this.audioCtx.createGain();
+    const dryGain = this.audioCtx.createGain();
     const gain = this.audioCtx.createGain();
+
+    // Generate simple reverb impulse response
+    reverb.buffer = this.createReverbImpulse(2, 2);
 
     // Create dual-source gains
     const cacheGain = this.audioCtx.createGain();
@@ -383,21 +424,42 @@ export class MusicPlayerEngine {
     cacheGain.connect(pregain);
     streamGain.connect(pregain);
 
-    // Connect effect chain
+    // Connect effect chain: pregain -> comp -> tone -> EQ chain -> dry/wet split
     pregain.connect(comp);
     comp.connect(tone);
-    tone.connect(gain);
+    tone.connect(eqLow);
+    eqLow.connect(eqMid);
+    eqMid.connect(eqHigh);
+
+    // Dry/wet split for reverb
+    eqHigh.connect(dryGain);
+    eqHigh.connect(reverb);
+    reverb.connect(reverbGain);
+
+    // Mix dry and wet
+    dryGain.connect(gain);
+    reverbGain.connect(gain);
     gain.connect(this.masterGain);
 
     // Initialize preview mode (cache active, stream silent)
     cacheGain.gain.value = 1;
     streamGain.gain.value = 0;
 
+    // Initialize dry/wet mix (100% dry, 0% wet initially)
+    dryGain.gain.value = 1;
+    reverbGain.gain.value = 0;
+
     this.cacheGains[stemName] = cacheGain;
     this.streamGains[stemName] = streamGain;
     this.pregainNodes[stemName] = pregain;
     this.compressorNodes[stemName] = comp;
     this.toneNodes[stemName] = tone;
+    this.eqLowNodes[stemName] = eqLow;
+    this.eqMidNodes[stemName] = eqMid;
+    this.eqHighNodes[stemName] = eqHigh;
+    this.reverbNodes[stemName] = reverb;
+    this.reverbGainNodes[stemName] = reverbGain;
+    this.dryGainNodes[stemName] = dryGain;
     this.stemGains[stemName] = gain;
     this.distortionNodes[stemName] = null;
 
@@ -410,8 +472,31 @@ export class MusicPlayerEngine {
       pregain: 0.3,
       compression: 0,
       tone: 0.7,
-      distortion: 0
+      distortion: 0,
+      eqLow: 0.5,
+      eqMid: 0.5,
+      eqHigh: 0.5,
+      reverb: 0
     };
+  }
+
+  /**
+   * Create a simple reverb impulse response
+   */
+  private createReverbImpulse(duration: number, decay: number): AudioBuffer {
+    const sampleRate = this.audioCtx.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = this.audioCtx.createBuffer(2, length, sampleRate);
+    const left = impulse.getChannelData(0);
+    const right = impulse.getChannelData(1);
+
+    for (let i = 0; i < length; i++) {
+      const n = length - i;
+      left[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay);
+      right[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay);
+    }
+
+    return impulse;
   }
 
   getBuffer(stem: string): AudioBuffer | undefined {
@@ -564,9 +649,26 @@ export class MusicPlayerEngine {
           this.distortionNodes[stem] = ws;
           this.toneNodes[stem].disconnect();
           this.toneNodes[stem].connect(ws);
-          ws.connect(this.stemGains[stem]);
+          ws.connect(this.eqLowNodes[stem]);
         }
         ws.curve = this.makeDistortionCurve(value * 50) as any;
+        break;
+      case 'eqLow':
+        // Map 0-1 to -12dB to +12dB
+        this.eqLowNodes[stem].gain.value = (value - 0.5) * 24;
+        break;
+      case 'eqMid':
+        // Map 0-1 to -12dB to +12dB
+        this.eqMidNodes[stem].gain.value = (value - 0.5) * 24;
+        break;
+      case 'eqHigh':
+        // Map 0-1 to -12dB to +12dB
+        this.eqHighNodes[stem].gain.value = (value - 0.5) * 24;
+        break;
+      case 'reverb':
+        // Crossfade between dry and wet (0 = 100% dry, 1 = 50% wet / 50% dry for natural mix)
+        this.dryGainNodes[stem].gain.value = 1 - (value * 0.5);
+        this.reverbGainNodes[stem].gain.value = value * 0.5;
         break;
     }
   }
@@ -576,7 +678,11 @@ export class MusicPlayerEngine {
       pregain: 0.3,
       compression: 0,
       tone: 0.7,
-      distortion: 0
+      distortion: 0,
+      eqLow: 0.5,
+      eqMid: 0.5,
+      eqHigh: 0.5,
+      reverb: 0
     };
     this.setKnob(stem, param, defaults[param]);
   }
@@ -611,7 +717,11 @@ export class MusicPlayerEngine {
         pregain: cfg.pregain,
         compression: cfg.compression,
         tone: cfg.tone,
-        distortion: cfg.distortion
+        distortion: cfg.distortion,
+        eqLow: cfg.eqLow ?? 0.5,
+        eqMid: cfg.eqMid ?? 0.5,
+        eqHigh: cfg.eqHigh ?? 0.5,
+        reverb: cfg.reverb ?? 0
       };
 
       this.stemGains[stem].gain.value = cfg.muted ? 0 : cfg.volume;
@@ -623,6 +733,16 @@ export class MusicPlayerEngine {
 
       this.toneNodes[stem].frequency.value = 300 + cfg.tone * 9700;
 
+      // Restore EQ settings
+      this.eqLowNodes[stem].gain.value = ((cfg.eqLow ?? 0.5) - 0.5) * 24;
+      this.eqMidNodes[stem].gain.value = ((cfg.eqMid ?? 0.5) - 0.5) * 24;
+      this.eqHighNodes[stem].gain.value = ((cfg.eqHigh ?? 0.5) - 0.5) * 24;
+
+      // Restore reverb settings
+      const reverbVal = cfg.reverb ?? 0;
+      this.dryGainNodes[stem].gain.value = 1 - (reverbVal * 0.5);
+      this.reverbGainNodes[stem].gain.value = reverbVal * 0.5;
+
       if (this.isDistortable(stem)) {
         let ws = this.distortionNodes[stem];
         if (!ws) {
@@ -630,7 +750,7 @@ export class MusicPlayerEngine {
           this.distortionNodes[stem] = ws;
           this.toneNodes[stem].disconnect();
           this.toneNodes[stem].connect(ws);
-          ws.connect(this.stemGains[stem]);
+          ws.connect(this.eqLowNodes[stem]);
         }
         ws.curve = this.makeDistortionCurve(cfg.distortion * 50) as any;
       }
@@ -675,6 +795,12 @@ export class MusicPlayerEngine {
     this.pregainNodes = {};
     this.compressorNodes = {};
     this.toneNodes = {};
+    this.eqLowNodes = {};
+    this.eqMidNodes = {};
+    this.eqHighNodes = {};
+    this.reverbNodes = {};
+    this.reverbGainNodes = {};
+    this.dryGainNodes = {};
     this.stemGains = {};
     this.distortionNodes = {};
 
