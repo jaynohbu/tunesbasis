@@ -48,17 +48,16 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // When tab becomes active for the first time, trigger load
-    if (changes['isActive'] && this.isActive && !this.hasBeenLoaded) {
-      console.log(`[ScenePlayerTab] Tab "${this.scene?.name}" became active for first time`);
-      this.hasBeenLoaded = true;
-      // The music-player will auto-load via its own ngOnChanges
-    }
-
-    // When tab becomes active again (switching back), ensure player is ready
-    if (changes['isActive'] && this.isActive && this.hasBeenLoaded && changes['isActive'].previousValue === false) {
-      console.log(`[ScenePlayerTab] Tab "${this.scene?.name}" became active again (switching back)`);
-      // Player already loaded, no need to reload
+    // When tab becomes active (first time or switching back)
+    if (changes['isActive'] && this.isActive) {
+      if (!this.hasBeenLoaded) {
+        console.log(`[ScenePlayerTab] Tab "${this.scene?.name}" became active for first time`);
+        this.hasBeenLoaded = true;
+      } else if (changes['isActive'].previousValue === false) {
+        console.log(`[ScenePlayerTab] Tab "${this.scene?.name}" became active again (switching back)`);
+        // Music player's ngOnChanges will handle the reload automatically
+        // since we clear stems when tab becomes inactive
+      }
     }
   }
 
@@ -158,6 +157,12 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   onSongRenamed() {
     console.log('[ScenePlayerTab.onSongRenamed] Song was renamed');
     // No need to emit anything, the song name is already updated in the scene object
+  }
+
+  onDefaultsInitialized() {
+    console.log('[ScenePlayerTab.onDefaultsInitialized] Default settings initialized, saving to backend');
+    // Save the default settings to backend
+    this.sceneUpdated.emit(this.scene);
   }
 
   /* ================= COPY SCENE ================= */

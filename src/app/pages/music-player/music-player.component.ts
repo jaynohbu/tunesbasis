@@ -1,6 +1,8 @@
 import {
   Component,
   Input,
+  Output,
+  EventEmitter,
   OnInit,
   OnChanges,
   SimpleChanges,
@@ -20,6 +22,8 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() scene!: Scene;
   @Input() activeIndex = 0;
   @Input() isTabActive = false;
+
+  @Output() defaultsInitialized = new EventEmitter<void>();
 
   stems: StemInfo[] = [];
 
@@ -109,11 +113,19 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
       return; // Exit early after triggering load
     }
 
-    // Handle tab deactivation (stop playback)
-    if (changes['isTabActive'] && !this.isTabActive && this.engine.isPlaying()) {
-      console.log(`[MusicPlayer.ngOnChanges] Tab became inactive - stopping playback for "${this.scene?.name}"`);
-      this.engine.togglePlay();
-      this.stopCursorLoop();
+    // Handle tab deactivation (stop playback and clear stems to allow reload on reactivation)
+    if (changes['isTabActive'] && !this.isTabActive) {
+      console.log(`[MusicPlayer.ngOnChanges] Tab became inactive for "${this.scene?.name}"`);
+      if (this.engine.isPlaying()) {
+        console.log(`[MusicPlayer.ngOnChanges] Stopping playback`);
+        this.engine.togglePlay();
+        this.stopCursorLoop();
+      }
+      // Clear stems so that when tab becomes active again, ngOnChanges will reload
+      console.log(`[MusicPlayer.ngOnChanges] Clearing stems to allow reload on reactivation`);
+      this.stems = [];
+      this.waveformsDrawn = 0;
+      this.waveformsReady = false;
     }
   }
 
@@ -222,7 +234,18 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
         console.log('[MusicPlayer.loadFromScene] Restoring stem settings...', Object.keys(item.stems));
         this.restoreStemSettings(item.stems);
       } else {
-        console.log('[MusicPlayer.loadFromScene] No saved settings - using engine defaults');
+        console.log('[MusicPlayer.loadFromScene] No saved settings - initializing with engine defaults');
+        // Get engine defaults and apply them to audio nodes
+        if (!item.stems) item.stems = {};
+        const defaultSettings = this.engine.getAllStemSettings();
+        Object.keys(defaultSettings).forEach(stemName => {
+          item.stems![stemName] = defaultSettings[stemName];
+        });
+        console.log('[MusicPlayer.loadFromScene] Default settings stored:', Object.keys(item.stems));
+        // Apply defaults to audio nodes (this is critical - otherwise audio nodes have uninitialized values)
+        this.restoreStemSettings(defaultSettings);
+        // Notify parent to save these defaults to backend
+        this.defaultsInitialized.emit();
       }
 
       console.log('[MusicPlayer.loadFromScene] ✅ Load complete');

@@ -1,7 +1,7 @@
 <div class="layout-topbar">
     <a class="layout-topbar-logo" routerLink="">
-        <img width="80px" height="280px" src="assets/layout/images/{{layoutService.config.colorScheme === 'light' ? 'logo-white' : 'logo-white'}}.svg" alt="logo">
-        <span>TunesBasis</span>
+        <img src="assets/layout/images/{{layoutService.config.colorScheme === 'light' ? 'logo-white' : 'logo-white'}}.svg" alt="logo">
+        <span>Live Band</span>
     </a>
 
     <button #menubutton class="p-link layout-menu-button layout-topbar-button" (click)="layoutService.onMenuToggle()">
@@ -13,17 +13,10 @@
     </button>
 
     <div #topbarmenu class="layout-topbar-menu" [ngClass]="{'layout-topbar-menu-mobile-active': layoutService.state.profileSidebarVisible}">
-        <button class="p-link layout-topbar-button">
-            <i class="pi pi-calendar"></i>
-            <span>Calendar</span>
-        </button>
-        <button class="p-link layout-topbar-button">
+        <p-menu #userMenu [model]="userMenuItems" [popup]="true" appendTo="body"></p-menu>
+        <button class="p-link layout-topbar-button" (click)="userMenu.toggle($event)">
             <i class="pi pi-user"></i>
-            <span>Profile</span>
-        </button>
-        <button class="p-link layout-topbar-button" [routerLink]="'/documentation'">
-            <i class="pi pi-cog"></i>
-            <span>Settings</span>
+            <span>{{ userEmail }}</span>
         </button>
     </div>
 </div>

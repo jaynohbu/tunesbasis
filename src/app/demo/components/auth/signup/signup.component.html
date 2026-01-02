@@ -1,0 +1,67 @@
+<div class="surface-0 flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">
+    <div class="grid justify-content-center p-2 lg:p-0" style="min-width:80%">
+        <div class="col-12 mt-5 xl:mt-0 text-center">
+            <img src="assets/layout/images/{{layoutService.config.colorScheme === 'light' ? 'logo-dark' : 'logo-white'}}.svg" alt="TunesBasis logo" class="mb-5" style= "height:250px;">                
+        </div>
+        <div class="col-12 xl:col-6" style="border-radius:56px; padding:0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%);">
+            <div class="h-full w-full m-0 py-7 px-4" style="border-radius:53px; background: linear-gradient(180deg, var(--surface-50) 38.9%, var(--surface-0));">
+                <div class="text-center mb-5">
+                    <div class="text-900 text-3xl font-medium mb-3">Create Account</div>
+                    <span class="text-600 font-medium">{{ needsVerification ? 'Enter verification code' : 'Sign up for TunesBasis' }}</span>
+                </div>
+
+                <!-- Error message -->
+                <div *ngIf="error" class="w-full md:w-10 mx-auto mb-3">
+                    <p-message severity="error" [text]="error"></p-message>
+                </div>
+
+                <!-- Success message -->
+                <div *ngIf="success" class="w-full md:w-10 mx-auto mb-3">
+                    <p-message severity="success" [text]="success"></p-message>
+                </div>
+
+                <!-- Sign Up Form -->
+                <div *ngIf="!needsVerification" class="w-full md:w-10 mx-auto">
+                    <label for="email1" class="block text-900 text-xl font-medium mb-2">Email</label>
+                    <input id="email1" type="email" placeholder="Email address" 
+                           pInputText class="w-full mb-3" style="padding:1rem;"
+                           [(ngModel)]="email" [disabled]="loading">
+
+                    <label for="password1" class="block text-900 font-medium text-xl mb-2">Password</label>
+                    <p-password id="password1" [(ngModel)]="password" placeholder="Password" 
+                                [toggleMask]="true" styleClass="w-full mb-3"
+                                [disabled]="loading"
+                                [strongRegex]="'^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})'"></p-password>
+
+                    <label for="confirm-password" class="block text-900 font-medium text-xl mb-2">Confirm Password</label>
+                    <p-password id="confirm-password" [(ngModel)]="confirmPassword" placeholder="Confirm Password" 
+                                [toggleMask]="true" styleClass="w-full mb-3"
+                                [disabled]="loading" [feedback]="false"
+                                (keyup.enter)="onSignUp()"></p-password>
+
+                    <div class="flex align-items-center justify-content-between mb-5">
+                        <a class="font-medium no-underline cursor-pointer" 
+                           style="color: var(--primary-color)"
+                           (click)="goToLogin()">Already have an account?</a>
+                    </div>
+                    <button pButton pRipple label="Sign Up" class="w-full p-3 text-xl"
+                            [loading]="loading" [disabled]="loading"
+                            (click)="onSignUp()"></button>
+                </div>
+
+                <!-- Verification Form -->
+                <div *ngIf="needsVerification" class="w-full md:w-10 mx-auto">
+                    <label for="verification-code" class="block text-900 text-xl font-medium mb-2">Verification Code</label>
+                    <input id="verification-code" type="text" placeholder="Enter code from email" 
+                           pInputText class="w-full mb-5" style="padding:1rem;"
+                           [(ngModel)]="verificationCode" [disabled]="loading"
+                           (keyup.enter)="onVerify()">
+
+                    <button pButton pRipple label="Verify" class="w-full p-3 text-xl"
+                            [loading]="loading" [disabled]="loading"
+                            (click)="onVerify()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

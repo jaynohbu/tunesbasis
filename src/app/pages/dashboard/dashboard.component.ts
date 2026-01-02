@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { MusicUploadService, SongDTO } from 'src/app/services/music-upload.service';
 import { SceneService, SceneDTO, SceneItemDTO } from 'src/app/services/scene.service';
 import { Scene, SceneSong } from 'src/app/model/scene';
@@ -40,7 +40,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private uploadService: MusicUploadService,
-    private sceneService: SceneService
+    private sceneService: SceneService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   /* ================= INIT ================= */
@@ -279,20 +280,21 @@ async onSceneCopied(scene: Scene) {
 
     console.log('[COPY] Scene copied successfully:', response.data.sceneId);
 
-    // Reset activeSceneIndex to force PrimeNG to update
-    this.activeSceneIndex = -1;
-
     // Reload all scenes to get the new copy
     await this.reloadSongsAndScenes();
 
-    // Use setTimeout to allow Angular change detection to process
+    // Force change detection to ensure tab view updates properly
+    this.cdr.detectChanges();
+
+    // Use setTimeout to allow DOM to stabilize before switching tabs
     setTimeout(() => {
       // Switch to the new copied scene (it will be the last one)
       this.activeSceneIndex = this.scenes.length - 1;
       this.saveActiveSceneIndex();
+      this.cdr.detectChanges();
 
       console.log('[COPY] Switched to new scene:', this.scenes[this.activeSceneIndex]?.name);
-    }, 0);
+    }, 100);
   } catch (error) {
     console.error('[COPY] Failed to copy scene:', error);
   }

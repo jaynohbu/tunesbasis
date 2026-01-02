@@ -17,7 +17,7 @@ export class AppMenuComponent implements OnInit {
             {
                 label: 'Profile',
                 items: [
-                    { label: 'Profile', icon: 'pi pi-fw pi-home', routerLink: ['/'] }
+                    { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/app'] }
                 ]
             },
             // {
@@ -83,14 +83,14 @@ export class AppMenuComponent implements OnInit {
                 label: 'AI Study Note',
                 icon: 'pi pi-fw pi-book',
                 items: [
-                    { label: 'ML Basics', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/ml-basic'] },
-                    { label: 'ML Metrics', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/ml-metrics'] },
-                    { label: 'Time Series', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/time-series'] },
-                    { label: 'Reinforcement Learning', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/reinforcement-learning'] },
-                    { label: 'Algorythms', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/algorythms'] },
-                    { label: 'Python Tricks', icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/python-tricks'] },
-                    { label: 'Music Data Analysis',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/music-data'] },
-                    { label: 'Music Player Demo',  icon: 'pi pi-fw pi-clock', routerLink: ['/note-pages/dashboard'] },
+                    { label: 'ML Basics', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/ml-basic'] },
+                    { label: 'ML Metrics', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/ml-metrics'] },
+                    { label: 'Time Series', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/time-series'] },
+                    { label: 'Reinforcement Learning', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/reinforcement-learning'] },
+                    { label: 'Algorythms', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/algorythms'] },
+                    { label: 'Python Tricks', icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/python-tricks'] },
+                    { label: 'Music Data Analysis',  icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/music-data'] },
+                    { label: 'Music Player Demo',  icon: 'pi pi-fw pi-clock', routerLink: ['/app/note-pages/dashboard'] },
                 ]
             },
 

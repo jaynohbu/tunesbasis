@@ -1,10 +1,26 @@
 /* dashboard.component.scss */
 
+/* Tab view global styles */
+::ng-deep .p-tabview-nav {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+}
+
+::ng-deep .p-tabview-nav-link {
+  white-space: nowrap !important;
+  min-width: max-content !important;
+}
+
+::ng-deep .p-tabview-panel {
+  padding: 0 !important;
+}
+
 /* Scene tab header editing */
 .scene-tab-header {
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .scene-tab-header-edit {

@@ -32,7 +32,11 @@
   </div>
 
   <!-- ================= Player ================= -->
-  <music-player [scene]="scene" [isTabActive]="isActive"></music-player>
+  <music-player
+    [scene]="scene"
+    [isTabActive]="isActive"
+    (defaultsInitialized)="onDefaultsInitialized()">
+  </music-player>
 
   <!-- ================= Overlay ================= -->
   <div class="overlay" *ngIf="overlayOpen">

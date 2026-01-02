@@ -51,3 +51,12 @@ import 'zone.js';  // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+
+// Polyfill for amazon-cognito-identity-js (requires global, process, and Buffer)
+import { Buffer } from 'buffer';
+
+(window as any).global = window;
+(window as any).process = {
+  env: { DEBUG: undefined },
+};
+(window as any).Buffer = Buffer;

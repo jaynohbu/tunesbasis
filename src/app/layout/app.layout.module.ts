@@ -9,6 +9,7 @@ import { BadgeModule } from 'primeng/badge';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { RippleModule } from 'primeng/ripple';
+import { MenuModule } from 'primeng/menu';
 import { AppMenuComponent } from './app.menu.component';
 import { AppMenuitemComponent } from './app.menuitem.component';
 import { RouterModule } from '@angular/router';
@@ -38,6 +39,7 @@ import { AppLayoutComponent } from "./app.layout.component";
         RadioButtonModule,
         InputSwitchModule,
         RippleModule,
+        MenuModule,
         RouterModule,
         AppConfigModule
     ],
