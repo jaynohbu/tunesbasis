@@ -37,6 +37,7 @@ export class DashboardComponent implements OnInit {
 
   showPlayer = true;
   lblBtnShowPlayer = 'Show Songs';
+  showInviteModal = false;
 
   constructor(
     private uploadService: MusicUploadService,
@@ -473,5 +474,45 @@ private toSceneItemDTO(
   cancelEditingScene() {
     this.editingSceneIndex = null;
     this.editingSceneName = '';
+  }
+
+  /* ================= INVITE MODAL ================= */
+
+  openInviteModal() {
+    this.showInviteModal = true;
+  }
+
+  closeInviteModal() {
+    this.showInviteModal = false;
+  }
+
+  /* ================= SCENE SHARING ================= */
+
+  async onToggleSceneSharing(event: { sceneId: string; shared: boolean }): Promise<void> {
+    console.log('[Dashboard.onToggleSceneSharing] Toggling scene sharing:', event);
+
+    try {
+      await this.sceneService.toggleSceneSharing(event.sceneId, event.shared);
+
+      // Update local scene state
+      const sceneDTO = this.scenesDTO.find(s => s.sceneId === event.sceneId);
+      if (sceneDTO) {
+        sceneDTO.shared = event.shared;
+      }
+
+      const scene = this.scenes.find(s => s.sceneId === event.sceneId);
+      if (scene) {
+        scene.shared = event.shared;
+      }
+
+      console.log('[Dashboard.onToggleSceneSharing] Scene sharing updated successfully');
+    } catch (error) {
+      console.error('[Dashboard.onToggleSceneSharing] Failed to toggle scene sharing:', error);
+      // Revert the toggle in UI
+      const scene = this.scenes.find(s => s.sceneId === event.sceneId);
+      if (scene) {
+        scene.shared = !event.shared;
+      }
+    }
   }
 }

@@ -2,12 +2,21 @@
 
   <div class="header-section">
     <h3>{{ scene.name }}</h3>
-    <p-button
-      icon="pi pi-copy"
-      label="Copy as New Scene"
-      styleClass="p-button-sm p-button-info"
-      (onClick)="onCopyAsNewScene()">
-    </p-button>
+    <div class="header-actions">
+      <div class="sharing-toggle">
+        <label class="toggle-label">Share with Group:</label>
+        <p-inputSwitch
+          [(ngModel)]="scene.shared"
+          (onChange)="onToggleSharing($event.checked)">
+        </p-inputSwitch>
+      </div>
+      <p-button
+        icon="pi pi-copy"
+        label="Copy as New Scene"
+        styleClass="p-button-sm p-button-info"
+        (onClick)="onCopyAsNewScene()">
+      </p-button>
+    </div>
   </div>
 
   <div class="add-song-section">

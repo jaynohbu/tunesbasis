@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { InvitationsService } from 'src/app/services/invitations.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-login',
@@ -36,12 +38,19 @@ export class LoginComponent implements OnInit {
         public layoutService: LayoutService,
         private authService: AuthService,
         private router: Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private invitationsService: InvitationsService
     ) { }
 
     ngOnInit(): void {
         // Get return URL from route parameters or default to '/app'
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/app';
+
+        // Auto-fill test credentials in development/localhost
+        if (!environment.production) {
+            this.email = 'test@tunesbasis.com';
+            this.password = 'TestPassword123!';
+        }
 
         // Redirect if already logged in
         if (this.authService.isAuthenticated()) {
@@ -60,8 +69,23 @@ export class LoginComponent implements OnInit {
 
         try {
             await this.authService.signIn(this.email, this.password);
-            // Redirect to return URL
-            this.router.navigate([this.returnUrl]);
+
+            // Check if there's a pending invitation token
+            const invitationToken = sessionStorage.getItem('invitation_token');
+            if (invitationToken) {
+                try {
+                    await this.invitationsService.acceptInvitation({ token: invitationToken });
+                    sessionStorage.removeItem('invitation_token');
+                    this.router.navigate(['/dashboard']);
+                } catch (inviteErr) {
+                    console.error('Failed to accept invitation:', inviteErr);
+                    // Still redirect to dashboard even if invitation acceptance fails
+                    this.router.navigate([this.returnUrl]);
+                }
+            } else {
+                // Redirect to return URL
+                this.router.navigate([this.returnUrl]);
+            }
         } catch (err: any) {
             console.error('Sign in error:', err);
             this.error = err.message || 'Failed to sign in. Please check your credentials.';

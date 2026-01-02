@@ -15,6 +15,8 @@ export interface SceneDTO {
   sceneId: string;
   name: string;
   items: SceneItemDTO[];
+  ownerUserId?: string;
+  shared?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,5 +84,22 @@ export class SceneService {
    * ============================================================ */
   deleteScene(sceneId: string): Promise<AxiosResponse<void>> {
     return axios.delete<void>(`${this.baseUrl}/${sceneId}`);
+  }
+
+  /* ============================================================
+   * TOGGLE SCENE SHARING
+   * ============================================================ */
+  toggleSceneSharing(sceneId: string, shared: boolean): Promise<AxiosResponse<{ shared: boolean }>> {
+    return axios.post<{ shared: boolean }>(
+      `${this.baseUrl}/${sceneId}/share`,
+      { shared }
+    );
+  }
+
+  /* ============================================================
+   * LIST SHARED SCENES
+   * ============================================================ */
+  listSharedScenes(): Promise<AxiosResponse<SceneDTO[]>> {
+    return axios.get<SceneDTO[]>(`${this.baseUrl}/shared/all`);
   }
 }

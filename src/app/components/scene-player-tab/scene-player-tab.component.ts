@@ -35,6 +35,9 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   /** emit add song request to parent */
   @Output() songAdded = new EventEmitter<SongDTO>();
 
+  /** emit toggle sharing request to parent */
+  @Output() toggleSharing = new EventEmitter<{ sceneId: string; shared: boolean }>();
+
   /** real player instance */
   @ViewChild(MusicPlayerComponent)
   player!: MusicPlayerComponent;
@@ -219,5 +222,16 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
 
   toggleOverlay() {
     this.overlayOpen = !this.overlayOpen;
+  }
+
+  /* ================= SCENE SHARING ================= */
+
+  onToggleSharing(shared: boolean) {
+    if (!this.scene.sceneId) {
+      console.warn('[ScenePlayerTab.onToggleSharing] Scene has no ID');
+      return;
+    }
+    console.log('[ScenePlayerTab.onToggleSharing] Emitting toggle sharing:', { sceneId: this.scene.sceneId, shared });
+    this.toggleSharing.emit({ sceneId: this.scene.sceneId, shared });
   }
 }

@@ -13,6 +13,11 @@ import { SliderModule } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { CheckboxModule } from 'primeng/checkbox';
 
 /* Components */
 import { TimeSeriesComponent } from './time-series/time-series.component';
@@ -34,6 +39,7 @@ import { SceneEditorComponent } from '../components/scene-editor/scene-editor.co
 import { DropdownModule } from 'primeng/dropdown';
 import { OrderListModule } from 'primeng/orderlist';
 import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-player-tab.component';
+import { InviteModalComponent } from '../components/invite-modal/invite-modal.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -49,7 +55,8 @@ import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-pl
     SongListComponent,
     DashboardComponent,
     SceneEditorComponent,
-    ScenePlayerTabComponent
+    ScenePlayerTabComponent,
+    InviteModalComponent
   ],
   imports: [
     CommonModule,
@@ -67,6 +74,14 @@ import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-pl
     OrderListModule,
     DialogModule,
     InputTextModule,
+    ProgressSpinnerModule,
+    ToastModule,
+    SliderModule,
+    InputSwitchModule,
+    CheckboxModule
+  ],
+  providers: [
+    MessageService
   ]
 })
 export class PagesModule { }

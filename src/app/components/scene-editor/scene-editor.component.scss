@@ -18,6 +18,7 @@
   align-items: center;
   margin-bottom: 16px;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .header-section h3 {
@@ -25,6 +26,30 @@
   font-size: 14px;
   font-weight: 600;
   flex: 1;
+  min-width: 150px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sharing-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--surface-100);
+  border-radius: 6px;
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
 }
 
 /* Add song section */

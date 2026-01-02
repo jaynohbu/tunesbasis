@@ -27,4 +27,6 @@ export interface Scene {
   sceneId?: string;
   name: string;
   items: SceneSong[];
+  shared?: boolean;
+  ownerUserId?: string;
 }

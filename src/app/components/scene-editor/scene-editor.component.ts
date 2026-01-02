@@ -25,6 +25,7 @@ export class SceneEditorComponent implements OnChanges {
   @Output() deleteSong = new EventEmitter<number>();
   @Output() songRenamed = new EventEmitter<void>();
   @Output() addSong = new EventEmitter<SongDTO>();
+  @Output() toggleSharing = new EventEmitter<boolean>();
 
   @ViewChild('songNameInput') songNameInput?: ElementRef<HTMLInputElement>;
 
@@ -174,6 +175,11 @@ export class SceneEditorComponent implements OnChanges {
   cancelEditingSong() {
     this.editingSongIndex = null;
     this.editingSongName = '';
+  }
+
+  onToggleSharing(shared: boolean) {
+    console.log('[SceneEditor.onToggleSharing] Toggling scene sharing:', shared);
+    this.toggleSharing.emit(shared);
   }
 
   private emit() {

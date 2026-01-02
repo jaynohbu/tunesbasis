@@ -1,9 +1,17 @@
-<!-- ================= UPLOAD ================= -->
-<music-upload
-  (processCompleted)="onProcessCompleted()"
-  (uploadFailed)="onUploadFailed($event)">
-</music-upload>
+<!-- ================= HEADER ACTIONS ================= -->
+<div class="dashboard-header">
+  <music-upload
+    (processCompleted)="onProcessCompleted()"
+    (uploadFailed)="onUploadFailed($event)">
+  </music-upload>
 
+  <p-button
+    label="Invite Members"
+    icon="pi pi-users"
+    styleClass="p-button-outlined p-button-secondary invite-button"
+    (onClick)="openInviteModal()">
+  </p-button>
+</div>
 
 <p-tabView
   *ngIf="scenes?.length"
@@ -53,11 +61,20 @@
       [allSongs]="songs"
       (sceneUpdated)="onSceneUpdated($event)"
       (sceneCopied)="onSceneCopied($event)"
-      (sceneDeleted)="onSceneDeleted($event)">
+      (sceneDeleted)="onSceneDeleted($event)"
+      (toggleSharing)="onToggleSceneSharing($event)">
     </scene-player-tab>
 
   </p-tabPanel>
 
 </p-tabView>
 
+<!-- ================= INVITE MODAL ================= -->
+<app-invite-modal
+  *ngIf="showInviteModal"
+  [currentScene]="scenes[activeSceneIndex]"
+  (closeModal)="closeInviteModal()">
+</app-invite-modal>
 
+<!-- ================= TOAST MESSAGE ================= -->
+<p-toast></p-toast>

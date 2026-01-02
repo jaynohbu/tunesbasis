@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { InvitationsService } from 'src/app/services/invitations.service';
 
 @Component({
     selector: 'app-signup',
@@ -40,7 +41,8 @@ export class SignupComponent implements OnInit {
         public layoutService: LayoutService,
         private authService: AuthService,
         private router: Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private invitationsService: InvitationsService
     ) { }
 
     ngOnInit(): void {
@@ -99,9 +101,28 @@ export class SignupComponent implements OnInit {
             
             // Auto sign in after verification
             await this.authService.signIn(this.email, this.password);
-            setTimeout(() => {
-                this.router.navigate([this.returnUrl]);
-            }, 1000);
+
+            // Check if there's a pending invitation token
+            const invitationToken = sessionStorage.getItem('invitation_token');
+            if (invitationToken) {
+                try {
+                    await this.invitationsService.acceptInvitation({ token: invitationToken });
+                    sessionStorage.removeItem('invitation_token');
+                    setTimeout(() => {
+                        this.router.navigate(['/dashboard']);
+                    }, 1000);
+                } catch (inviteErr) {
+                    console.error('Failed to accept invitation:', inviteErr);
+                    // Still redirect even if invitation acceptance fails
+                    setTimeout(() => {
+                        this.router.navigate([this.returnUrl]);
+                    }, 1000);
+                }
+            } else {
+                setTimeout(() => {
+                    this.router.navigate([this.returnUrl]);
+                }, 1000);
+            }
         } catch (err: any) {
             console.error('Verification error:', err);
             this.error = err.message || 'Failed to verify code. Please try again.';
