@@ -91,7 +91,7 @@ export class DashboardComponent implements OnInit {
     const songRes = await this.uploadService.listSongs();
     this.songs = songRes?.data ?? [];
 
-    console.log(`[RELOAD] Songs loaded: ${this.songs.length}`);
+    console.log(`[RELOAD] Songs loaded: ${this.songs.length}`, this.songs.map(s => s.originalName));
     console.table(
       this.songs.map(s => ({
         songId: s.songId,

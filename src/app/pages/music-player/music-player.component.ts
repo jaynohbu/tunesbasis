@@ -11,6 +11,7 @@ import {
 import { Scene, SceneSong, StemSettings } from 'src/app/model/scene';
 import { MusicPlayerEngine, StemInfo, KnobParam } from './music-player.engine';
 import { CachedSong } from 'src/app/services/audio-cache.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'music-player',
@@ -80,9 +81,17 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   private isRestoring = false;
   private isLoading = false;
 
-  constructor() {}
+  // Scene playback
+  playingScene = false;
+  private scenePlaybackTimer: any = null;
 
-  ngOnInit() {}
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
+    // Set auth token for streaming requests
+    const token = this.authService.getIdToken();
+    this.engine.setAuthToken(token);
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     // Log all changes for debugging
@@ -131,6 +140,7 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy() {
     this.stopCursorLoop();
+    this.stopScenePlayback();
     // Note: Don't call engine.destroy() here because Angular might reuse the component
     // The engine will clean up audio nodes in reset() when loading new scenes
   }
@@ -551,5 +561,113 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   private getStorageKey(scene: Scene): string {
     // Use sceneId to create unique storage key for each scene
     return `${this.STORAGE_KEY_SONG_INDEX}.${scene.sceneId}`;
+  }
+
+  /* ================= SCENE PLAYBACK ================= */
+
+  getCurrentSongName(): string {
+    if (!this.scene?.items?.[this.activeIndex]) return '';
+    const song = this.scene.items[this.activeIndex].song;
+    return song.sceneName || song.originalName;
+  }
+
+  getNextSongName(): string {
+    const nextIndex = this.activeIndex + 1;
+    if (!this.scene?.items?.[nextIndex]) return 'End of Scene';
+    const song = this.scene.items[nextIndex].song;
+    return song.sceneName || song.originalName;
+  }
+
+  togglePlayScene() {
+    if (this.playingScene) {
+      this.stopScenePlayback();
+    } else {
+      this.startScenePlayback();
+    }
+  }
+
+  private startScenePlayback() {
+    console.log('[MusicPlayer.startScenePlayback] Starting scene playback');
+    this.playingScene = true;
+
+    // Start playing current song if not already playing
+    if (!this.engine.isPlaying()) {
+      this.togglePlay();
+    }
+
+    // Monitor for song end
+    this.monitorSongEnd();
+  }
+
+  private stopScenePlayback() {
+    console.log('[MusicPlayer.stopScenePlayback] Stopping scene playback');
+    this.playingScene = false;
+    if (this.scenePlaybackTimer) {
+      clearTimeout(this.scenePlaybackTimer);
+      this.scenePlaybackTimer = null;
+    }
+  }
+
+  private monitorSongEnd() {
+    if (!this.playingScene) return;
+
+    const checkEnd = () => {
+      if (!this.playingScene) return;
+
+      const currentTime = this.engine.getCurrentTime();
+      const duration = this.engine.getMaxDuration();
+
+      // Check if song has finished (with small buffer for timing issues)
+      if (currentTime >= duration - 0.1) {
+        console.log('[MusicPlayer.monitorSongEnd] Song finished, preparing next song');
+        this.advanceToNextSong();
+      } else {
+        // Check again in 100ms
+        this.scenePlaybackTimer = setTimeout(checkEnd, 100);
+      }
+    };
+
+    checkEnd();
+  }
+
+  private async advanceToNextSong() {
+    const nextIndex = this.activeIndex + 1;
+
+    if (nextIndex >= this.scene.items.length) {
+      console.log('[MusicPlayer.advanceToNextSong] Reached end of scene');
+      this.stopScenePlayback();
+      if (this.engine.isPlaying()) {
+        this.togglePlay();
+      }
+      return;
+    }
+
+    // Get interval delay from current song
+    const currentItem = this.scene.items[this.activeIndex];
+    const intervalSec = currentItem.intervalSec || 0;
+
+    console.log(`[MusicPlayer.advanceToNextSong] Waiting ${intervalSec}s before loading next song`);
+
+    // Stop current playback
+    if (this.engine.isPlaying()) {
+      this.togglePlay();
+    }
+
+    // Wait for interval
+    await new Promise(resolve => setTimeout(resolve, intervalSec * 1000));
+
+    if (!this.playingScene) return; // User stopped scene playback during interval
+
+    // Load next song
+    console.log(`[MusicPlayer.advanceToNextSong] Loading song at index ${nextIndex}`);
+    await this.loadFromScene(nextIndex);
+
+    // Start playing automatically
+    if (!this.engine.isPlaying()) {
+      this.togglePlay();
+    }
+
+    // Continue monitoring
+    this.monitorSongEnd();
   }
 }

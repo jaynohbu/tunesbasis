@@ -1,14 +1,31 @@
 
 
 
-
 <!-- ================= GLOBAL CONTROLS ================= -->
 
-<div *ngIf="stems.length" class="controls">
+<div *ngIf="stems.length" class="controls-container">
+  <!-- Scene Playback Info -->
+  <div *ngIf="playingScene" class="scene-playback-info">
+    <div class="song-flow">
+      <span class="current-song">{{ getCurrentSongName() }}</span>
+      <i class="pi pi-arrow-right"></i>
+      <span class="next-song">{{ getNextSongName() }}</span>
+    </div>
+  </div>
+
+  <!-- Control Buttons -->
+  <div class="controls">
   <p-button [label]="playing ? 'Pause' : 'Play'" [icon]="playing ? 'pi pi-pause' : 'pi pi-play'"
     [disabled]="!waveformsReady" (onClick)="togglePlay()">
   </p-button>
 
+  <p-button
+    [label]="playingScene ? 'Stop Scene' : 'Play Scene'"
+    [icon]="playingScene ? 'pi pi-stop' : 'pi pi-play-circle'"
+    [disabled]="!waveformsReady"
+    styleClass="p-button-success"
+    (onClick)="togglePlayScene()">
+  </p-button>
 
   <label>
     Master Volume
@@ -23,6 +40,7 @@
     size="small"
     (onClick)="resetAllStemsAllKnobs()">
   </p-button>
+  </div>
 </div>
 
 <!-- ================= STEM TRACKS ================= -->

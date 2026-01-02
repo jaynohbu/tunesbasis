@@ -52,12 +52,14 @@
     <scene-editor
       [scene]="scene"
       [selectedIndex]="selectedIndex"
+      [allSongs]="allSongs"
       (selectSong)="selectedIndex = $event"
       (loadSong)="onLoadSong($event)"
       (sceneChange)="onSceneChange($event)"
       (copyAsNewScene)="onCopyScene()"
       (deleteSong)="onDeleteSong($event)"
-      (songRenamed)="onSongRenamed()">
+      (songRenamed)="onSongRenamed()"
+      (addSong)="onAddSong($event)">
     </scene-editor>
 
   </div>

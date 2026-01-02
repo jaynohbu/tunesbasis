@@ -50,6 +50,7 @@
     <scene-player-tab
       [scene]="scene"
       [isActive]="i === activeSceneIndex"
+      [allSongs]="songs"
       (sceneUpdated)="onSceneUpdated($event)"
       (sceneCopied)="onSceneCopied($event)"
       (sceneDeleted)="onSceneDeleted($event)">

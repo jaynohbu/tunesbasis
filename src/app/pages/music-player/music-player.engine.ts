@@ -71,11 +71,16 @@ export class MusicPlayerEngine {
   private startTime = 0;
   private offset = 0;
   private maxDuration = 0;
+  private authToken: string | null = null;
 
   constructor() {
     this.audioCtx = new AudioContext();
     this.masterGain = this.audioCtx.createGain();
     this.masterGain.connect(this.audioCtx.destination);
+  }
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
   }
 
   // ================= GETTERS =================
@@ -347,7 +352,16 @@ export class MusicPlayerEngine {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`[MusicPlayerEngine] Fetching ${stem.name}... (attempt ${attempt}/${maxRetries})`);
-        const arr = await fetch(stem.url).then(r => r.arrayBuffer());
+
+        // Prepare fetch options with auth token if available
+        const fetchOptions: RequestInit = {};
+        if (this.authToken) {
+          fetchOptions.headers = {
+            'Authorization': `Bearer ${this.authToken}`
+          };
+        }
+
+        const arr = await fetch(stem.url, fetchOptions).then(r => r.arrayBuffer());
         console.log(`[MusicPlayerEngine] Decoding ${stem.name}... (${arr.byteLength} bytes)`);
         const buffer = await this.audioCtx.decodeAudioData(arr);
         console.log(`[MusicPlayerEngine] Successfully loaded ${stem.name} (${buffer.duration.toFixed(2)}s)`);

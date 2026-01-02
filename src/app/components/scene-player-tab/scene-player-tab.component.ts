@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Scene } from 'src/app/model/scene';
 import { MusicPlayerComponent } from 'src/app/pages/music-player/music-player.component';
+import { SongDTO } from 'src/app/services/music-upload.service';
 
 @Component({
   selector: 'scene-player-tab',
@@ -20,6 +21,7 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
 
   @Input() scene!: Scene;
   @Input() isActive = false;
+  @Input() allSongs: SongDTO[] = [];
 
   /** emit updated scene to parent */
   @Output() sceneUpdated = new EventEmitter<Scene>();
@@ -29,6 +31,9 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
 
   /** emit delete scene request to parent */
   @Output() sceneDeleted = new EventEmitter<Scene>();
+
+  /** emit add song request to parent */
+  @Output() songAdded = new EventEmitter<SongDTO>();
 
   /** real player instance */
   @ViewChild(MusicPlayerComponent)
@@ -48,6 +53,15 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Log all songs input changes
+    if (changes['allSongs']) {
+      console.log('[ScenePlayerTab.ngOnChanges] allSongs changed:', {
+        previousCount: changes['allSongs'].previousValue?.length || 0,
+        currentCount: changes['allSongs'].currentValue?.length || 0,
+        songs: changes['allSongs'].currentValue?.map((s: SongDTO) => s.originalName) || []
+      });
+    }
+
     // When tab becomes active (first time or switching back)
     if (changes['isActive'] && this.isActive) {
       if (!this.hasBeenLoaded) {
@@ -181,6 +195,24 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
 
     // emit upward to dashboard to delete the scene
     this.sceneDeleted.emit(this.scene);
+  }
+
+  /* ================= ADD SONG ================= */
+
+  onAddSong(song: SongDTO) {
+    console.log('[ScenePlayerTab.onAddSong] Adding song to scene:', song.originalName);
+
+    // Add the song to the scene
+    this.scene.items.push({
+      song,
+      intervalSec: 10,
+      stems: {}
+    });
+
+    // Save the updated scene
+    this.sceneUpdated.emit(this.scene);
+
+    console.log('[ScenePlayerTab.onAddSong] Song added successfully, scene now has', this.scene.items.length, 'songs');
   }
 
   /* ================= OVERLAY ================= */

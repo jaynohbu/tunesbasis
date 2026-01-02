@@ -1,13 +1,34 @@
 <div class="overlay">
 
-  <h3>{{ scene.name }}</h3>
+  <div class="header-section">
+    <h3>{{ scene.name }}</h3>
+    <p-button
+      icon="pi pi-copy"
+      label="Copy as New Scene"
+      styleClass="p-button-sm p-button-info"
+      (onClick)="onCopyAsNewScene()">
+    </p-button>
+  </div>
 
-  <p-button
-    icon="pi pi-copy"
-    label="Copy as New Scene"
-    styleClass="p-button-sm p-button-info"
-    (onClick)="onCopyAsNewScene()">
-  </p-button>
+  <div class="add-song-section">
+    <p-dropdown
+      [options]="availableSongsToAdd"
+      [(ngModel)]="selectedSongToAdd"
+      optionLabel="displayName"
+      placeholder="Select a song to add"
+      [filter]="true"
+      filterBy="displayName"
+      [showClear]="true"
+      styleClass="add-song-dropdown">
+    </p-dropdown>
+    <p-button
+      icon="pi pi-plus"
+      label="Add Song"
+      styleClass="p-button-sm p-button-success"
+      [disabled]="!selectedSongToAdd"
+      (onClick)="onAddSong()">
+    </p-button>
+  </div>
 
   <ul class="song-list">
     <li

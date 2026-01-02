@@ -11,11 +11,38 @@
   height: 100%;
 }
 
-/* Title (if any) */
-.scene-editor h3 {
-  margin: 0 0 12px 0;
+/* Header section with title and copy button */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.header-section h3 {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+  flex: 1;
+}
+
+/* Add song section */
+.add-song-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.add-song-section ::ng-deep .add-song-dropdown {
+  flex: 1;
+  min-width: 200px;
+}
+
+.add-song-section ::ng-deep .p-dropdown {
+  margin-right: 4px;
 }
 
 /* Song list */
