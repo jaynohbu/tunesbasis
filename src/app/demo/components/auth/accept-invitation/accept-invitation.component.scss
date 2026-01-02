@@ -1,0 +1,25 @@
+.accept-invitation-card {
+  width: 500px;
+  max-width: 90vw;
+  padding: 3rem 2rem;
+  background: var(--surface-card);
+  border-radius: 12px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.invitation-content {
+  padding: 1rem 0;
+}
+
+.invitation-info {
+  background: var(--surface-100);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 576px) {
+  .accept-invitation-card {
+    padding: 2rem 1.5rem;
+  }
+}

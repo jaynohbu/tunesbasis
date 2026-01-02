@@ -1,0 +1,57 @@
+.invite-modal-content {
+  padding: 1rem 0;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+.create-group-section {
+  h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: var(--text-color-secondary);
+  }
+}
+
+.send-invitation-section {
+  .group-info {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: var(--surface-100);
+    border-radius: 8px;
+  }
+
+  p {
+    color: var(--text-color-secondary);
+  }
+}
+
+.invite-method-buttons {
+  display: flex;
+  gap: 0.5rem;
+
+  ::ng-deep .p-button {
+    flex: 1;
+  }
+}
+
+.field {
+  margin-bottom: 1.5rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+}

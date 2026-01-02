@@ -1,0 +1,132 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '500px'}"
+  header="Invite Members"
+  (onHide)="onHide()">
+
+  <div class="invite-modal-content">
+
+    <!-- ================= LOADING ================= -->
+    <div *ngIf="loading" class="loading-container">
+      <p-progressSpinner></p-progressSpinner>
+      <p>Loading...</p>
+    </div>
+
+    <!-- ================= CREATE GROUP ================= -->
+    <div *ngIf="!loading && !hasGroup" class="create-group-section">
+      <h3>Create Your Group</h3>
+      <p class="mb-3">You need to create a group before you can invite members.</p>
+
+      <div class="p-fluid">
+        <div class="field">
+          <label for="groupName">Group Name</label>
+          <input
+            id="groupName"
+            type="text"
+            pInputText
+            [(ngModel)]="groupName"
+            placeholder="e.g., My Awesome Band"
+            maxlength="50"
+            [disabled]="creatingGroup"
+          />
+        </div>
+
+        <p-button
+          label="Create Group"
+          icon="pi pi-plus"
+          styleClass="w-full"
+          [loading]="creatingGroup"
+          (onClick)="onCreateGroup()">
+        </p-button>
+      </div>
+    </div>
+
+    <!-- ================= SEND INVITATION ================= -->
+    <div *ngIf="!loading && hasGroup" class="send-invitation-section">
+      <div class="group-info mb-4">
+        <i class="pi pi-users" style="font-size: 1.5rem; color: var(--primary-color);"></i>
+        <h3 class="ml-2 mb-0">{{ group?.name }}</h3>
+      </div>
+
+      <p class="mb-3">Invite someone to join your group and share scenes together.</p>
+
+      <div class="p-fluid">
+        <!-- Invite Method Selection -->
+        <div class="field">
+          <label>Invite Method</label>
+          <div class="invite-method-buttons">
+            <p-button
+              label="Email"
+              icon="pi pi-envelope"
+              [styleClass]="inviteMethod === 'email' ? 'p-button-primary' : 'p-button-outlined'"
+              (onClick)="inviteMethod = 'email'">
+            </p-button>
+            <p-button
+              label="Phone (US)"
+              icon="pi pi-phone"
+              [styleClass]="inviteMethod === 'phone' ? 'p-button-primary' : 'p-button-outlined'"
+              (onClick)="inviteMethod = 'phone'">
+            </p-button>
+          </div>
+        </div>
+
+        <!-- Email Input -->
+        <div *ngIf="inviteMethod === 'email'" class="field">
+          <label for="email">Email Address</label>
+          <input
+            id="email"
+            type="email"
+            pInputText
+            [(ngModel)]="email"
+            placeholder="friend@example.com"
+            [disabled]="loading"
+          />
+        </div>
+
+        <!-- Phone Input -->
+        <div *ngIf="inviteMethod === 'phone'" class="field">
+          <label for="phone">Phone Number (US)</label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon">+1</span>
+            <input
+              id="phone"
+              type="tel"
+              pInputText
+              [(ngModel)]="phoneNumber"
+              placeholder="(555) 123-4567"
+              maxlength="14"
+              [disabled]="loading"
+            />
+          </div>
+          <small class="block mt-1 text-500">Enter 10-digit US phone number</small>
+        </div>
+
+        <!-- Share Current Scene Checkbox -->
+        <div *ngIf="currentScene" class="field-checkbox mt-3 mb-3">
+          <p-checkbox
+            [(ngModel)]="shareCurrentScene"
+            [binary]="true"
+            inputId="shareScene">
+          </p-checkbox>
+          <label for="shareScene" class="ml-2">
+            Share current scene "{{ currentScene.name }}" with invitee
+          </label>
+        </div>
+
+        <p-button
+          label="Send Invitation"
+          icon="pi pi-send"
+          styleClass="w-full"
+          [loading]="loading"
+          (onClick)="onSendInvitation()">
+        </p-button>
+      </div>
+    </div>
+
+  </div>
+
+</p-dialog>
