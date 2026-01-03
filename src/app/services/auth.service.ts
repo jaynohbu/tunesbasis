@@ -168,6 +168,18 @@ export class AuthService {
   }
 
   /**
+   * Get current user ID (Cognito sub)
+   */
+  async getCurrentUserId(): Promise<string> {
+    const session = this.getSession();
+    if (!session || !session.isValid()) {
+      throw new Error('No valid session');
+    }
+    const idToken = session.getIdToken();
+    return idToken.payload['sub'];
+  }
+
+  /**
    * Initiate forgot password flow
    */
   forgotPassword(email: string): Promise<any> {

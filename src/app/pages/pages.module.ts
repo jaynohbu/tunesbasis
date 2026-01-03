@@ -18,6 +18,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { CheckboxModule } from 'primeng/checkbox';
+import { SidebarModule } from 'primeng/sidebar';
+import { BadgeModule } from 'primeng/badge';
 
 /* Components */
 import { TimeSeriesComponent } from './time-series/time-series.component';
@@ -40,6 +42,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { OrderListModule } from 'primeng/orderlist';
 import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-player-tab.component';
 import { InviteModalComponent } from '../components/invite-modal/invite-modal.component';
+import { ChatComponent } from '../components/chat/chat.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -56,7 +59,8 @@ import { InviteModalComponent } from '../components/invite-modal/invite-modal.co
     DashboardComponent,
     SceneEditorComponent,
     ScenePlayerTabComponent,
-    InviteModalComponent
+    InviteModalComponent,
+    ChatComponent
   ],
   imports: [
     CommonModule,
@@ -78,7 +82,9 @@ import { InviteModalComponent } from '../components/invite-modal/invite-modal.co
     ToastModule,
     SliderModule,
     InputSwitchModule,
-    CheckboxModule
+    CheckboxModule,
+    SidebarModule,
+    BadgeModule
   ],
   providers: [
     MessageService

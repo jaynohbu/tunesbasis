@@ -1,0 +1,90 @@
+<div class="chat-container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="chat-header">
+    <i class="pi pi-comments"></i>
+    <h3>Group Chat</h3>
+  </div>
+
+  <!-- ================= MESSAGES ================= -->
+  <div #messageContainer class="messages-container">
+    <div *ngIf="loading" class="loading-state">
+      <p-progressSpinner [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+    </div>
+
+    <div *ngIf="!loading && messages.length === 0" class="empty-state">
+      <i class="pi pi-comment"></i>
+      <p>No messages yet. Start the conversation!</p>
+    </div>
+
+    <div *ngFor="let message of messages" class="message" [class.own-message]="isOwnMessage(message)">
+
+      <div class="message-content">
+        <div class="message-header">
+          <span class="user-name">{{ isOwnMessage(message) ? 'You' : message.userName }}</span>
+          <span class="timestamp">{{ formatTime(message.createdAt) }}</span>
+          <button
+            *ngIf="isOwnMessage(message)"
+            class="delete-button"
+            (click)="onDeleteMessage(message)"
+            pButton
+            icon="pi pi-trash"
+            [style.fontSize]="'0.7rem'"
+            [style.padding]="'0.2rem 0.4rem'"
+            severity="danger">
+          </button>
+        </div>
+
+        <div class="message-text">{{ message.message }}</div>
+
+        <!-- Emoji picker bar (shows on hover) -->
+        <div class="emoji-picker-bar">
+          <button
+            *ngFor="let emoji of commonEmojis"
+            class="emoji-quick-pick"
+            [class.selected]="getUserReaction(message) === emoji"
+            (click)="onToggleReaction(message, emoji)">
+            {{ emoji }}
+          </button>
+        </div>
+
+        <!-- Reactions (existing reactions) -->
+        <div *ngIf="getReactionSummary(message).length > 0" class="reactions">
+          <span
+            *ngFor="let reaction of getReactionSummary(message)"
+            class="reaction-badge"
+            [class.user-reacted]="getUserReaction(message) === reaction.emoji"
+            (click)="onToggleReaction(message, reaction.emoji)">
+            {{ reaction.emoji }}
+            <span *ngIf="reaction.count > 1" class="reaction-count">{{ reaction.count }}</span>
+          </span>
+        </div>
+
+        <!-- Read receipts (only show for own messages) -->
+        <div *ngIf="isOwnMessage(message) && getReadByCount(message) > 0" class="read-receipt">
+          <i class="pi pi-check"></i>
+          <span>{{ getReadByUsernames(message) }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= INPUT ================= -->
+  <div class="message-input">
+    <input
+      type="text"
+      pInputText
+      [(ngModel)]="newMessage"
+      (keyup.enter)="onSendMessage()"
+      placeholder="Type a message..."
+      [disabled]="loading"
+    />
+    <p-button
+      icon="pi pi-send"
+      (onClick)="onSendMessage()"
+      [disabled]="!newMessage.trim() || loading">
+    </p-button>
+  </div>
+
+</div>

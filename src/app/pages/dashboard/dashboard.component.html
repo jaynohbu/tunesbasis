@@ -11,6 +11,20 @@
     styleClass="p-button-outlined p-button-secondary invite-button"
     (onClick)="openInviteModal()">
   </p-button>
+
+  <p-button
+    label="Chat"
+    icon="pi pi-comments"
+    styleClass="p-button-outlined p-button-primary chat-button"
+    (onClick)="toggleChat()">
+    <ng-template pTemplate="content">
+      <span>
+        <i class="pi pi-comments" style="margin-right: 0.5rem;"></i>
+        Chat
+        <p-badge *ngIf="unreadMessageCount > 0" [value]="unreadMessageCount.toString()" severity="danger" style="margin-left: 0.5rem;"></p-badge>
+      </span>
+    </ng-template>
+  </p-button>
 </div>
 
 <p-tabView
@@ -75,6 +89,33 @@
   [currentScene]="scenes[activeSceneIndex]"
   (closeModal)="closeInviteModal()">
 </app-invite-modal>
+
+<!-- ================= CHAT SIDEBAR ================= -->
+<p-sidebar
+  [(visible)]="showChat"
+  position="right"
+  [style]="{width: '400px'}"
+  [showCloseIcon]="true">
+  <ng-template pTemplate="header">
+    <h3 style="margin: 0;">Group Chat</h3>
+  </ng-template>
+
+  <div *ngIf="!hasGroup" class="no-group-message">
+    <i class="pi pi-users" style="font-size: 3rem; opacity: 0.5; margin-bottom: 1rem;"></i>
+    <p>You need to create a group first to use chat.</p>
+    <p-button
+      label="Create Group"
+      icon="pi pi-plus"
+      (onClick)="openInviteModal(); showChat = false;">
+    </p-button>
+  </div>
+
+  <app-chat
+    *ngIf="hasGroup && userGroupId"
+    [groupId]="userGroupId"
+    style="height: calc(100vh - 120px); display: block;">
+  </app-chat>
+</p-sidebar>
 
 <!-- ================= TOAST MESSAGE ================= -->
 <p-toast></p-toast>

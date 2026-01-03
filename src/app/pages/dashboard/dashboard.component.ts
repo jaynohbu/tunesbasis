@@ -1,14 +1,18 @@
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { MusicUploadService, SongDTO } from 'src/app/services/music-upload.service';
 import { SceneService, SceneDTO, SceneItemDTO } from 'src/app/services/scene.service';
+import { GroupsService } from 'src/app/services/groups.service';
+import { ChatService } from 'src/app/services/chat.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { Scene, SceneSong } from 'src/app/model/scene';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
 
   /* ================= DATA ================= */
 
@@ -39,9 +43,21 @@ export class DashboardComponent implements OnInit {
   lblBtnShowPlayer = 'Show Songs';
   showInviteModal = false;
 
+  /* ================= CHAT ================= */
+
+  showChat = false;
+  hasGroup = false;
+  userGroupId: string | null = null;
+  unreadMessageCount = 0;
+  private chatSubscription?: Subscription;
+  private currentUserId = '';
+
   constructor(
     private uploadService: MusicUploadService,
     private sceneService: SceneService,
+    private groupsService: GroupsService,
+    private chatService: ChatService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -58,6 +74,9 @@ export class DashboardComponent implements OnInit {
     await this.reloadSongsAndScenes();
     await this.addMissingSongsToActiveScene();
     await this.reloadSongsAndScenes();
+
+    // Load group information for chat
+    await this.loadGroupInfo();
 
     console.log('[INIT] Initial load complete');
     console.log('===================================');
@@ -513,6 +532,71 @@ private toSceneItemDTO(
       if (scene) {
         scene.shared = !event.shared;
       }
+    }
+  }
+
+  /* ================= CHAT ================= */
+
+  async loadGroupInfo(): Promise<void> {
+    try {
+      // Get current user ID
+      this.currentUserId = await this.authService.getCurrentUserId();
+
+      const response = await this.groupsService.getMyGroup();
+      const data = response.data;
+
+      if (data.exists && data.group) {
+        this.hasGroup = true;
+        this.userGroupId = data.group.groupId;
+        console.log('[Dashboard] User group loaded:', data.group.name);
+
+        // Subscribe to new messages for unread count
+        this.subscribeToMessages();
+      } else {
+        this.hasGroup = false;
+        this.userGroupId = null;
+        console.log('[Dashboard] User has no group');
+      }
+    } catch (error) {
+      console.error('[Dashboard] Failed to load group info:', error);
+      this.hasGroup = false;
+      this.userGroupId = null;
+    }
+  }
+
+  private subscribeToMessages(): void {
+    if (!this.userGroupId) return;
+
+    // Subscribe to new messages
+    this.chatSubscription = this.chatService.subscribeToMessages(this.userGroupId).subscribe({
+      next: (message) => {
+        // Only increment if:
+        // 1. Message is from another user
+        // 2. Chat window is not currently open
+        if (message.userId !== this.currentUserId && !this.showChat) {
+          this.unreadMessageCount++;
+          this.cdr.detectChanges();
+          console.log('[Dashboard] Unread message count:', this.unreadMessageCount);
+        }
+      },
+      error: (error) => console.error('[Dashboard] Message subscription error:', error)
+    });
+  }
+
+  toggleChat(): void {
+    this.showChat = !this.showChat;
+
+    // Reset unread count when opening chat
+    if (this.showChat) {
+      this.unreadMessageCount = 0;
+      this.cdr.detectChanges();
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from chat messages
+    if (this.chatSubscription) {
+      this.chatSubscription.unsubscribe();
     }
   }
 }
