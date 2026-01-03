@@ -10,6 +10,7 @@ import { PythonTricksComponent } from './python-tricks/python-tricks.component';
 import { MusicalDataComponent } from './musical-data/musical-data.component';
 import { MusicPlayerComponent } from './music-player/music-player.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { ClockSyncTestComponent } from '../components/clock-sync-test/clock-sync-test.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -22,6 +23,7 @@ const routes: Routes = [
   { path: 'music-data', component: MusicalDataComponent },
   { path: 'music-player', component: MusicPlayerComponent },
   { path: 'dashboard', component: DashboardComponent },
+  { path: 'clock-sync-test', component: ClockSyncTestComponent },
 ];
 
 @NgModule({

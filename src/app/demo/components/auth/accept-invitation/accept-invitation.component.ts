@@ -46,7 +46,9 @@ export class AcceptInvitationComponent implements OnInit {
     });
 
     // Check if user is authenticated
-    this.isAuthenticated = this.authService.isAuthenticated();
+    this.authService.isAuthenticated().then(isAuth => {
+      this.isAuthenticated = isAuth;
+    });
   }
 
   /* ============================================================

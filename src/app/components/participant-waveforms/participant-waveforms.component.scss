@@ -1,0 +1,86 @@
+.waveforms-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.waveform-row {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #1a1a1a;
+  border-radius: 6px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.participant-label {
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #fff;
+
+  i {
+    font-size: 1.2rem;
+    color: #4CAF50;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.waveform-canvas {
+  flex: 1;
+  max-width: 100%;
+  height: 50px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #1a1a1a;
+  display: block;
+}
+
+.no-participants {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+
+  i {
+    font-size: 3rem;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  p {
+    margin: 0;
+    font-style: italic;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .waveform-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .participant-label {
+    min-width: unset;
+    justify-content: center;
+  }
+
+  .waveform-canvas {
+    width: 100%;
+  }
+}

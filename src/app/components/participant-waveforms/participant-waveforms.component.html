@@ -1,0 +1,55 @@
+<div class="waveforms-container">
+  <!-- LIVE MODE: Show live waveforms -->
+  <ng-container *ngIf="mode === 'live'">
+    <div class="waveform-row" *ngIf="localEnabled">
+      <div class="participant-label">
+        <i class="pi pi-microphone"></i>
+        <span>You (Local)</span>
+      </div>
+      <canvas
+        #waveformCanvas
+        class="waveform-canvas"
+        width="800"
+        height="50">
+      </canvas>
+    </div>
+
+    <div
+      class="waveform-row"
+      *ngFor="let stream of remoteStreams; let i = index">
+      <div class="participant-label">
+        <i class="pi pi-user"></i>
+        <span>{{ stream.userName }}</span>
+      </div>
+      <canvas
+        #waveformCanvas
+        class="waveform-canvas"
+        width="800"
+        height="50">
+      </canvas>
+    </div>
+  </ng-container>
+
+  <!-- RECORDED MODE: Show recorded waveforms -->
+  <ng-container *ngIf="mode === 'recorded'">
+    <div
+      class="waveform-row"
+      *ngFor="let stem of recordedStems; let i = index">
+      <div class="participant-label">
+        <i class="pi pi-microphone"></i>
+        <span>{{ stem.userName }}</span>
+      </div>
+      <canvas
+        #waveformCanvas
+        class="waveform-canvas"
+        width="800"
+        height="50">
+      </canvas>
+    </div>
+  </ng-container>
+
+  <div class="no-participants" *ngIf="getTotalParticipants() === 0">
+    <i class="pi pi-microphone-slash"></i>
+    <p>Enable your microphone or wait for participants to join</p>
+  </div>
+</div>

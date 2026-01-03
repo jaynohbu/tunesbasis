@@ -1,0 +1,317 @@
+.jam-session-container {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+
+  .not-in-session {
+    text-align: center;
+    padding: 2rem 1rem;
+
+    .hint {
+      margin-top: 0.5rem;
+      color: #666;
+      font-size: 0.875rem;
+    }
+
+    .error-message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: #ffebee;
+      border: 1px solid #f44336;
+      border-radius: 4px;
+      color: #c62828;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .in-session {
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 1rem;
+
+      .session-info {
+        h3 {
+          margin: 0 0 0.5rem 0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #2c3e50;
+
+          i {
+            color: #3498db;
+          }
+
+          .session-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #3498db;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+
+            &.follower {
+              background-color: #95a5a6;
+            }
+          }
+        }
+
+        .session-id {
+          margin: 0;
+          color: #7f8c8d;
+          font-size: 0.875rem;
+          font-family: monospace;
+        }
+      }
+    }
+
+    .sync-status {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      .status-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        label {
+          font-size: 0.75rem;
+          color: #7f8c8d;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+
+        span {
+          font-size: 1rem;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          i {
+            font-size: 0.625rem;
+          }
+        }
+      }
+    }
+
+    .leader-controls {
+      padding: 1rem;
+      background-color: #e8f5e9;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      h4 {
+        margin: 0 0 0.75rem 0;
+        color: #2e7d32;
+        font-size: 1rem;
+      }
+
+      .controls-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .hint {
+        margin: 0;
+        color: #558b2f;
+        font-size: 0.875rem;
+        font-style: italic;
+      }
+    }
+
+    .follower-status {
+      padding: 1rem;
+      background-color: #fff3e0;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      h4 {
+        margin: 0 0 0.5rem 0;
+        color: #ef6c00;
+        font-size: 1rem;
+      }
+
+      .hint {
+        margin: 0;
+        color: #e65100;
+        font-size: 0.875rem;
+      }
+    }
+
+    .recording-section {
+      padding: 1rem;
+      background-color: #ffebee;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      h4 {
+        margin: 0 0 0.75rem 0;
+        color: #c62828;
+        font-size: 1rem;
+      }
+
+      .recording-idle {
+        .hint {
+          margin: 0.5rem 0 0 0;
+          color: #d32f2f;
+          font-size: 0.875rem;
+        }
+      }
+
+      .recording-active {
+        .recording-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 0.75rem;
+
+          .recording-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #d32f2f;
+
+            i {
+              font-size: 0.75rem;
+              animation: pulse 1.5s ease-in-out infinite;
+            }
+          }
+
+          .recording-time {
+            flex: 1;
+            font-weight: 600;
+            font-family: monospace;
+            color: #2c3e50;
+          }
+
+          .recording-size {
+            font-size: 0.875rem;
+            color: #666;
+          }
+        }
+
+        .recording-progress {
+          margin-bottom: 0.75rem;
+        }
+      }
+    }
+
+    .participants-list {
+      padding: 1rem;
+      background-color: white;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      h4 {
+        margin: 0 0 0.75rem 0;
+        color: #2c3e50;
+        font-size: 1rem;
+      }
+
+      .participant-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .participant-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+
+          i {
+            color: #3498db;
+          }
+
+          span {
+            flex: 1;
+            font-size: 0.875rem;
+          }
+
+          .leader-badge {
+            flex: none;
+            padding: 0.125rem 0.5rem;
+            background-color: #3498db;
+            color: white;
+            border-radius: 8px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+          }
+        }
+      }
+    }
+
+    .session-status {
+      display: flex;
+      gap: 2rem;
+      padding: 0.75rem 1rem;
+      background-color: #ecf0f1;
+      border-radius: 6px;
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        label {
+          font-size: 0.875rem;
+          color: #7f8c8d;
+          font-weight: 600;
+        }
+
+        .status-value {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #2c3e50;
+          text-transform: capitalize;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .jam-session-container {
+    .in-session {
+      .sync-status {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .session-status {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+  }
+}

@@ -49,9 +49,11 @@ export class SignupComponent implements OnInit {
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/app';
 
         // Redirect if already logged in
-        if (this.authService.isAuthenticated()) {
-            this.router.navigate([this.returnUrl]);
-        }
+        this.authService.isAuthenticated().then(isAuth => {
+            if (isAuth) {
+                this.router.navigate([this.returnUrl]);
+            }
+        });
     }
 
     async onSignUp(): Promise<void> {

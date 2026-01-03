@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, Observer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from './auth.service';
 import axios from 'axios';
@@ -54,12 +55,12 @@ export class ChatService {
   }
 
   private createAppSyncWebSocket(query: string, variables: any): Observable<any> {
-    return new Observable((observer: Observer<any>) => {
-      const token = this.authService.getIdToken();
-      if (!token) {
-        observer.error(new Error('No authentication token available'));
-        return;
-      }
+    return from(this.authService.getIdToken()).pipe(
+      switchMap(token => new Observable((observer: Observer<any>) => {
+        if (!token) {
+          observer.error(new Error('No authentication token available'));
+          return;
+        }
 
       // Create WebSocket connection to AppSync realtime endpoint
       const realtimeUrl = this.endpoint
@@ -138,11 +139,12 @@ export class ChatService {
           ws.close();
         }
       };
-    });
+    }))
+    );
   }
 
   private async graphqlRequest(query: string, variables: any): Promise<any> {
-    const token = this.authService.getIdToken();
+    const token = await this.authService.getIdToken();
     if (!token) {
       throw new Error('No authentication token available');
     }

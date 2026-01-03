@@ -43,6 +43,9 @@ import { OrderListModule } from 'primeng/orderlist';
 import { ScenePlayerTabComponent } from '../components/scene-player-tab/scene-player-tab.component';
 import { InviteModalComponent } from '../components/invite-modal/invite-modal.component';
 import { ChatComponent } from '../components/chat/chat.component';
+import { ClockSyncTestComponent } from '../components/clock-sync-test/clock-sync-test.component';
+import { JamSessionComponent } from '../components/jam-session/jam-session.component';
+import { ParticipantWaveformsComponent } from '../components/participant-waveforms/participant-waveforms.component';
 @NgModule({
   declarations: [
     TimeSeriesComponent,
@@ -60,7 +63,10 @@ import { ChatComponent } from '../components/chat/chat.component';
     SceneEditorComponent,
     ScenePlayerTabComponent,
     InviteModalComponent,
-    ChatComponent
+    ChatComponent,
+    ClockSyncTestComponent,
+    JamSessionComponent,
+    ParticipantWaveformsComponent
   ],
   imports: [
     CommonModule,

@@ -6,12 +6,16 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
-  OnDestroy
+  OnDestroy,
+  ViewChild
 } from '@angular/core';
 import { Scene, SceneSong, StemSettings } from 'src/app/model/scene';
 import { MusicPlayerEngine, StemInfo, KnobParam } from './music-player.engine';
 import { CachedSong } from 'src/app/services/audio-cache.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { JamSessionComponent } from 'src/app/components/jam-session/jam-session.component';
+import { ParticipantAudioStream } from 'src/app/services/webrtc-audio.service';
+import { RecordedStem } from 'src/app/services/recording-to-stem.service';
 
 @Component({
   selector: 'music-player',
@@ -23,8 +27,11 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() scene!: Scene;
   @Input() activeIndex = 0;
   @Input() isTabActive = false;
+  @Input() groupId: string | null = null;
 
   @Output() defaultsInitialized = new EventEmitter<void>();
+
+  @ViewChild(JamSessionComponent) jamSessionComponent?: JamSessionComponent;
 
   stems: StemInfo[] = [];
 
@@ -40,7 +47,8 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     'other'
   ];
 
-  private engine = new MusicPlayerEngine();
+  public playerEngine = new MusicPlayerEngine();
+  private engine = this.playerEngine; // Alias for backward compatibility
 
   globalVolume = 1;
 
@@ -85,11 +93,19 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
   playingScene = false;
   private scenePlaybackTimer: any = null;
 
+  // Recorded mic stems
+  recordedMicStems: RecordedStem[] = [];
+  showingLiveMics = true;
+
+  // Local microphone (before joining jam session)
+  localMicEnabled = false;
+  private localMicStream: MediaStream | null = null;
+
   constructor(private authService: AuthService) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     // Set auth token for streaming requests
-    const token = this.authService.getIdToken();
+    const token = await this.authService.getIdToken();
     this.engine.setAuthToken(token);
   }
 
@@ -669,5 +685,103 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
     // Continue monitoring
     this.monitorSongEnd();
+  }
+
+  /* ============================================================
+   * JAM SESSION HELPERS
+   * ============================================================ */
+  isMicrophoneEnabled(): boolean {
+    // Check both local mic (before jam) and jam session mic
+    return this.localMicEnabled || (this.jamSessionComponent?.isMicrophoneEnabled || false);
+  }
+
+  getRemoteStreams(): ParticipantAudioStream[] {
+    return this.jamSessionComponent?.getRemoteStreamsArray() || [];
+  }
+
+  isInJamSession(): boolean {
+    return this.jamSessionComponent?.session !== null && this.jamSessionComponent?.session !== undefined;
+  }
+
+  isConnectingToJam(): boolean {
+    return this.jamSessionComponent?.connecting || false;
+  }
+
+  async toggleLocalMicrophone(): Promise<void> {
+    try {
+      if (this.localMicEnabled) {
+        // Stop local microphone
+        if (this.localMicStream) {
+          this.localMicStream.getTracks().forEach(track => track.stop());
+          this.localMicStream = null;
+        }
+        this.localMicEnabled = false;
+      } else {
+        // Start local microphone (for waveform visualization only)
+        this.localMicStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        this.localMicEnabled = true;
+      }
+    } catch (error: any) {
+      console.error('[MusicPlayer] Failed to toggle local microphone:', error);
+      this.localMicEnabled = false;
+      this.localMicStream = null;
+    }
+  }
+
+  getLocalMicStream(): MediaStream | null {
+    return this.localMicStream;
+  }
+
+  onStartJamming(): void {
+    this.jamSessionComponent?.onStartJamming();
+  }
+
+  onJamPlaybackStateChanged(isPlaying: boolean): void {
+    // When jam session playback starts/stops, manage cursor loop
+    if (isPlaying) {
+      this.startCursorLoop();
+    } else {
+      this.stopCursorLoop();
+    }
+  }
+
+  onRecordedStemsReady(recordedStems: RecordedStem[]): void {
+    console.log('[MusicPlayer] Received recorded stems:', recordedStems);
+
+    this.recordedMicStems = recordedStems;
+    this.showingLiveMics = false; // Switch to recorded view
+
+    // Add recorded stems to player engine for playback/control
+    for (const stem of recordedStems) {
+      this.playerEngine.addRecordedStem(stem);
+      this.stems.push({ name: stem.name, url: '' });
+    }
+
+    console.log('[MusicPlayer] Added', recordedStems.length, 'recorded mic stems to player');
+  }
+
+  onClearRecordedStems(): void {
+    console.log('[MusicPlayer] Clearing recorded mic stems');
+
+    // Remove recorded mic stems from player
+    for (const stem of this.recordedMicStems) {
+      this.playerEngine.removeRecordedStem(stem.name);
+      const index = this.stems.findIndex(s => s.name === stem.name);
+      if (index !== -1) {
+        this.stems.splice(index, 1);
+      }
+    }
+
+    // Clear state
+    this.recordedMicStems = [];
+    this.showingLiveMics = true; // Switch back to live view
+
+    console.log('[MusicPlayer] Cleared all recorded mic stems');
   }
 }

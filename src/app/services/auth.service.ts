@@ -29,11 +29,21 @@ export class AuthService {
     };
     this.userPool = new CognitoUserPool(poolData);
 
-    // Initialize current user from session
-    const session = this.getSession();
-    const user = session ? this.getUserFromSession(session) : null;
-    this.currentUserSubject = new BehaviorSubject<AuthUser | null>(user);
+    // Initialize current user subject
+    this.currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
     this.currentUser = this.currentUserSubject.asObservable();
+
+    // Initialize current user from session (async)
+    this.initializeUser();
+  }
+
+  /**
+   * Initialize user from existing session
+   */
+  private async initializeUser(): Promise<void> {
+    const session = await this.getSession();
+    const user = session ? this.getUserFromSession(session) : null;
+    this.currentUserSubject.next(user);
   }
 
   public get currentUserValue(): AuthUser | null {
@@ -128,31 +138,30 @@ export class AuthService {
   }
 
   /**
-   * Get current session
+   * Get current session (async)
    */
-  getSession(): CognitoUserSession | null {
+  async getSession(): Promise<CognitoUserSession | null> {
     const cognitoUser = this.userPool.getCurrentUser();
     if (!cognitoUser) {
       return null;
     }
 
-    let session: CognitoUserSession | null = null;
-    cognitoUser.getSession((err: Error | null, result: CognitoUserSession | null) => {
-      if (err || !result) {
-        session = null;
-      } else {
-        session = result;
-      }
+    return new Promise((resolve) => {
+      cognitoUser.getSession((err: Error | null, result: CognitoUserSession | null) => {
+        if (err || !result) {
+          resolve(null);
+        } else {
+          resolve(result);
+        }
+      });
     });
-
-    return session;
   }
 
   /**
-   * Get ID token for API requests
+   * Get ID token for API requests (async)
    */
-  getIdToken(): string | null {
-    const session = this.getSession();
+  async getIdToken(): Promise<string | null> {
+    const session = await this.getSession();
     if (!session || !session.isValid()) {
       return null;
     }
@@ -160,10 +169,10 @@ export class AuthService {
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated (async)
    */
-  isAuthenticated(): boolean {
-    const session = this.getSession();
+  async isAuthenticated(): Promise<boolean> {
+    const session = await this.getSession();
     return session !== null && session.isValid();
   }
 
@@ -171,7 +180,7 @@ export class AuthService {
    * Get current user ID (Cognito sub)
    */
   async getCurrentUserId(): Promise<string> {
-    const session = this.getSession();
+    const session = await this.getSession();
     if (!session || !session.isValid()) {
       throw new Error('No valid session');
     }

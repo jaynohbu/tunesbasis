@@ -22,6 +22,7 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   @Input() scene!: Scene;
   @Input() isActive = false;
   @Input() allSongs: SongDTO[] = [];
+  @Input() groupId: string | null = null;
 
   /** emit updated scene to parent */
   @Output() sceneUpdated = new EventEmitter<Scene>();

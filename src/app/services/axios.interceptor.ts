@@ -8,8 +8,8 @@ import { AuthService } from './auth.service';
 export function setupAxiosInterceptor(authService: AuthService): void {
   // Request interceptor - add JWT token to headers
   axios.interceptors.request.use(
-    (config) => {
-      const token = authService.getIdToken();
+    async (config) => {
+      const token = await authService.getIdToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

@@ -53,9 +53,11 @@ export class LoginComponent implements OnInit {
         }
 
         // Redirect if already logged in
-        if (this.authService.isAuthenticated()) {
-            this.router.navigate([this.returnUrl]);
-        }
+        this.authService.isAuthenticated().then(isAuth => {
+            if (isAuth) {
+                this.router.navigate([this.returnUrl]);
+            }
+        });
     }
 
     async onSignIn(): Promise<void> {

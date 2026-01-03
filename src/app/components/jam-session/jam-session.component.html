@@ -1,0 +1,178 @@
+<div class="jam-session-container">
+  <!-- Error Message (if not in session) -->
+  <div *ngIf="!session && error" class="error-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <!-- In Session: Show Controls -->
+  <div *ngIf="session" class="in-session">
+    <!-- Session Header -->
+    <div class="session-header">
+      <div class="session-info">
+        <h3>
+          <i class="pi pi-users"></i>
+          Jam Session
+          <span class="session-badge" *ngIf="isLeader">Leader</span>
+          <span class="session-badge follower" *ngIf="!isLeader">Follower</span>
+        </h3>
+        <p class="session-id">Session: {{ session.sessionId.substring(0, 8) }}...</p>
+      </div>
+
+      <p-button
+        label="Leave"
+        icon="pi pi-sign-out"
+        styleClass="p-button-sm p-button-outlined p-button-danger"
+        (onClick)="onLeaveSession()">
+      </p-button>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status">
+      <div class="status-item">
+        <label>Sync Status:</label>
+        <span [style.color]="getSyncStatusColor()">
+          <i class="pi pi-circle-fill"></i>
+          {{ syncStatus }}
+        </span>
+      </div>
+
+      <div class="status-item">
+        <label>Offset:</label>
+        <span>{{ clockOffset.toFixed(1) }} ms</span>
+      </div>
+
+      <div class="status-item">
+        <label>RTT:</label>
+        <span>{{ clockRtt.toFixed(1) }} ms</span>
+      </div>
+
+      <div class="status-item">
+        <label>Participants:</label>
+        <span>{{ getParticipantCount() }}</span>
+      </div>
+    </div>
+
+    <!-- Leader Controls -->
+    <div *ngIf="isLeader" class="leader-controls">
+      <h4>Playback Controls</h4>
+
+      <!-- Show this when microphone is not enabled -->
+      <div *ngIf="!isMicrophoneEnabled" class="microphone-required">
+        <p class="hint warning">
+          <i class="pi pi-exclamation-triangle"></i>
+          Please enable your microphone to start playback
+        </p>
+      </div>
+
+      <!-- Show playback controls when microphone is enabled -->
+      <div *ngIf="isMicrophoneEnabled" class="controls-buttons">
+        <p-button
+          *ngIf="!isPlaying()"
+          label="Play"
+          icon="pi pi-play"
+          styleClass="p-button-success"
+          (onClick)="onPlayClicked()">
+        </p-button>
+
+        <p-button
+          *ngIf="isPlaying()"
+          label="Pause"
+          icon="pi pi-pause"
+          styleClass="p-button-warning"
+          (onClick)="onPauseClicked()">
+        </p-button>
+
+        <p-button
+          *ngIf="shouldShowRestart()"
+          label="Restart"
+          icon="pi pi-refresh"
+          styleClass="p-button-success"
+          (onClick)="onRestartClicked()">
+        </p-button>
+      </div>
+
+      <p class="hint" *ngIf="isMicrophoneEnabled">
+        Microphones are automatically recorded during playback and converted to stems when you pause/stop
+      </p>
+    </div>
+
+    <!-- Follower Status -->
+    <div *ngIf="!isLeader" class="follower-status">
+      <h4>Following Leader</h4>
+      <p class="hint">
+        Playback is controlled by the session leader.
+        Your audio will stay synchronized automatically.
+      </p>
+    </div>
+
+    <!-- Participant Recording Status -->
+    <div class="recording-section" *ngIf="isRecordingParticipants">
+      <h4>Recording Microphones</h4>
+      <div class="recording-active">
+        <div class="recording-indicator">
+          <i class="pi pi-circle-fill"></i>
+          Recording {{ recordingParticipantCount }} participant{{ recordingParticipantCount > 1 ? 's' : '' }}
+        </div>
+        <p class="hint">
+          Microphones will be converted to stems when you pause/stop playback
+        </p>
+      </div>
+    </div>
+
+    <!-- Participants List -->
+    <div class="participants-list">
+      <h4>Participants ({{ getParticipantCount() }})</h4>
+      <div class="participant-items">
+        <div
+          *ngFor="let participant of session.participants"
+          class="participant-item">
+          <i class="pi pi-user"></i>
+          <span>{{ participant.userName }}</span>
+          <span
+            *ngIf="participant.userId === session.leaderId"
+            class="leader-badge">
+            Leader
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Audio Controls -->
+    <div class="live-audio-section">
+      <h4>Live Audio</h4>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <p-button
+          [icon]="isMicrophoneEnabled ? 'pi pi-microphone' : 'pi pi-microphone-slash'"
+          [label]="isMicrophoneEnabled ? 'Microphone On' : 'Microphone Off'"
+          [styleClass]="isMicrophoneEnabled ? 'p-button-success p-button-sm' : 'p-button-outlined p-button-sm'"
+          (onClick)="toggleMicrophone()">
+        </p-button>
+        <p-button
+          label="Test Mic"
+          icon="pi pi-info-circle"
+          styleClass="p-button-sm p-button-text"
+          (onClick)="testMicrophone()">
+        </p-button>
+      </div>
+      <p class="hint" *ngIf="isMicrophoneEnabled">
+        Other participants can hear you. You'll hear them too.
+      </p>
+      <p class="hint" *ngIf="!isMicrophoneEnabled">
+        Enable your microphone to talk with other participants. Waveforms will appear above stems.
+      </p>
+    </div>
+
+    <!-- Session Status -->
+    <div class="session-status">
+      <div class="status-item">
+        <label>Status:</label>
+        <span class="status-value">{{ session.status }}</span>
+      </div>
+      <div class="status-item">
+        <label>Position:</label>
+        <span class="status-value">{{ session.currentPosition.toFixed(1) }}s</span>
+      </div>
+    </div>
+  </div>
+</div>

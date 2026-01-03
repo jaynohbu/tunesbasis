@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
   apiBaseUrl: 'https://bl18uj24nb.execute-api.us-west-2.amazonaws.com',
+  syncServerUrl: 'http://tunesbasis-sync-alb-1633246389.us-west-2.elb.amazonaws.com',
   cdnBaseUrl: 'https://dhqgiy9k3x870.cloudfront.net',
   frontendUrl: 'https://tunesbasis.com',
   cognitoUserPoolId: 'us-west-2_i3IgdwzmB',

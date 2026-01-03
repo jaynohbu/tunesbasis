@@ -1,5 +1,13 @@
-
-
+<!-- ================= JAM SESSION ================= -->
+<app-jam-session
+  *ngIf="groupId && scene?.sceneId && playerEngine"
+  [groupId]="groupId"
+  [sceneId]="scene.sceneId!"
+  [playerEngine]="playerEngine"
+  (playbackStateChanged)="onJamPlaybackStateChanged($event)"
+  (recordedStemsReady)="onRecordedStemsReady($event)"
+  (clearRecordedStems)="onClearRecordedStems()">
+</app-jam-session>
 
 <!-- ================= GLOBAL CONTROLS ================= -->
 
@@ -15,16 +23,31 @@
 
   <!-- Control Buttons -->
   <div class="controls">
-  <p-button [label]="playing ? 'Pause' : 'Play'" [icon]="playing ? 'pi pi-pause' : 'pi pi-play'"
-    [disabled]="!waveformsReady" (onClick)="togglePlay()">
+  <!-- Hide Play/Play Scene buttons when in jam session -->
+  <p-button
+    *ngIf="!isInJamSession()"
+    [label]="playing ? 'Pause' : 'Play'"
+    [icon]="playing ? 'pi pi-pause' : 'pi pi-play'"
+    [disabled]="!waveformsReady"
+    (onClick)="togglePlay()">
   </p-button>
 
   <p-button
+    *ngIf="!isInJamSession()"
     [label]="playingScene ? 'Stop Scene' : 'Play Scene'"
     [icon]="playingScene ? 'pi pi-stop' : 'pi pi-play-circle'"
     [disabled]="!waveformsReady"
     styleClass="p-button-success"
     (onClick)="togglePlayScene()">
+  </p-button>
+
+  <p-button
+    *ngIf="groupId && !isInJamSession()"
+    label="Start Jamming"
+    icon="pi pi-users"
+    styleClass="p-button-info p-button-sm"
+    [loading]="isConnectingToJam()"
+    (onClick)="onStartJamming()">
   </p-button>
 
   <label>
@@ -41,6 +64,17 @@
     (onClick)="resetAllStemsAllKnobs()">
   </p-button>
   </div>
+</div>
+
+<!-- ================= LIVE PARTICIPANT WAVEFORMS ================= -->
+<div *ngIf="groupId && scene?.sceneId" class="live-waveforms-container">
+  <app-participant-waveforms
+    [mode]="showingLiveMics ? 'live' : 'recorded'"
+    [localEnabled]="isMicrophoneEnabled()"
+    [localStream]="getLocalMicStream()"
+    [remoteStreams]="getRemoteStreams()"
+    [recordedStems]="recordedMicStems">
+  </app-participant-waveforms>
 </div>
 
 <!-- ================= STEM TRACKS ================= -->

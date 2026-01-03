@@ -63,7 +63,7 @@ export class MusicUploadService {
       // Step 1: Get presigned URL from backend
       this.zone.run(() => onProgress(5));
 
-      const token = this.authService.getIdToken();
+      const token = await this.authService.getIdToken();
       if (!token) {
         throw new Error('No authentication token available');
       }
@@ -132,8 +132,8 @@ export class MusicUploadService {
 
   /* ================= SONGS ================= */
 
-  listSongs(): Promise<AxiosResponse<SongDTO[]>> {
-    const token = this.authService.getIdToken();
+  async listSongs(): Promise<AxiosResponse<SongDTO[]>> {
+    const token = await this.authService.getIdToken();
     return axios.get<SongDTO[]>(
       `${environment.apiBaseUrl}/songs`,
       {
@@ -144,11 +144,11 @@ export class MusicUploadService {
     );
   }
 
-  updateSong(
+  async updateSong(
     songId: string,
     payload: { sceneName?: string }
   ): Promise<AxiosResponse<void>> {
-    const token = this.authService.getIdToken();
+    const token = await this.authService.getIdToken();
     return axios.put<void>(
       `${environment.apiBaseUrl}/songs/${songId}`,
       payload,
@@ -162,8 +162,8 @@ export class MusicUploadService {
 
   /* ================= SCENES ================= */
 
-  listScenes(): Promise<AxiosResponse<SceneDTO[]>> {
-    const token = this.authService.getIdToken();
+  async listScenes(): Promise<AxiosResponse<SceneDTO[]>> {
+    const token = await this.authService.getIdToken();
     return axios.get<SceneDTO[]>(
       `${environment.apiBaseUrl}/scenes`,
       {
@@ -174,8 +174,8 @@ export class MusicUploadService {
     );
   }
 
-  getScene(sceneId: string): Promise<AxiosResponse<SceneDTO>> {
-    const token = this.authService.getIdToken();
+  async getScene(sceneId: string): Promise<AxiosResponse<SceneDTO>> {
+    const token = await this.authService.getIdToken();
     return axios.get<SceneDTO>(
       `${environment.apiBaseUrl}/scenes/${sceneId}`,
       {
@@ -186,11 +186,11 @@ export class MusicUploadService {
     );
   }
 
-  createScene(payload: {
+  async createScene(payload: {
     name: string;
     items: SceneItemDTO[];
   }): Promise<AxiosResponse<SceneDTO>> {
-    const token = this.authService.getIdToken();
+    const token = await this.authService.getIdToken();
     return axios.post<SceneDTO>(
       `${environment.apiBaseUrl}/scenes`,
       payload,
@@ -202,14 +202,14 @@ export class MusicUploadService {
     );
   }
 
-  updateScene(
+  async updateScene(
     sceneId: string,
     payload: {
       name?: string;
       items?: SceneItemDTO[];
     }
   ): Promise<AxiosResponse<void>> {
-    const token = this.authService.getIdToken();
+    const token = await this.authService.getIdToken();
     return axios.put<void>(
       `${environment.apiBaseUrl}/scenes/${sceneId}`,
       payload,

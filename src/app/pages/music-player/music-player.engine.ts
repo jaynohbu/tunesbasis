@@ -1,4 +1,5 @@
 import { AudioCacheService, CachedSong } from 'src/app/services/audio-cache.service';
+import { RecordedStem } from 'src/app/services/recording-to-stem.service';
 
 export interface StemInfo {
   name: string;
@@ -87,6 +88,10 @@ export class MusicPlayerEngine {
 
   getAudioContext(): AudioContext {
     return this.audioCtx;
+  }
+
+  getMasterGainNode(): GainNode {
+    return this.masterGain;
   }
 
   isPlaying(): boolean {
@@ -843,5 +848,111 @@ export class MusicPlayerEngine {
 
   getPlaybackMode(): PlaybackMode {
     return this.playbackMode;
+  }
+
+  /**
+   * Add a recorded stem to the player
+   * This allows participant microphone recordings to be played alongside regular stems
+   */
+  addRecordedStem(recordedStem: RecordedStem): void {
+    console.log(`[MusicPlayerEngine] Adding recorded stem: ${recordedStem.name}`);
+
+    // Add buffer to buffers map
+    this.buffers[recordedStem.name] = recordedStem.audioBuffer;
+
+    // Create audio nodes for this stem (effects chain)
+    this.createAudioNodesForStem(recordedStem.name);
+
+    console.log(`[MusicPlayerEngine] Successfully added recorded stem: ${recordedStem.name}`);
+  }
+
+  /**
+   * Remove a recorded stem from the player
+   * Disconnects all audio nodes and cleans up resources
+   */
+  removeRecordedStem(stemName: string): void {
+    console.log(`[MusicPlayerEngine] Removing recorded stem: ${stemName}`);
+
+    // Disconnect and remove cache gain
+    if (this.cacheGains[stemName]) {
+      this.cacheGains[stemName].disconnect();
+      delete this.cacheGains[stemName];
+    }
+
+    // Disconnect and remove stream gain
+    if (this.streamGains[stemName]) {
+      this.streamGains[stemName].disconnect();
+      delete this.streamGains[stemName];
+    }
+
+    // Disconnect and remove effect nodes
+    if (this.pregainNodes[stemName]) {
+      this.pregainNodes[stemName].disconnect();
+      delete this.pregainNodes[stemName];
+    }
+
+    if (this.compressorNodes[stemName]) {
+      this.compressorNodes[stemName].disconnect();
+      delete this.compressorNodes[stemName];
+    }
+
+    if (this.toneNodes[stemName]) {
+      this.toneNodes[stemName].disconnect();
+      delete this.toneNodes[stemName];
+    }
+
+    if (this.eqLowNodes[stemName]) {
+      this.eqLowNodes[stemName].disconnect();
+      delete this.eqLowNodes[stemName];
+    }
+
+    if (this.eqMidNodes[stemName]) {
+      this.eqMidNodes[stemName].disconnect();
+      delete this.eqMidNodes[stemName];
+    }
+
+    if (this.eqHighNodes[stemName]) {
+      this.eqHighNodes[stemName].disconnect();
+      delete this.eqHighNodes[stemName];
+    }
+
+    if (this.reverbNodes[stemName]) {
+      this.reverbNodes[stemName].disconnect();
+      delete this.reverbNodes[stemName];
+    }
+
+    if (this.reverbGainNodes[stemName]) {
+      this.reverbGainNodes[stemName].disconnect();
+      delete this.reverbGainNodes[stemName];
+    }
+
+    if (this.dryGainNodes[stemName]) {
+      this.dryGainNodes[stemName].disconnect();
+      delete this.dryGainNodes[stemName];
+    }
+
+    if (this.stemGains[stemName]) {
+      this.stemGains[stemName].disconnect();
+      delete this.stemGains[stemName];
+    }
+
+    if (this.distortionNodes[stemName]) {
+      this.distortionNodes[stemName]?.disconnect();
+      delete this.distortionNodes[stemName];
+    }
+
+    // Remove buffer
+    delete this.buffers[stemName];
+
+    // Remove settings
+    delete this.stemVolumes[stemName];
+    delete this.stemMuted[stemName];
+    delete this.stemBypassLED[stemName];
+    delete this.stemKnobs[stemName];
+
+    // Remove stream URL if exists
+    delete this.streamUrls[stemName];
+
+    console.log(`[MusicPlayerEngine] Successfully removed recorded stem: ${stemName}`);
   }
 }
