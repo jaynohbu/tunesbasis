@@ -87,6 +87,15 @@ export class SceneService {
   }
 
   /* ============================================================
+   * DELETE SONG FROM SCENE
+   * ============================================================ */
+  deleteSongFromScene(sceneId: string, songIndex: number): Promise<AxiosResponse<void>> {
+    return axios.delete<void>(
+      `${this.baseUrl}/${sceneId}/songs/${songIndex}`
+    );
+  }
+
+  /* ============================================================
    * TOGGLE SCENE SHARING
    * ============================================================ */
   toggleSceneSharing(sceneId: string, shared: boolean): Promise<AxiosResponse<{ shared: boolean }>> {

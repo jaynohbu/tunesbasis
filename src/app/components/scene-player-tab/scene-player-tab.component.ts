@@ -33,11 +33,20 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   /** emit delete scene request to parent */
   @Output() sceneDeleted = new EventEmitter<Scene>();
 
+  /** emit delete song request to parent (sceneId, songIndex) */
+  @Output() songDeleted = new EventEmitter<{ sceneId: string; songIndex: number }>();
+
   /** emit add song request to parent */
   @Output() songAdded = new EventEmitter<SongDTO>();
 
   /** emit toggle sharing request to parent */
   @Output() toggleSharing = new EventEmitter<{ sceneId: string; shared: boolean }>();
+
+  /** emit jamming saved request to parent to reload scenes */
+  @Output() jammingSaved = new EventEmitter<void>();
+
+  /** emit recording state change to parent to disable/enable tabs */
+  @Output() recordingStateChanged = new EventEmitter<boolean>();
 
   /** real player instance */
   @ViewChild(MusicPlayerComponent)
@@ -105,47 +114,23 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
   }
 
   onDeleteSong(index: number) {
-    if (!this.player) {
-      console.warn('[ScenePlayerTab.onDeleteSong] Cannot delete song — player not ready');
+    if (!this.scene?.sceneId) {
+      console.warn('[ScenePlayerTab.onDeleteSong] Cannot delete song — scene has no ID');
       return;
     }
 
     console.log('[ScenePlayerTab.onDeleteSong] User deleting song at index:', index, {
+      sceneId: this.scene.sceneId,
       sceneName: this.scene?.name,
       songName: this.scene?.items[index]?.song?.originalName
     });
 
-    // Get current playing index
-    const currentIndex = this.player.activeIndex;
+    // Emit delete request to parent dashboard
+    // Dashboard will handle the API call and reload the scene
+    // Note: Overlay should stay open during deletion
+    this.songDeleted.emit({ sceneId: this.scene.sceneId, songIndex: index });
 
-    // Remove the song from the scene
-    this.scene.items.splice(index, 1);
-
-    // Determine next song to load
-    let nextIndex = index;
-    if (nextIndex >= this.scene.items.length) {
-      nextIndex = this.scene.items.length - 1; // Move to last song
-    }
-
-    // If we deleted the currently playing song, load the next one
-    if (index === currentIndex) {
-      if (this.scene.items.length > 0) {
-        console.log('[ScenePlayerTab.onDeleteSong] Loading next song at index:', nextIndex);
-        this.player.resetPlayer();
-        this.player.loadFromScene(nextIndex);
-        this.selectedIndex = nextIndex;
-      } else {
-        console.log('[ScenePlayerTab.onDeleteSong] No songs left in scene');
-        this.player.resetPlayer();
-        this.selectedIndex = null;
-      }
-    } else if (index < currentIndex) {
-      // If we deleted a song before the current one, adjust the current index
-      this.player.activeIndex = currentIndex - 1;
-    }
-
-    // Save the updated scene
-    this.sceneUpdated.emit(this.scene);
+    console.log('[ScenePlayerTab.onDeleteSong] Delete event emitted, overlay should remain open');
   }
 
   /* ================= SAVE SONG SETTINGS ================= */
@@ -234,5 +219,29 @@ export class ScenePlayerTabComponent implements AfterViewInit, OnChanges {
     }
     console.log('[ScenePlayerTab.onToggleSharing] Emitting toggle sharing:', { sceneId: this.scene.sceneId, shared });
     this.toggleSharing.emit({ sceneId: this.scene.sceneId, shared });
+  }
+
+  /* ================= JAMMING SAVED ================= */
+
+  onJammingSaved() {
+    console.log('[ScenePlayerTab.onJammingSaved] Jamming saved, emitting to dashboard to reload scenes');
+    this.jammingSaved.emit();
+  }
+
+  /* ================= RECORDING STATE ================= */
+
+  onRecordingStateChanged(isRecording: boolean) {
+    console.log('[ScenePlayerTab.onRecordingStateChanged] Recording state:', isRecording);
+    this.recordingStateChanged.emit(isRecording);
+  }
+
+  /* ================= HELPER METHODS ================= */
+
+  isInJamSession(): boolean {
+    return this.player?.isInJamSession() || false;
+  }
+
+  isJammingsScene(): boolean {
+    return this.scene?.name === 'Jammings';
   }
 }

@@ -6,6 +6,7 @@ import { ChatService } from 'src/app/services/chat.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { Scene, SceneSong } from 'src/app/model/scene';
 import { Subscription } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-dashboard',
@@ -43,6 +44,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   lblBtnShowPlayer = 'Show Songs';
   showInviteModal = false;
 
+  /* ================= JAM SESSION RECORDING ================= */
+
+  isRecordingInProgress = false;
+
   /* ================= CHAT ================= */
 
   showChat = false;
@@ -58,7 +63,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private groupsService: GroupsService,
     private chatService: ChatService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirmationService: ConfirmationService
   ) {}
 
   /* ================= INIT ================= */
@@ -180,13 +186,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onSceneTabChange(index: number) {
-    console.log('[TAB] Scene tab changed:', index);
+    console.log('[TAB] Scene tab changed from', this.activeSceneIndex, 'to', index);
+
+    // Close any pending confirmation dialogs to prevent them from appearing
+    this.confirmationService.close();
+    console.log('[TAB] Closed any pending confirmation dialogs');
+
     this.activeSceneIndex = index;
     this.saveActiveSceneIndex();
 
     // Tab's music-player already loaded via ngOnChanges - no need to reload
     const scene = this.scenes[index];
     console.log(`[TAB] Switched to "${scene?.name}" - player already loaded`);
+    console.log('[TAB] No save confirmation should appear - just stopping playback');
   }
 
   /* ================= LOCALSTORAGE PERSISTENCE ================= */
@@ -246,6 +258,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
       name: dto.name,
       items: dto.items
         .map(item => {
+          // Check if this is a jam recording (soundState.stems is array of {name, url})
+          const isJamRecording = item.soundState?.stems && Array.isArray(item.soundState.stems);
+
+          if (isJamRecording) {
+            // This is a jam recording - create a fake song from soundState
+            console.log('[HYDRATE] Jam recording detected:', item.songId);
+            const fakeSong: SongDTO = {
+              songId: item.songId,
+              originalName: item.soundState.originalName || item.songId,
+              stems: item.soundState.stems, // Array of {name, url}
+              status: 'ready',
+              entityType: 'SONG',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              audioKey: item.songId // Use songId as audioKey for jam recordings
+            };
+
+            return {
+              song: fakeSong,
+              intervalSec: item.intervalSec,
+              stems: {} // Initialize empty settings for jam recordings
+            };
+          }
+
+          // Normal song - look up in songMap
           const song = songMap[item.songId];
 
           if (!song) {
@@ -274,15 +311,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     console.error('[UPLOAD] Failed:', err);
   }
 async onSceneUpdated(scene: Scene) {
-  if (!scene.sceneId) return;
+  if (!scene.sceneId) {
+    console.error('[Dashboard.onSceneUpdated] Cannot update scene without sceneId');
+    return;
+  }
+
+  console.log('[Dashboard.onSceneUpdated] Updating scene:', {
+    sceneId: scene.sceneId,
+    sceneName: scene.name,
+    itemCount: scene.items.length
+  });
 
   const itemsDTO = scene.items.map((item, index) =>
     this.toSceneItemDTO(item, index)
   );
 
-  return this.sceneService.updateScene(scene.sceneId, {
-    items: itemsDTO
-  });
+  try {
+    await this.sceneService.updateScene(scene.sceneId, {
+      items: itemsDTO
+    });
+
+    console.log('[Dashboard.onSceneUpdated] Scene updated successfully');
+
+    // Update the local scenes array to reflect the changes
+    const sceneIndex = this.scenes.findIndex(s => s.sceneId === scene.sceneId);
+    if (sceneIndex !== -1) {
+      this.scenes[sceneIndex] = scene;
+      console.log('[Dashboard.onSceneUpdated] Local scenes array updated');
+    }
+
+    this.cdr.detectChanges();
+  } catch (error) {
+    console.error('[Dashboard.onSceneUpdated] Failed to update scene:', error);
+  }
 }
 
 async onSceneCopied(scene: Scene) {
@@ -374,6 +435,66 @@ async onSceneDeleted(scene: Scene) {
   }
 }
 
+async onSongDeleted(event: { sceneId: string; songIndex: number }) {
+  const { sceneId, songIndex } = event;
+
+  console.log('[Dashboard.onSongDeleted] Deleting song from scene:', {
+    sceneId,
+    songIndex
+  });
+
+  try {
+    // Call backend to delete the song
+    await this.sceneService.deleteSongFromScene(sceneId, songIndex);
+
+    console.log('[Dashboard.onSongDeleted] Song deleted successfully, reloading scene');
+
+    // Reload the specific scene from backend
+    const sceneResponse = await this.sceneService.getScene(sceneId);
+    const sceneDTO = sceneResponse.data;
+
+    // Find the scene in local arrays
+    const sceneIndex = this.scenes.findIndex(s => s.sceneId === sceneId);
+    const sceneDTOIndex = this.scenesDTO.findIndex(s => s.sceneId === sceneId);
+
+    if (sceneIndex === -1) {
+      console.error('[Dashboard.onSongDeleted] Scene not found in local array');
+      return;
+    }
+
+    // Update scenesDTO to prevent full reload
+    if (sceneDTOIndex !== -1) {
+      this.scenesDTO[sceneDTOIndex] = sceneDTO;
+      console.log('[Dashboard.onSongDeleted] Updated scenesDTO at index:', sceneDTOIndex);
+    }
+
+    // Hydrate the updated scene data
+    const updatedScene = this.hydrateScene(sceneDTO, this.songMap);
+
+    // IMPORTANT: Update scene properties in-place instead of replacing the object
+    // This preserves component state (like overlayOpen in scene-player-tab)
+    const existingScene = this.scenes[sceneIndex];
+    existingScene.sceneId = updatedScene.sceneId;
+    existingScene.name = updatedScene.name;
+    existingScene.items = updatedScene.items;
+
+    console.log('[Dashboard.onSongDeleted] Scene updated in-place, new item count:', existingScene.items.length);
+    console.log('[Dashboard.onSongDeleted] Triggering change detection');
+
+    // Force UI update without destroying components
+    this.cdr.detectChanges();
+
+    console.log('[Dashboard.onSongDeleted] Change detection complete');
+  } catch (error: any) {
+    console.error('[Dashboard.onSongDeleted] Failed to delete song:', error);
+    console.error('[Dashboard.onSongDeleted] Error details:', {
+      message: error?.message,
+      stack: error?.stack
+    });
+    // Don't rethrow - prevent page refresh on error
+  }
+}
+
 private toSceneItemDTO(
   item: SceneSong,
   index: number
@@ -397,6 +518,13 @@ private toSceneItemDTO(
     const activeSceneDTO = this.scenesDTO[this.activeSceneIndex];
     if (!activeSceneDTO) {
       console.warn('[APPEND] No active scene DTO');
+      return;
+    }
+
+    // IMPORTANT: Skip auto-adding songs to Jammings scene
+    // Jammings scene should only contain jam recordings (saved from jam sessions)
+    if (activeSceneDTO.name.toLowerCase() === 'jammings') {
+      console.log('[APPEND] Skipping Jammings scene - jam recordings only');
       return;
     }
 
@@ -533,6 +661,33 @@ private toSceneItemDTO(
         scene.shared = !event.shared;
       }
     }
+  }
+
+  /* ================= JAMMING SAVED ================= */
+
+  async onJammingSaved(): Promise<void> {
+    console.log('[Dashboard.onJammingSaved] Reloading scenes with recorded stems');
+
+    // Save current tab index before reload
+    const currentTabIndex = this.activeSceneIndex;
+
+    // Reload all scenes from backend
+    await this.reloadSongsAndScenes();
+
+    // Stay on the same tab (don't switch)
+    this.activeSceneIndex = currentTabIndex;
+    console.log('[Dashboard.onJammingSaved] Staying on current tab at index:', currentTabIndex);
+
+    // Force UI update
+    this.cdr.detectChanges();
+  }
+
+  /* ================= JAM RECORDING STATE ================= */
+
+  onRecordingStateChanged(isRecording: boolean): void {
+    console.log('[Dashboard.onRecordingStateChanged] Recording state:', isRecording);
+    this.isRecordingInProgress = isRecording;
+    this.cdr.detectChanges();
   }
 
   /* ================= CHAT ================= */

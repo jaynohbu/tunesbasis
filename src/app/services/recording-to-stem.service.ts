@@ -13,6 +13,7 @@ export interface RecordedStem {
   audioBuffer: AudioBuffer;
   startOffsetSeconds: number; // How many seconds into playback this stem starts
   duration: number;
+  originalBlob: Blob; // Original WebM recording for upload
 }
 
 /**
@@ -69,6 +70,7 @@ export class RecordingToStemService {
           audioBuffer,
           startOffsetSeconds,
           duration: audioBuffer.duration,
+          originalBlob: recording.audioBlob, // Keep original WebM for upload
         };
 
         stems.push(stem);

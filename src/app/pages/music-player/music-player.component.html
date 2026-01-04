@@ -1,3 +1,6 @@
+<!-- ================= CONFIRMATION DIALOG ================= -->
+<p-confirmDialog></p-confirmDialog>
+
 <!-- ================= JAM SESSION ================= -->
 <app-jam-session
   *ngIf="groupId && scene?.sceneId && playerEngine"
@@ -6,7 +9,8 @@
   [playerEngine]="playerEngine"
   (playbackStateChanged)="onJamPlaybackStateChanged($event)"
   (recordedStemsReady)="onRecordedStemsReady($event)"
-  (clearRecordedStems)="onClearRecordedStems()">
+  (clearRecordedStems)="onClearRecordedStems()"
+  (leaveRequested)="onLeaveJamRequested()">
 </app-jam-session>
 
 <!-- ================= GLOBAL CONTROLS ================= -->
@@ -23,9 +27,9 @@
 
   <!-- Control Buttons -->
   <div class="controls">
-  <!-- Hide Play/Play Scene buttons when in jam session -->
+  <!-- Hide Play/Play Scene buttons only during active jam session (not on Jammings scene) -->
   <p-button
-    *ngIf="!isInJamSession()"
+    *ngIf="!isInJamSession() || isJammingsScene()"
     [label]="playing ? 'Pause' : 'Play'"
     [icon]="playing ? 'pi pi-pause' : 'pi pi-play'"
     [disabled]="!waveformsReady"
@@ -33,7 +37,7 @@
   </p-button>
 
   <p-button
-    *ngIf="!isInJamSession()"
+    *ngIf="!isInJamSession() || isJammingsScene()"
     [label]="playingScene ? 'Stop Scene' : 'Play Scene'"
     [icon]="playingScene ? 'pi pi-stop' : 'pi pi-play-circle'"
     [disabled]="!waveformsReady"
@@ -42,10 +46,10 @@
   </p-button>
 
   <p-button
-    *ngIf="groupId && !isInJamSession()"
-    label="Start Jamming"
+    *ngIf="groupId && !isInJamSession() && !isJammingsScene()"
+    [label]="recordedMicStems.length > 0 ? 'Start Jamming (' + recordedMicStems.length + ' unsaved)' : 'Start Jamming'"
     icon="pi pi-users"
-    styleClass="p-button-info p-button-sm"
+    [styleClass]="recordedMicStems.length > 0 ? 'p-button-warning' : 'p-button-info'"
     [loading]="isConnectingToJam()"
     (onClick)="onStartJamming()">
   </p-button>
@@ -67,7 +71,7 @@
 </div>
 
 <!-- ================= LIVE PARTICIPANT WAVEFORMS ================= -->
-<div *ngIf="groupId && scene?.sceneId" class="live-waveforms-container">
+<div *ngIf="(groupId && scene?.sceneId) || recordedMicStems.length > 0" class="live-waveforms-container">
   <app-participant-waveforms
     [mode]="showingLiveMics ? 'live' : 'recorded'"
     [localEnabled]="isMicrophoneEnabled()"

@@ -1,14 +1,8 @@
 <div class="scene-container">
 
   <!-- ================= Scene Actions ================= -->
-  <div class="scene-actions" *ngIf="!overlayOpen">
-    <p-button
-      icon="pi pi-save"
-      label="Save Song Settings"
-      styleClass="p-button-sm p-button-success"
-      (onClick)="onUpdateScene()">
-    </p-button>
-
+  <!-- Hide scene actions when overlay is open or during jam session -->
+  <div class="scene-actions" *ngIf="!overlayOpen && !isInJamSession()">
     <p-button
       icon="pi pi-copy"
       label="Copy Scene"
@@ -17,6 +11,7 @@
     </p-button>
 
     <p-button
+      *ngIf="!isJammingsScene()"
       icon="pi pi-trash"
       label="Delete Scene"
       styleClass="p-button-sm p-button-danger"
@@ -36,7 +31,9 @@
     [scene]="scene"
     [isTabActive]="isActive"
     [groupId]="groupId"
-    (defaultsInitialized)="onDefaultsInitialized()">
+    (defaultsInitialized)="onDefaultsInitialized()"
+    (jammingSaved)="onJammingSaved()"
+    (recordingStateChanged)="onRecordingStateChanged($event)">
   </music-player>
 
   <!-- ================= Overlay ================= -->

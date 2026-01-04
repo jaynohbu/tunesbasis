@@ -176,10 +176,10 @@ export class ParticipantRecordingService {
         throw new Error('Browser does not support WebM/Opus recording');
       }
 
-      // Create media recorder
+      // Create media recorder with higher bitrate for better quality
       const options = {
         mimeType,
-        audioBitsPerSecond: 128000, // 128 kbps
+        audioBitsPerSecond: 256000, // 256 kbps - increased from 128kbps for better quality
       };
 
       console.log(`[ParticipantRecording] Creating MediaRecorder for ${userName} with:`, {
@@ -219,9 +219,10 @@ export class ParticipantRecordingService {
         this.onParticipantRecordingStopped(userId);
       };
 
-      // Start recording with timeslice to prevent clipping
-      // Request data every 100ms to ensure smooth recording
-      recorder.start(100);
+      // Start recording with optimized timeslice
+      // 250ms provides good balance between latency and performance
+      // Too small (e.g., 100ms) causes excessive overhead and can freeze playback
+      recorder.start(250);
 
       console.log(`[ParticipantRecording] Started recording for ${userName} (${userId})`);
     } catch (error) {

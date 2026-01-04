@@ -89,11 +89,12 @@ export class MusicUploadService {
       // Step 2: Upload file directly to S3 using presigned URL
       this.zone.run(() => onProgress(10));
 
-      await axios.put(presignedUrl, file, {
-        headers: {
-          'Content-Type': file.type || 'audio/wav',
-        },
-        onUploadProgress: (evt) => {
+      // Use XMLHttpRequest for S3 upload to avoid axios adding extra headers
+      // that would invalidate the presigned URL signature
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (evt) => {
           if (!evt.total) return;
 
           // Map S3 upload progress to 10-80%
@@ -101,7 +102,23 @@ export class MusicUploadService {
           const mappedProgress = 10 + Math.round(s3Progress * 0.7);
 
           this.zone.run(() => onProgress(mappedProgress));
-        },
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`S3 upload failed with status ${xhr.status}: ${xhr.responseText}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('S3 upload network error'));
+        });
+
+        xhr.open('PUT', presignedUrl);
+        xhr.setRequestHeader('Content-Type', file.type || 'audio/webm');
+        xhr.send(file);
       });
 
       // Step 3: Notify backend to process the uploaded file

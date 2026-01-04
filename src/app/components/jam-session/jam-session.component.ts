@@ -34,6 +34,7 @@ export class JamSessionComponent implements OnInit, OnDestroy {
   @Output() recordedStemsReady = new EventEmitter<RecordedStem[]>();
   @Output() playbackStateChanged = new EventEmitter<boolean>();
   @Output() clearRecordedStems = new EventEmitter<void>();
+  @Output() leaveRequested = new EventEmitter<void>();
 
   /* ================= STATE ================= */
   session: JamSession | null = null;
@@ -77,6 +78,12 @@ export class JamSessionComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // Restore microphone preference from localStorage
+    const savedMicPreference = localStorage.getItem('jam-microphone-enabled');
+    if (savedMicPreference === 'true') {
+      console.log('[JamSession] Restoring microphone preference: enabled');
+    }
+
     // Subscribe to clock sync status
     const clockSub = this.clockSyncService.syncStatus$.subscribe((status) => {
       this.clockOffset = status.offset;
@@ -98,6 +105,11 @@ export class JamSessionComponent implements OnInit, OnDestroy {
       async (session) => {
         this.session = session;
         this.isLeader = await this.jamSessionService.isLeader();
+
+        // Auto-enable microphone if preference is saved and session just started
+        if (session && savedMicPreference === 'true' && !this.isMicrophoneEnabled) {
+          setTimeout(() => this.toggleMicrophone(), 500); // Small delay to ensure session is ready
+        }
       },
     );
 
@@ -297,6 +309,17 @@ export class JamSessionComponent implements OnInit, OnDestroy {
         detail: 'You are the session leader',
         life: 5000,
       });
+
+      // Step 4: Auto-start recording if microphone is enabled
+      if (this.isMicrophoneEnabled) {
+        console.log('[JamSession] Auto-starting recording after session start');
+        // Small delay to ensure session is fully initialized
+        setTimeout(() => {
+          this.onPlayClicked();
+        }, 500);
+      } else {
+        console.log('[JamSession] Microphone not enabled, waiting for user to enable and click Record');
+      }
     } catch (error: any) {
       console.error('[JamSession] Failed to start jamming:', error);
       this.error = error.message || 'Failed to start jam session';
@@ -349,7 +372,44 @@ export class JamSessionComponent implements OnInit, OnDestroy {
     }
   }
 
-  onLeaveSession(): void {
+  async onLeaveSession(): Promise<void> {
+    console.log('[JamSession.onLeaveSession] User clicked Leave button');
+
+    // Stop playback immediately
+    if (this.playerEngine && this.playerEngine.isPlaying()) {
+      this.playerEngine.pause();
+      console.log('[JamSession.onLeaveSession] Stopped playback');
+    }
+
+    // Stop participant recording if active and wait for recordings to complete
+    if (this.isRecordingParticipants) {
+      console.log('[JamSession.onLeaveSession] Stopping participant recording and waiting for conversion...');
+      await this.stopAndWaitForRecordings();
+      this.isRecordingParticipants = false;
+      console.log('[JamSession.onLeaveSession] Recording stopped and converted');
+    }
+
+    // Cancel any scheduled playback
+    this.synchronizedPlayerService.cancelScheduledPlay();
+
+    // Emit playback state change to stop cursor loop
+    this.playbackStateChanged.emit(false);
+
+    // Small delay to ensure recordedStemsReady event was processed by music-player
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Emit leave request to music-player to handle save confirmation
+    console.log('[JamSession.onLeaveSession] Emitting leaveRequested event');
+    this.leaveRequested.emit();
+  }
+
+  /**
+   * Actually disconnect from the session (called after save confirmation)
+   */
+  disconnectFromSession(): void {
+    console.log('[JamSession.disconnectFromSession] Disconnecting from session');
+
+    // Disconnect from jam session
     this.jamSessionService.disconnect();
     this.clockSyncService.disconnect();
     this.synchronizedPlayerService.cancelScheduledPlay();
@@ -369,8 +429,8 @@ export class JamSessionComponent implements OnInit, OnDestroy {
     if (!this.isLeader || !this.session) return;
 
     try {
-      // Clear any recorded stems from previous session
-      this.clearRecordedStems.emit();
+      // Don't clear recorded stems here - let the music player's onStartJamming handle it
+      // after showing the save popup to the user
 
       // Ensure socket is connected before starting playback
       const socket = this.jamSessionService.getSocket();
@@ -379,7 +439,10 @@ export class JamSessionComponent implements OnInit, OnDestroy {
         await this.jamSessionService.connect();
       }
 
-      const currentPosition = this.playerEngine.getCurrentTime();
+      // CRITICAL: Always start jam sessions from the beginning
+      this.playerEngine.seek(0);
+      const currentPosition = 0;
+      console.log('[JamSession] Starting jam session from beginning (position 0)');
 
       // Request playback start from server (returns server timestamp)
       const serverStartTime = await this.jamSessionService.startPlayback(
@@ -424,62 +487,42 @@ export class JamSessionComponent implements OnInit, OnDestroy {
 
       await this.jamSessionService.pausePlayback(currentPosition);
 
-      // Stop participant recording
-      this.stopParticipantRecording();
+      // Stop participant recording and wait for conversion to complete
+      if (this.isRecordingParticipants) {
+        console.log('[JamSession] Stopping recording and waiting for conversion...');
+        await this.stopAndWaitForRecordings();
+        this.isRecordingParticipants = false;
+        console.log('[JamSession] Recording stopped and converted');
+      }
 
       // Leader pauses immediately
       this.playerEngine.pause();
 
-      // Emit playback state change
-      this.playbackStateChanged.emit(false);
-
-      console.log('[JamSession] Leader paused playback');
-    } catch (error: any) {
-      console.error('[JamSession] Failed to pause playback:', error);
-
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Pause Failed',
-        detail: error.message,
-        life: 3000,
-      });
-    }
-  }
-
-  async onRestartClicked(): Promise<void> {
-    if (!this.isLeader || !this.session) return;
-
-    try {
-      // Pause if currently playing
-      if (this.playerEngine.isPlaying()) {
-        await this.onPauseClicked();
-      }
-
-      // Clear recorded stems
-      this.clearRecordedStems.emit();
-
-      // Seek to beginning
+      // Reset to beginning after stopping
       this.playerEngine.seek(0);
 
-      console.log('[JamSession] Restarted - cleared recordings and reset to beginning');
+      // Emit playback state change to stop cursor loop
+      this.playbackStateChanged.emit(false);
 
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Restarted',
-        detail: 'Playback reset, recordings cleared',
-        life: 3000,
-      });
+      // Small delay to ensure recordedStemsReady event was processed by music-player
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Trigger leave request which will show save confirmation dialog in music-player
+      // This allows user to save or discard the recording before leaving
+      console.log('[JamSession] Stopped recording, emitting leaveRequested to show save dialog');
+      this.leaveRequested.emit();
     } catch (error: any) {
-      console.error('[JamSession] Failed to restart:', error);
+      console.error('[JamSession] Failed to stop playback:', error);
 
       this.messageService.add({
         severity: 'error',
-        summary: 'Restart Failed',
+        summary: 'Stop Failed',
         detail: error.message,
         life: 3000,
       });
     }
   }
+
 
   /* ============================================================
    * COMBINED PLAY & RECORD
@@ -570,16 +613,6 @@ export class JamSessionComponent implements OnInit, OnDestroy {
     return this.playerEngine?.isPlaying() || false;
   }
 
-  /**
-   * Should show restart button: only when paused AND position > 0
-   */
-  shouldShowRestart(): boolean {
-    if (!this.playerEngine || this.isPlaying()) {
-      return false;
-    }
-    const currentTime = this.playerEngine.getCurrentTime();
-    return currentTime > 0;
-  }
 
   /* ============================================================
    * WEBRTC MICROPHONE CONTROL
@@ -600,6 +633,9 @@ export class JamSessionComponent implements OnInit, OnDestroy {
         // Stop broadcasting
         this.webrtcAudioService.stopBroadcasting();
         this.isMicrophoneEnabled = false;
+
+        // Save preference
+        localStorage.setItem('jam-microphone-enabled', 'false');
 
         this.messageService.add({
           severity: 'info',
@@ -622,12 +658,21 @@ export class JamSessionComponent implements OnInit, OnDestroy {
 
         this.isMicrophoneEnabled = true;
 
+        // Save preference
+        localStorage.setItem('jam-microphone-enabled', 'true');
+
         this.messageService.add({
           severity: 'success',
           summary: 'Microphone Enabled',
           detail: 'Other participants can now hear you',
           life: 3000,
         });
+
+        // Auto-play if leader and not already playing
+        if (this.isLeader && !this.playerEngine.isPlaying()) {
+          console.log('[JamSession] Auto-starting playback after enabling microphone');
+          setTimeout(() => this.onPlayClicked(), 300);
+        }
       }
     } catch (error: any) {
       console.error('[JamSession] Failed to toggle microphone:', error);
@@ -763,6 +808,56 @@ export class JamSessionComponent implements OnInit, OnDestroy {
     if (this.participantRecordingService.isRecording()) {
       this.participantRecordingService.stopRecording();
     }
+  }
+
+  /**
+   * Stop participant recording and wait for conversion to complete
+   * Returns a promise that resolves when recordedStemsReady has been emitted
+   */
+  async stopAndWaitForRecordings(): Promise<void> {
+    if (!this.participantRecordingService.isRecording()) {
+      console.log('[JamSession] No active recording to stop');
+      return;
+    }
+
+    console.log('[JamSession.stopAndWait] Setting up recording completion listener...');
+
+    // Create a promise that resolves when recordings are converted
+    const recordingsCompleted = new Promise<void>((resolve) => {
+      let resolved = false;
+
+      // Subscribe to recordingsCompleted$ observable BEFORE stopping
+      const sub = this.participantRecordingService.recordingsCompleted$.subscribe(
+        async (recordings) => {
+          if (recordings.length > 0 && !resolved) {
+            resolved = true;
+            console.log('[JamSession.stopAndWait] Recordings completed, converting to stems...');
+            // Wait for conversion to happen
+            await this.onParticipantRecordingsCompleted(recordings);
+            console.log('[JamSession.stopAndWait] Conversion complete');
+            sub.unsubscribe();
+            resolve();
+          }
+        }
+      );
+
+      // Set a timeout in case recordings don't complete
+      setTimeout(() => {
+        if (!resolved) {
+          console.warn('[JamSession.stopAndWait] Timeout waiting for recordings');
+          sub.unsubscribe();
+          resolve();
+        }
+      }, 5000); // 5 second timeout
+
+      // Stop the recording AFTER setting up the subscription
+      console.log('[JamSession.stopAndWait] Stopping recording...');
+      this.participantRecordingService.stopRecording();
+    });
+
+    // Wait for conversion to complete
+    await recordingsCompleted;
+    console.log('[JamSession.stopAndWait] Finished waiting for recordings');
   }
 
   async onParticipantRecordingsCompleted(recordings: ParticipantRecording[]): Promise<void> {

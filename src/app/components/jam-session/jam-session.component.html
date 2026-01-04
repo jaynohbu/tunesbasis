@@ -69,31 +69,23 @@
       <div *ngIf="isMicrophoneEnabled" class="controls-buttons">
         <p-button
           *ngIf="!isPlaying()"
-          label="Play"
-          icon="pi pi-play"
-          styleClass="p-button-success"
+          label="Record"
+          icon="pi pi-circle"
+          styleClass="p-button-danger"
           (onClick)="onPlayClicked()">
         </p-button>
 
         <p-button
           *ngIf="isPlaying()"
-          label="Pause"
-          icon="pi pi-pause"
+          label="Stop"
+          icon="pi pi-stop"
           styleClass="p-button-warning"
           (onClick)="onPauseClicked()">
-        </p-button>
-
-        <p-button
-          *ngIf="shouldShowRestart()"
-          label="Restart"
-          icon="pi pi-refresh"
-          styleClass="p-button-success"
-          (onClick)="onRestartClicked()">
         </p-button>
       </div>
 
       <p class="hint" *ngIf="isMicrophoneEnabled">
-        Microphones are automatically recorded during playback and converted to stems when you pause/stop
+        Click Record to start jamming. Microphones are automatically recorded and converted to stems when you stop.
       </p>
     </div>
 

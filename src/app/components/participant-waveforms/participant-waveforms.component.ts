@@ -90,15 +90,17 @@ export class ParticipantWaveformsComponent
     }
 
     // Handle mode changes
-    if (this.mode === 'live') {
-      // Switch to live mode - start animation
-      if (this.animationFrameId === null) {
-        this.startAnimation();
+    if (changes['mode'] || changes['recordedStems']) {
+      if (this.mode === 'live') {
+        // Switch to live mode - start animation
+        if (this.animationFrameId === null) {
+          this.startAnimation();
+        }
+      } else {
+        // Switch to recorded mode - stop animation and draw once
+        this.stopAnimation();
+        setTimeout(() => this.drawRecordedWaveforms(), 100);
       }
-    } else {
-      // Switch to recorded mode - stop animation and draw once
-      this.stopAnimation();
-      setTimeout(() => this.drawRecordedWaveforms(), 0);
     }
   }
 
@@ -119,12 +121,26 @@ export class ParticipantWaveformsComponent
   }
 
   private startAnimation(): void {
-    const animate = () => {
-      this.drawWaveforms();
+    // Reduce frame rate to ~30fps instead of 60fps to save CPU
+    // Use setTimeout instead of requestAnimationFrame for better control
+    let lastFrameTime = 0;
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
+
+    const animate = (currentTime: number) => {
       this.animationFrameId = requestAnimationFrame(animate);
+
+      // Throttle to target FPS
+      const elapsed = currentTime - lastFrameTime;
+      if (elapsed < frameInterval) {
+        return;
+      }
+
+      lastFrameTime = currentTime - (elapsed % frameInterval);
+      this.drawWaveforms();
     };
 
-    animate();
+    this.animationFrameId = requestAnimationFrame(animate);
   }
 
   private stopAnimation(): void {
@@ -184,10 +200,21 @@ export class ParticipantWaveformsComponent
   }
 
   private drawRecordedWaveforms(): void {
+    console.log('[ParticipantWaveforms] drawRecordedWaveforms called');
+    console.log('[ParticipantWaveforms] Mode:', this.mode);
+    console.log('[ParticipantWaveforms] Recorded stems count:', this.recordedStems.length);
+
     const canvasArray = this.canvases.toArray();
+    console.log('[ParticipantWaveforms] Canvas count:', canvasArray.length);
+
+    if (!this.recordedStems || this.recordedStems.length === 0) {
+      console.log('[ParticipantWaveforms] No recorded stems to draw');
+      return;
+    }
 
     for (let i = 0; i < this.recordedStems.length; i++) {
       if (i < canvasArray.length) {
+        console.log(`[ParticipantWaveforms] Drawing stem ${i}: ${this.recordedStems[i].userName}`);
         this.drawStaticWaveform(
           canvasArray[i].nativeElement,
           this.recordedStems[i].audioBuffer,
