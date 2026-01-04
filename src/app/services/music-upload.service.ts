@@ -237,4 +237,53 @@ export class MusicUploadService {
       }
     );
   }
+
+  async getOrCreateJammingScene(groupId: string): Promise<AxiosResponse<SceneDTO>> {
+    const token = await this.authService.getIdToken();
+    return axios.get<SceneDTO>(
+      `${environment.apiBaseUrl}/scenes/jamming/${groupId}`,
+      {
+        headers: {
+          'Authorization': token
+        }
+      }
+    );
+  }
+
+  async addSongToScene(
+    sceneId: string,
+    payload: {
+      songId: string;
+      intervalSec?: number;
+      soundState?: any;
+    }
+  ): Promise<AxiosResponse<SceneDTO>> {
+    const token = await this.authService.getIdToken();
+    return axios.post<SceneDTO>(
+      `${environment.apiBaseUrl}/scenes/${sceneId}/songs`,
+      payload,
+      {
+        headers: {
+          'Authorization': token
+        }
+      }
+    );
+  }
+
+  async createJamRecording(
+    name: string,
+    stems: Record<string, string>,
+    micRecordings?: Array<{ name: string; blob: string }>
+  ): Promise<AxiosResponse<{ songId: string; originalName: string; status: string; stems: Record<string, string> }>> {
+    const token = await this.authService.getIdToken();
+    return axios.post(
+      `${environment.apiBaseUrl}/songs/jam-recording`,
+      { name, stems, micRecordings },
+      {
+        headers: {
+          'Authorization': token
+        }
+      }
+    );
+  }
 }

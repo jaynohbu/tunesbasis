@@ -111,4 +111,35 @@ export class SceneService {
   listSharedScenes(): Promise<AxiosResponse<SceneDTO[]>> {
     return axios.get<SceneDTO[]>(`${this.baseUrl}/shared/all`);
   }
+
+  /* ============================================================
+   * GET OR CREATE PERSONAL JAMMING SCENE
+   * ============================================================ */
+  getOrCreatePersonalJammingScene(): Promise<AxiosResponse<SceneDTO>> {
+    return axios.get<SceneDTO>(`${this.baseUrl}/my-jammings`);
+  }
+
+  /* ============================================================
+   * GET OR CREATE JAMMING SCENE FOR GROUP
+   * ============================================================ */
+  getOrCreateJammingScene(groupId: string): Promise<AxiosResponse<SceneDTO>> {
+    return axios.get<SceneDTO>(`${this.baseUrl}/jamming/${groupId}`);
+  }
+
+  /* ============================================================
+   * ADD SONG TO SCENE (ATOMIC)
+   * ============================================================ */
+  addSongToScene(
+    sceneId: string,
+    payload: {
+      songId: string;
+      intervalSec?: number;
+      soundState?: any;
+    }
+  ): Promise<AxiosResponse<SceneDTO>> {
+    return axios.post<SceneDTO>(
+      `${this.baseUrl}/${sceneId}/songs`,
+      payload
+    );
+  }
 }

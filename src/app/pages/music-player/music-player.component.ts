@@ -20,6 +20,7 @@ import { RecordedStem } from 'src/app/services/recording-to-stem.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { MusicUploadService } from 'src/app/services/music-upload.service';
 import { SceneService } from 'src/app/services/scene.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'music-player',
@@ -234,6 +235,24 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     // The engine will clean up audio nodes in reset() when loading new scenes
   }
 
+  /**
+   * Convert relative stem URLs to absolute URLs by prepending API base URL
+   * Handles:
+   * - Relative paths: "songs/xxx/stream/piano" → "https://api.../songs/xxx/stream/piano"
+   * - Already absolute URLs: pass through unchanged
+   */
+  private convertToAbsoluteUrl(url: string): string {
+    // Already absolute URL (starts with http:// or https://)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // Relative path - prepend API base URL
+    // Remove leading slash if present to avoid double slashes
+    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    return `${environment.apiBaseUrl}/${cleanUrl}`;
+  }
+
   private normalizeSceneItem(item: any) {
     // Backend stores stem settings in soundState.stems
     // We need to map it to item.stems for the component to use
@@ -331,11 +350,19 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
     const rawStems = song.stems;
 
+    // CRITICAL: Stem URLs from backend are relative paths (e.g., "songs/xxx/stream/piano")
+    // We need to convert them to absolute URLs by prepending the API base URL
     const stemList: StemInfo[] = Array.isArray(rawStems)
-      ? rawStems.filter(s => s?.name && s?.url).map(s => ({ name: s.name, url: s.url }))
+      ? rawStems.filter(s => s?.name && s?.url).map(s => ({
+          name: s.name,
+          url: this.convertToAbsoluteUrl(s.url)
+        }))
       : Object.entries(rawStems)
           .filter(([, url]) => typeof url === 'string')
-          .map(([name, url]) => ({ name, url: url as string }));
+          .map(([name, url]) => ({
+            name,
+            url: this.convertToAbsoluteUrl(url as string)
+          }));
 
     this.stems = stemList.sort(
       (a, b) =>
@@ -1047,6 +1074,15 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     try {
+      console.log('[MusicPlayer.saveJamRecording] ========== FUNCTION CALLED ==========');
+      console.log('[MusicPlayer.saveJamRecording] Current item:', {
+        songId: currentItem.song?.songId,
+        songName: currentItem.song?.originalName,
+        hasSong: !!currentItem.song,
+        hasStems: !!currentItem.song?.stems
+      });
+      console.log('[MusicPlayer.saveJamRecording] Recorded mic stems count:', this.recordedMicStems.length);
+
       this.messageService.add({
         severity: 'info',
         summary: 'Saving Recording',
@@ -1056,6 +1092,7 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
       // Step 1: Collect all stems (original instrumental + recorded mic)
       const allStemUrls: { name: string; url: string }[] = [];
+      console.log('[MusicPlayer.saveJamRecording] Step 1: Collecting all stems...');
 
       // Get instrumental stems from the currently playing song
       // NOTE: normalizeSceneItem() already handles both regular songs and jam recordings
@@ -1067,11 +1104,58 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
         const rawStems = currentItem.song.stems;
 
         // Handle both array and object formats (same logic as loadFromScene)
-        instrumentalStems = Array.isArray(rawStems)
+        let rawInstrumentalStems = Array.isArray(rawStems)
           ? rawStems.filter(s => s?.name && s?.url)
           : Object.entries(rawStems)
               .filter(([, url]) => typeof url === 'string')
               .map(([name, url]) => ({ name, url: url as string }));
+
+        // CRITICAL: Convert streaming endpoint URLs to actual S3 keys
+        // Regular songs have stems like: songs/{songId}/stems/bass.wav (actual S3 keys)
+        // But when playing, frontend loads via: http://localhost:3000/songs/{songId}/stream/bass (streaming API)
+        // When saving jam recordings, we must convert back to actual S3 keys: songs/{songId}/stems/bass.wav
+        instrumentalStems = rawInstrumentalStems.map(stem => {
+          let normalizedUrl = stem.url;
+
+          // Strip localhost proxy URLs
+          if (normalizedUrl.startsWith('http://localhost:')) {
+            const match = normalizedUrl.match(/http:\/\/localhost:\d+\/(.+)/);
+            if (match) {
+              normalizedUrl = match[1];
+              console.log(`[MusicPlayer] Normalized localhost URL: ${stem.url} → ${normalizedUrl}`);
+            }
+          }
+
+          // Strip API Gateway URLs
+          if (normalizedUrl.startsWith('https://') && normalizedUrl.includes('execute-api')) {
+            const match = normalizedUrl.match(/https:\/\/[^/]+\/(.+)/);
+            if (match) {
+              normalizedUrl = match[1];
+              console.log(`[MusicPlayer] Normalized API Gateway URL: ${stem.url} → ${normalizedUrl}`);
+            }
+          }
+
+          // Strip full S3 URLs
+          if (normalizedUrl.startsWith('https://') && normalizedUrl.includes('s3')) {
+            const match = normalizedUrl.match(/https:\/\/[^/]+\/(.+)/);
+            if (match) {
+              normalizedUrl = match[1];
+              console.log(`[MusicPlayer] Normalized S3 URL: ${stem.url} → ${normalizedUrl}`);
+            }
+          }
+
+          // CRITICAL FIX: Convert streaming endpoint paths to actual S3 keys
+          // FROM: songs/{songId}/stream/{stemName}
+          // TO:   songs/{songId}/stems/{stemName}.wav
+          const streamMatch = normalizedUrl.match(/^songs\/([a-f0-9-]+)\/stream\/(.+)$/);
+          if (streamMatch) {
+            const [, songId, stemName] = streamMatch;
+            normalizedUrl = `songs/${songId}/stems/${stemName}.wav`;
+            console.log(`[MusicPlayer] 🔧 Converted streaming endpoint to S3 key: ${stem.url} → ${normalizedUrl}`);
+          }
+
+          return { name: stem.name, url: normalizedUrl };
+        });
 
         console.log('[MusicPlayer] Currently playing song:', currentItem.song.originalName);
         console.log('[MusicPlayer] Adding', instrumentalStems.length, 'instrumental stems from song');
@@ -1104,121 +1188,98 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
         });
       }
 
-      // Upload recorded mic stems (WebM format) to S3
-      console.log('[MusicPlayer] Number of recorded mic stems to upload:', this.recordedMicStems.length);
+      // Convert recorded mic stems to Base64 (will be uploaded by backend)
+      console.log('[MusicPlayer] Number of recorded mic stems to convert:', this.recordedMicStems.length);
+      const micRecordings: Array<{ name: string; blob: string }> = [];
+
       for (const recordedStem of this.recordedMicStems) {
-        console.log('[MusicPlayer] Processing recorded stem:', recordedStem.name);
+        console.log('[MusicPlayer] Converting recorded stem to Base64:', recordedStem.name);
 
         // Use the original WebM blob from recording
         const webmBlob = recordedStem.originalBlob;
 
-        // Create S3-safe filename (remove @ . and other special characters)
-        const safeName = recordedStem.name.replace(/[@.]/g, '-');
-        const fileName = `${safeName}.webm`;
-        const file = new File([webmBlob], fileName, { type: 'audio/webm' });
+        // Convert blob to Base64
+        const base64 = await this.blobToBase64(webmBlob);
+        console.log(`[MusicPlayer] Converted ${recordedStem.name} to Base64 (${base64.length} chars)`);
 
-        // Upload to S3
-        console.log(`[MusicPlayer] Uploading ${fileName} to S3...`);
-        const uploadResponse = await this.musicUploadService.upload(
-          file,
-          (progress) => {
-            console.log(`[MusicPlayer] Upload progress for ${fileName}: ${progress}%`);
-          },
-          safeName  // Use safe name for S3 key
-        );
-
-        console.log('[MusicPlayer] Upload response for', fileName, ':', uploadResponse.data);
-
-        // The upload creates a new songId and uploads to S3
-        // We need to construct the S3 URL manually since stems aren't processed yet
-        const songId = uploadResponse.data.songId;
-
-        // Construct the S3 URL for the original WebM file
-        // Format: https://tunesbasis-files-{accountId}.s3.{region}.amazonaws.com/songs/{songId}/original.webm
-        const s3Url = `https://tunesbasis-files-086723604095.s3.us-west-2.amazonaws.com/songs/${songId}/original.webm`;
-
-        console.log('[MusicPlayer] Created mic stem URL:', s3Url);
-
-        // Add the mic stem to our collection
-        allStemUrls.push({
+        // Add to mic recordings array (backend will convert to MP3 and upload)
+        micRecordings.push({
           name: recordedStem.name,
-          url: s3Url
+          blob: base64
         });
       }
 
-      console.log('[MusicPlayer] ========== SAVE SUMMARY ==========');
-      console.log('[MusicPlayer] Total stems to save:', allStemUrls.length);
-      console.log('[MusicPlayer] - Instrumental stems:', instrumentalStems.length);
-      console.log('[MusicPlayer] - Recorded mic stems:', this.recordedMicStems.length);
-      console.log('[MusicPlayer] All stem names:', allStemUrls.map(s => s.name));
-      console.log('[MusicPlayer] ================================');
+      console.log('[MusicPlayer] Prepared', micRecordings.length, 'mic recordings for backend processing');
+
+      console.log('[MusicPlayer.saveJamRecording] ========== SAVE SUMMARY ==========');
+      console.log('[MusicPlayer.saveJamRecording] Total stems to save:', allStemUrls.length);
+      console.log('[MusicPlayer.saveJamRecording] - Instrumental stems:', instrumentalStems.length);
+      console.log('[MusicPlayer.saveJamRecording] - Recorded mic stems:', this.recordedMicStems.length);
+      console.log('[MusicPlayer.saveJamRecording] All stem URLs TO BE SENT TO BACKEND:', JSON.stringify(allStemUrls, null, 2));
+      console.log('[MusicPlayer.saveJamRecording] ================================');
 
       // Step 2: Generate unique jam session name with timestamp
+      console.log('[MusicPlayer.saveJamRecording] Step 2: Generating unique jam session name...');
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
       const timeStr = now.toISOString().split('T')[1].split('.')[0].replace(/:/g, ''); // HHMMSS
-      const groupName = this.groupId || 'solo';
 
       // Use timestamp to ensure uniqueness even when saving multiple times quickly
-      const jamSessionName = `jam_${dateStr}_${timeStr}_${groupName}`;
-      console.log('[MusicPlayer] Generated unique jam session name:', jamSessionName);
+      const jamSessionName = `Jam ${dateStr} ${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
+      console.log('[MusicPlayer.saveJamRecording] Generated unique jam session name:', jamSessionName);
 
-      // Step 3: Get or create "Jammings" scene
-      const scenes = await this.sceneService.listScenes();
-      const jammingsScene = scenes.data.find(s => s.name === 'Jammings');
-      let jammingsSceneId: string;
+      // Step 3: Create jam recording song with all stems (instrumental + recorded)
+      console.log('[MusicPlayer.saveJamRecording] Step 3: Creating jam recording song...');
+      const stemsRecord: Record<string, string> = {};
+      allStemUrls.forEach(stem => {
+        stemsRecord[stem.name] = stem.url;
+      });
 
-      if (jammingsScene) {
-        jammingsSceneId = jammingsScene.sceneId;
-        console.log('[MusicPlayer] Using existing Jammings scene:', jammingsSceneId);
-      } else {
-        // Create new Jammings scene
-        console.log('[MusicPlayer] Creating new Jammings scene');
-        const createResponse = await this.sceneService.createScene({
-          name: 'Jammings',
-          items: []
-        });
-        jammingsSceneId = createResponse.data.sceneId;
-      }
+      console.log('[MusicPlayer.saveJamRecording] Stems record to send to backend:', JSON.stringify(stemsRecord, null, 2));
+      console.log('[MusicPlayer.saveJamRecording] Mic recordings to send:', micRecordings.length);
+      console.log('[MusicPlayer.saveJamRecording] Calling musicUploadService.createJamRecording()...');
 
-      // Step 4: Add jam session to Jammings scene
-      const existingScene = await this.sceneService.getScene(jammingsSceneId);
-      const existingItems = existingScene.data.items || [];
+      const jamSongResponse = await this.musicUploadService.createJamRecording(jamSessionName, stemsRecord, micRecordings);
+      const jamSong = jamSongResponse.data;
 
-      // Create new scene item with soundState.stems containing ALL stems (instrumental + recorded)
-      const newItem = {
-        songId: jamSessionName, // Use jam session name as songId
-        order: existingItems.length,
-        intervalSec: 0,
-        soundState: {
-          originalName: jamSessionName,
-          stems: allStemUrls // Array of {name, url} - includes both instrumental and recorded stems
-        }
-      };
+      console.log('[MusicPlayer.saveJamRecording] ✅ Backend response - Created jam song with ID:', jamSong.songId);
+      console.log('[MusicPlayer.saveJamRecording] Full jam song response:', JSON.stringify(jamSong, null, 2));
 
-      console.log('[MusicPlayer] Creating new jam session entry in Jammings scene:');
-      console.log('[MusicPlayer] - songId (jam name):', jamSessionName);
-      console.log('[MusicPlayer] - soundState.stems count:', allStemUrls.length);
-      console.log('[MusicPlayer] - soundState.stems:', allStemUrls);
+      // Step 4: Get or create PERSONAL jamming scene (user's own Jammings)
+      console.log('[MusicPlayer.saveJamRecording] Step 4: Getting or creating personal jamming scene...');
+      const jammingSceneResponse = await this.sceneService.getOrCreatePersonalJammingScene();
+      const jammingScene = jammingSceneResponse.data;
+      console.log('[MusicPlayer.saveJamRecording] ✅ Got personal jamming scene:', jammingScene.sceneId, jammingScene.name);
 
-      console.log('[MusicPlayer] 📤 Calling updateScene API to save jam session...');
-      await this.sceneService.updateScene(jammingsSceneId, {
-        items: [...existingItems, newItem]
+      // Step 5: Add jam song to jamming scene atomically
+      console.log('[MusicPlayer.saveJamRecording] Step 5: Adding jam song to Jammings scene...');
+      console.log('[MusicPlayer.saveJamRecording] Calling sceneService.addSongToScene()...');
+      console.log('[MusicPlayer.saveJamRecording]   sceneId:', jammingScene.sceneId);
+      console.log('[MusicPlayer.saveJamRecording]   songId:', jamSong.songId);
+
+      await this.sceneService.addSongToScene(jammingScene.sceneId, {
+        songId: jamSong.songId,
+        intervalSec: 0
       });
 
       const saveElapsed = Date.now() - saveStartTime;
-      console.log('[MusicPlayer] ✅ updateScene API completed in', saveElapsed, 'ms');
-      console.log('[MusicPlayer] ✅ Successfully saved', allStemUrls.length, 'stems to Jammings scene');
+      console.log('[MusicPlayer.saveJamRecording] ✅ addSongToScene API completed in', saveElapsed, 'ms');
+      console.log('[MusicPlayer.saveJamRecording] ✅ Successfully added jam song to Jammings scene');
 
       // Wait for backend to persist
-      console.log('[MusicPlayer] ⏳ Waiting 500ms for backend persistence...');
+      console.log('[MusicPlayer.saveJamRecording] ⏳ Waiting 500ms for backend persistence...');
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const totalElapsed = Date.now() - saveStartTime;
-      console.log('[MusicPlayer] ========================================');
-      console.log('[MusicPlayer] ✅ SAVE COMPLETE:', new Date().toISOString());
-      console.log('[MusicPlayer] Total save time:', totalElapsed, 'ms');
-      console.log('[MusicPlayer] ========================================');
+      console.log('[MusicPlayer.saveJamRecording] ========================================');
+      console.log('[MusicPlayer.saveJamRecording] ✅✅✅ SAVE COMPLETE ✅✅✅');
+      console.log('[MusicPlayer.saveJamRecording] Timestamp:', new Date().toISOString());
+      console.log('[MusicPlayer.saveJamRecording] Total save time:', totalElapsed, 'ms');
+      console.log('[MusicPlayer.saveJamRecording] Jam session name:', jamSessionName);
+      console.log('[MusicPlayer.saveJamRecording] Jam song ID:', jamSong.songId);
+      console.log('[MusicPlayer.saveJamRecording] Jammings scene ID:', jammingScene.sceneId);
+      console.log('[MusicPlayer.saveJamRecording] Total stems saved:', allStemUrls.length);
+      console.log('[MusicPlayer.saveJamRecording] ========================================');
 
       this.messageService.add({
         severity: 'success',
@@ -1280,17 +1341,6 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
   onRecordedStemsReady(recordedStems: RecordedStem[]): void {
     console.log('[MusicPlayer] onRecordedStemsReady called with', recordedStems.length, 'stems');
-
-    // Guard against duplicate calls - check if we already have these exact stems
-    if (this.recordedMicStems.length > 0 && recordedStems.length > 0) {
-      const isSame = this.recordedMicStems.length === recordedStems.length &&
-                     this.recordedMicStems.every((stem, i) => stem.name === recordedStems[i].name);
-      if (isSame) {
-        console.log('[MusicPlayer] Duplicate call detected (same stems), ignoring');
-        return;
-      }
-    }
-
     console.log('[MusicPlayer] Recorded stems data:', recordedStems.map(s => ({
       name: s.name,
       userName: s.userName,
@@ -1299,6 +1349,17 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
       bufferLength: s.audioBuffer?.length
     })));
 
+    // Remove old recorded stems from player engine before adding new ones
+    for (const oldStem of this.recordedMicStems) {
+      this.playerEngine.removeRecordedStem(oldStem.name);
+      const index = this.stems.findIndex(s => s.name === oldStem.name);
+      if (index !== -1) {
+        this.stems.splice(index, 1);
+      }
+      console.log('[MusicPlayer] Removed old recorded stem:', oldStem.name);
+    }
+
+    // Set new recorded stems
     this.recordedMicStems = recordedStems;
     this.showingLiveMics = false; // Switch to recorded view
 
@@ -1309,22 +1370,32 @@ export class MusicPlayerComponent implements OnInit, OnChanges, OnDestroy {
       containerVisible: `(groupId:${!!this.groupId} && scene:${!!this.scene?.sceneId}) || recordedStems:${this.recordedMicStems.length > 0}`
     });
 
-    // Add recorded stems to player engine for playback/control
+    // Add new recorded stems to player engine for playback/control
     for (const stem of recordedStems) {
-      // Check if stem already exists in player
-      const existingStem = this.stems.find(s => s.name === stem.name);
-      if (existingStem) {
-        console.log('[MusicPlayer] Stem already exists, skipping:', stem.name);
-        continue;
-      }
-
       this.playerEngine.addRecordedStem(stem);
       this.stems.push({ name: stem.name, url: '' });
-      console.log('[MusicPlayer] Added stem to player:', stem.name);
+      console.log('[MusicPlayer] Added new recorded stem to player:', stem.name);
     }
 
     console.log('[MusicPlayer] Total stems in player now:', this.stems.length);
     console.log('[MusicPlayer] recordedMicStems array now has:', this.recordedMicStems.length, 'items');
+  }
+
+  /**
+   * Convert a Blob to Base64 string
+   */
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Result is in format: "data:audio/webm;base64,XXXXX..."
+        // We only want the Base64 part after the comma
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   onClearRecordedStems(): void {
